@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import Header from "@/components/header"
 
 type Product = {
   id: string
@@ -64,13 +65,7 @@ export default function PaymentSuccessPage() {
   return (
     <div className="min-h-screen bg-[#f8f3ea]">
       {/* Navigation Header */}
-      <header className="w-full py-6 px-4 md:px-8 bg-white/90 backdrop-blur-sm">
-        <div className="container mx-auto flex items-center justify-center max-w-7xl">
-          <Link href="/" className="text-2xl md:text-3xl font-serif tracking-wider text-[#2c2824]">
-            AMA
-          </Link>
-        </div>
-      </header>
+      <Header bgColor="bg-white/90 backdrop-blur-sm" textColor="text-[#2c2824]" />
 
       <div className="container mx-auto py-12 px-4">
         <div className="max-w-2xl mx-auto text-center">

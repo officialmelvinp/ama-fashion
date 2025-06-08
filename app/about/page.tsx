@@ -1,49 +1,11 @@
 import Image from "next/image"
-import Link from "next/link"
+import Header from "@/components/header"
 
 export default function AboutPage() {
   return (
     <div className="min-h-screen">
       {/* Navigation Header */}
-      <header className="w-full py-6 px-4 md:px-8 bg-white/90 backdrop-blur-sm">
-        <div className="container mx-auto flex items-center justify-between max-w-7xl">
-          <Link href="/" className="text-2xl md:text-3xl font-serif tracking-wider text-[#2c2824]">
-            AMA
-          </Link>
-          <nav className="flex items-center space-x-6 md:space-x-8">
-            <Link
-              href="/"
-              className="text-sm md:text-base tracking-widest hover:opacity-70 transition-opacity text-[#2c2824] opacity-80"
-            >
-              HOME
-            </Link>
-            <Link
-              href="/about"
-              className="text-sm md:text-base tracking-widest hover:opacity-70 transition-opacity text-[#2c2824] opacity-100"
-            >
-              ABOUT
-            </Link>
-            <Link
-              href="/shop"
-              className="text-sm md:text-base tracking-widest hover:opacity-70 transition-opacity text-[#2c2824] opacity-80"
-            >
-              SHOP
-            </Link>
-            <Link
-              href="/why-ama"
-              className="text-sm md:text-base tracking-widest hover:opacity-70 transition-opacity text-[#2c2824] opacity-80"
-            >
-              WHY AMA
-            </Link>
-            <Link
-              href="/contact"
-              className="text-sm md:text-base tracking-widest hover:opacity-70 transition-opacity text-[#2c2824] opacity-80"
-            >
-              CONTACT
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <Header bgColor="bg-white/90 backdrop-blur-sm" textColor="text-[#2c2824]" />
 
       <div className="container mx-auto py-24 px-4">
         <div className="max-w-4xl mx-auto">
@@ -65,7 +27,7 @@ export default function AboutPage() {
             </div>
             <div className="relative aspect-square">
               <Image
-                src="/images/ama2.jpeg?height=600&width=600"
+                src="/placeholder.svg?height=600&width=600"
                 alt="Artisan hands working with fabric"
                 fill
                 className="object-cover rounded-lg"
@@ -76,7 +38,7 @@ export default function AboutPage() {
           <div className="grid md:grid-cols-2 gap-12 items-center mb-24">
             <div className="relative aspect-square md:order-1">
               <Image
-                src="/images/ama4.jpeg?height=600&width=600"
+                src="/placeholder.svg?height=600&width=600"
                 alt="Close-up of fabric texture"
                 fill
                 className="object-cover rounded-lg"
@@ -112,7 +74,7 @@ export default function AboutPage() {
             </div>
             <div className="relative aspect-square">
               <Image
-                src="/images/ama9.jpeg?height=600&width=600"
+                src="/placeholder.svg?height=600&width=600"
                 alt="Serene landscape with earth tones"
                 fill
                 className="object-cover rounded-lg"

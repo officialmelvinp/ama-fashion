@@ -3,12 +3,12 @@
 import type React from "react"
 
 import { useState } from "react"
-import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { useSearchParams } from "next/navigation"
+import Header from "@/components/header"
 
 const whatsappNumber = "971501234567" // Replace with your client's actual WhatsApp number
 
@@ -53,45 +53,7 @@ export default function ContactPage() {
   return (
     <div className="min-h-screen bg-[#f8f3ea]">
       {/* Navigation Header */}
-      <header className="w-full py-6 px-4 md:px-8 bg-white/90 backdrop-blur-sm">
-        <div className="container mx-auto flex items-center justify-between max-w-7xl">
-          <Link href="/" className="text-2xl md:text-3xl font-serif tracking-wider text-[#2c2824]">
-            AMA
-          </Link>
-          <nav className="flex items-center space-x-6 md:space-x-8">
-            <Link
-              href="/"
-              className="text-sm md:text-base tracking-widest hover:opacity-70 transition-opacity text-[#2c2824] opacity-80"
-            >
-              HOME
-            </Link>
-            <Link
-              href="/about"
-              className="text-sm md:text-base tracking-widest hover:opacity-70 transition-opacity text-[#2c2824] opacity-80"
-            >
-              ABOUT
-            </Link>
-            <Link
-              href="/shop"
-              className="text-sm md:text-base tracking-widest hover:opacity-70 transition-opacity text-[#2c2824] opacity-80"
-            >
-              SHOP
-            </Link>
-            <Link
-              href="/why-ama"
-              className="text-sm md:text-base tracking-widest hover:opacity-70 transition-opacity text-[#2c2824] opacity-80"
-            >
-              WHY AMA
-            </Link>
-            <Link
-              href="/contact"
-              className="text-sm md:text-base tracking-widest hover:opacity-70 transition-opacity text-[#2c2824] opacity-100"
-            >
-              CONTACT
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <Header bgColor="bg-white/90 backdrop-blur-sm" textColor="text-[#2c2824]" />
 
       <div className="container mx-auto py-24 px-4">
         <div className="max-w-4xl mx-auto">

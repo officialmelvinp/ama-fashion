@@ -2,8 +2,8 @@
 
 import { useState } from "react"
 import Image from "next/image"
-import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import Header from "@/components/header"
 
 // ============= TYPE DEFINITIONS =============
 type Product = {
@@ -395,48 +395,7 @@ export default function ShopPage() {
   return (
     <div className="min-h-screen">
       {/* Navigation Header */}
-      <header className="absolute top-0 left-0 right-0 z-50 w-full py-6 px-4 md:px-8 bg-white/90 backdrop-blur-sm">
-        <div className="container mx-auto flex items-center justify-between max-w-7xl">
-          {/* Logo */}
-          <Link href="/" className="text-2xl md:text-3xl font-serif tracking-wider text-[#2c2824]">
-            AMA
-          </Link>
-
-          {/* Navigation */}
-          <nav className="flex items-center space-x-6 md:space-x-8">
-            <Link
-              href="/"
-              className="text-sm md:text-base tracking-widest hover:opacity-70 transition-opacity text-[#2c2824] opacity-80"
-            >
-              HOME
-            </Link>
-            <Link
-              href="/about"
-              className="text-sm md:text-base tracking-widest hover:opacity-70 transition-opacity text-[#2c2824] opacity-80"
-            >
-              ABOUT
-            </Link>
-            <Link
-              href="/shop"
-              className="text-sm md:text-base tracking-widest hover:opacity-70 transition-opacity text-[#2c2824] opacity-100"
-            >
-              SHOP
-            </Link>
-            <Link
-              href="/why-ama"
-              className="text-sm md:text-base tracking-widest hover:opacity-70 transition-opacity text-[#2c2824] opacity-80"
-            >
-              WHY AMA
-            </Link>
-            <Link
-              href="/contact"
-              className="text-sm md:text-base tracking-widest hover:opacity-70 transition-opacity text-[#2c2824] opacity-80"
-            >
-              CONTACT
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <Header bgColor="bg-white/90 backdrop-blur-sm" textColor="text-[#2c2824]" />
 
       <div className="container mx-auto py-24 px-4">
         {/* Top mood line */}

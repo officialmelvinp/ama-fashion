@@ -2,57 +2,17 @@ import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import NewsletterForm from "@/components/newsletter-form"
+import Header from "@/components/header"
 
 export default function Home() {
   return (
     <main>
       {/* Navigation Header */}
-      <header className="absolute top-0 left-0 right-0 z-50 w-full py-6 px-4 md:px-8">
-        <div className="container mx-auto flex items-center justify-between max-w-7xl">
-          {/* Logo */}
-          <Link href="/" className="text-2xl md:text-3xl font-serif tracking-wider text-white">
-            AMA
-          </Link>
-
-          {/* Navigation */}
-          <nav className="flex items-center space-x-6 md:space-x-8">
-            <Link
-              href="/"
-              className="text-sm md:text-base tracking-widest hover:opacity-70 transition-opacity text-white opacity-100"
-            >
-              HOME
-            </Link>
-            <Link
-              href="/about"
-              className="text-sm md:text-base tracking-widest hover:opacity-70 transition-opacity text-white opacity-80"
-            >
-              ABOUT
-            </Link>
-            <Link
-              href="/shop"
-              className="text-sm md:text-base tracking-widest hover:opacity-70 transition-opacity text-white opacity-80"
-            >
-              SHOP
-            </Link>
-            <Link
-              href="/why-ama"
-              className="text-sm md:text-base tracking-widest hover:opacity-70 transition-opacity text-white opacity-80"
-            >
-              WHY AMA
-            </Link>
-            <Link
-              href="/contact"
-              className="text-sm md:text-base tracking-widest hover:opacity-70 transition-opacity text-white opacity-80"
-            >
-              CONTACT
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <Header />
 
       {/* Hero Section */}
       <section className="relative h-screen flex items-center justify-center text-center text-white">
-        <Image src="/images/ama1.jpeg" alt="Hero Image" fill className="object-cover absolute inset-0 -z-10" />
+        <Image src="/images/hero-image.jpg" alt="Hero Image" fill className="object-cover absolute inset-0 -z-10" />
         <div className="absolute inset-0 bg-black/40 -z-10" />
         <div className="container mx-auto px-8">
           <h1 className="font-serif text-5xl md:text-7xl lg:text-8xl font-light tracking-wider leading-tight mb-6 max-w-6xl mx-auto">
@@ -95,7 +55,7 @@ export default function Home() {
             <Link href="/shop#ayaba-bubu" className="group">
               <div className="aspect-[3/4] relative mb-4 overflow-hidden">
                 <Image
-                  src="/images/ama2.jpeg"
+                  src="/images/ayaba-collection.jpg"
                   alt="Ayaba Bubu Collection"
                   fill
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
@@ -107,7 +67,7 @@ export default function Home() {
             <Link href="/shop#candy-combat" className="group">
               <div className="aspect-[3/4] relative mb-4 overflow-hidden">
                 <Image
-                  src="/images/ama3.jpeg"
+                  src="/images/candy-combat-collection.jpg"
                   alt="Candy Combat Collection"
                   fill
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
@@ -119,7 +79,7 @@ export default function Home() {
             <Link href="/shop#the-manifested-set" className="group">
               <div className="aspect-[3/4] relative mb-4 overflow-hidden">
                 <Image
-                  src="/images/ama4.jpeg"
+                  src="/images/manifest-set-collection.jpg"
                   alt="The Manifested Set Collection"
                   fill
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
@@ -131,7 +91,7 @@ export default function Home() {
             <Link href="/shop#milkmaid-dress" className="group">
               <div className="aspect-[3/4] relative mb-4 overflow-hidden">
                 <Image
-                  src="/images/ama5.jpeg"
+                  src="/images/milkmaid-collection.jpg"
                   alt="Milkmaid Dress Collection"
                   fill
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
@@ -163,7 +123,7 @@ export default function Home() {
             <Link href="/shop" className="group">
               <div className="aspect-square relative mb-6 overflow-hidden">
                 <Image
-                  src="/images/ama6.jpeg"
+                  src="/images/aso-oke.jpeg"
                   alt="Aso Oke fabric"
                   fill
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
@@ -175,7 +135,7 @@ export default function Home() {
             <Link href="/shop" className="group">
               <div className="aspect-square relative mb-6 overflow-hidden">
                 <Image
-                  src="/images/ama7.jpeg"
+                  src="/images/adire-eleko.jpeg"
                   alt="Adire Eleko fabric"
                   fill
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
