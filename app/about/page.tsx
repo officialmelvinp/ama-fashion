@@ -27,7 +27,7 @@ export default function AboutPage() {
             </div>
             <div className="relative aspect-square">
               <Image
-                src="/placeholder.svg?height=600&width=600"
+                src="/images/ama8.jpeg?height=600&width=600"
                 alt="Artisan hands working with fabric"
                 fill
                 className="object-cover rounded-lg"
@@ -38,7 +38,7 @@ export default function AboutPage() {
           <div className="grid md:grid-cols-2 gap-12 items-center mb-24">
             <div className="relative aspect-square md:order-1">
               <Image
-                src="/placeholder.svg?height=600&width=600"
+                src="/images/ama9.jpeg?height=600&width=600"
                 alt="Close-up of fabric texture"
                 fill
                 className="object-cover rounded-lg"
@@ -74,7 +74,7 @@ export default function AboutPage() {
             </div>
             <div className="relative aspect-square">
               <Image
-                src="/placeholder.svg?height=600&width=600"
+                src="/images/ama3.jpeg?height=600&width=600"
                 alt="Serene landscape with earth tones"
                 fill
                 className="object-cover rounded-lg"

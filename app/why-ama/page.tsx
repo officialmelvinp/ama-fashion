@@ -36,7 +36,7 @@ export default function WhyAMAPage() {
                 </div>
                 <div className="relative aspect-square">
                   <Image
-                    src="/placeholder.svg?height=600&width=600"
+                    src="/images/ama4.jpeg?height=600&width=600"
                     alt="West African landscape"
                     fill
                     className="object-cover rounded-lg"
@@ -51,7 +51,7 @@ export default function WhyAMAPage() {
               <div className="grid md:grid-cols-2 gap-12 items-center">
                 <div className="relative aspect-square md:order-1">
                   <Image
-                    src="/placeholder.svg?height=600&width=600"
+                    src="/images/ama5.jpeg?height=600&width=600"
                     alt="Artisan hands working with fabric"
                     fill
                     className="object-cover rounded-lg"
@@ -89,7 +89,7 @@ export default function WhyAMAPage() {
                 </div>
                 <div className="relative aspect-square">
                   <Image
-                    src="/placeholder.svg?height=600&width=600"
+                    src="/images/ama3.jpeg?height=600&width=600"
                     alt="Elegant minimalist garment"
                     fill
                     className="object-cover rounded-lg"

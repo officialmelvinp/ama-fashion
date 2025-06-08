@@ -12,7 +12,7 @@ export default function Home() {
 
       {/* Hero Section */}
       <section className="relative h-screen flex items-center justify-center text-center text-white">
-        <Image src="/images/hero-image.jpg" alt="Hero Image" fill className="object-cover absolute inset-0 -z-10" />
+        <Image src="/images/ama1.jpeg" alt="Hero Image" fill className="object-cover absolute inset-0 -z-10" />
         <div className="absolute inset-0 bg-black/40 -z-10" />
         <div className="container mx-auto px-8">
           <h1 className="font-serif text-5xl md:text-7xl lg:text-8xl font-light tracking-wider leading-tight mb-6 max-w-6xl mx-auto">
@@ -20,17 +20,26 @@ export default function Home() {
             <br />
             ELEVATED ESSENTIALS.
           </h1>
-          <p className="text-lg md:text-xl mb-12 tracking-wide opacity-90">
-            Natural Textures 🌿 | Tailored Simplicity ✂️ | Rooted in 🇳🇬 🇦🇪 🇬🇧
-          </p>
-          <Link href="/why-ama">
-            <Button
-              variant="outline"
-              className="bg-white/10 backdrop-blur-sm border border-white text-white hover:bg-white hover:text-black px-12 py-6 text-base tracking-[0.3em] font-medium transition-all duration-300"
-            >
-              ENTER THE MANIFESTATION
-            </Button>
-          </Link>
+          <div className="text-center">
+            {/* Mobile: Stack vertically, Desktop: Single line */}
+            <div className="text-lg md:text-xl mb-12 tracking-wide opacity-90">
+              <div className="block md:hidden space-y-2">
+                <p>Natural Textures 🌿</p>
+                <p>Tailored Simplicity ✂️</p>
+                <p>Rooted in 🇳🇬 🇦🇪 🇬🇧</p>
+              </div>
+              <p className="hidden md:block">Natural Textures 🌿 | Tailored Simplicity ✂️ | Rooted in 🇳🇬 🇦🇪 🇬🇧</p>
+            </div>
+
+            <Link href="/why-ama">
+              <Button
+                variant="outline"
+                className="bg-white/10 backdrop-blur-sm border border-white text-white hover:bg-white hover:text-black px-6 md:px-12 py-4 md:py-6 text-sm md:text-base tracking-[0.2em] md:tracking-[0.3em] font-medium transition-all duration-300"
+              >
+                ENTER THE MANIFESTATION
+              </Button>
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -55,7 +64,7 @@ export default function Home() {
             <Link href="/shop#ayaba-bubu" className="group">
               <div className="aspect-[3/4] relative mb-4 overflow-hidden">
                 <Image
-                  src="/images/ayaba-collection.jpg"
+                  src="/images/ama4.jpeg"
                   alt="Ayaba Bubu Collection"
                   fill
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
@@ -67,7 +76,7 @@ export default function Home() {
             <Link href="/shop#candy-combat" className="group">
               <div className="aspect-[3/4] relative mb-4 overflow-hidden">
                 <Image
-                  src="/images/candy-combat-collection.jpg"
+                  src="/images/ama5.jpeg"
                   alt="Candy Combat Collection"
                   fill
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
@@ -79,7 +88,7 @@ export default function Home() {
             <Link href="/shop#the-manifested-set" className="group">
               <div className="aspect-[3/4] relative mb-4 overflow-hidden">
                 <Image
-                  src="/images/manifest-set-collection.jpg"
+                  src="/images/ama3.jpeg"
                   alt="The Manifested Set Collection"
                   fill
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
@@ -91,7 +100,7 @@ export default function Home() {
             <Link href="/shop#milkmaid-dress" className="group">
               <div className="aspect-[3/4] relative mb-4 overflow-hidden">
                 <Image
-                  src="/images/milkmaid-collection.jpg"
+                  src="/images/ama4.jpeg"
                   alt="Milkmaid Dress Collection"
                   fill
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
@@ -123,7 +132,7 @@ export default function Home() {
             <Link href="/shop" className="group">
               <div className="aspect-square relative mb-6 overflow-hidden">
                 <Image
-                  src="/images/aso-oke.jpeg"
+                  src="/images/ama6.jpeg"
                   alt="Aso Oke fabric"
                   fill
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
@@ -135,7 +144,7 @@ export default function Home() {
             <Link href="/shop" className="group">
               <div className="aspect-square relative mb-6 overflow-hidden">
                 <Image
-                  src="/images/adire-eleko.jpeg"
+                  src="/images/ama7.jpeg"
                   alt="Adire Eleko fabric"
                   fill
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
