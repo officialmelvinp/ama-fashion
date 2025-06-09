@@ -1,5 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import nodemailer from "nodemailer"
+import fs from "fs"
+import path from "path"
 
 // Email configuration
 const emailConfig = {
@@ -15,6 +17,49 @@ const emailConfig = {
 // Create transporter - Fixed method name
 const transporter = nodemailer.createTransport(emailConfig)
 
+// Path to subscribers file
+const SUBSCRIBERS_DIR = path.join(process.cwd(), "data")
+const SUBSCRIBERS_FILE = path.join(SUBSCRIBERS_DIR, "subscribers.json")
+
+// Ensure data directory exists
+if (!fs.existsSync(SUBSCRIBERS_DIR)) {
+  fs.mkdirSync(SUBSCRIBERS_DIR, { recursive: true })
+}
+
+// Initialize subscribers file if it doesn't exist
+if (!fs.existsSync(SUBSCRIBERS_FILE)) {
+  fs.writeFileSync(SUBSCRIBERS_FILE, JSON.stringify([]), "utf8")
+}
+
+// Function to store subscriber
+function storeSubscriber(email: string) {
+  try {
+    const data = fs.readFileSync(SUBSCRIBERS_FILE, "utf8")
+    const subscribers = JSON.parse(data)
+
+    // Check if email already exists
+    const existingSubscriber = subscribers.find((sub: any) => sub.email === email)
+    if (existingSubscriber) {
+      console.log("Email already subscribed:", email)
+      return false // Already exists
+    }
+
+    // Add new subscriber
+    subscribers.push({
+      email,
+      createdAt: new Date().toISOString(),
+      status: "active",
+    })
+
+    fs.writeFileSync(SUBSCRIBERS_FILE, JSON.stringify(subscribers, null, 2), "utf8")
+    console.log("Subscriber stored successfully:", email)
+    return true // Successfully added
+  } catch (error) {
+    console.error("Error storing subscriber:", error)
+    return false
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Log that the API route was hit
@@ -26,6 +71,18 @@ export async function POST(request: NextRequest) {
     // Validate email
     if (!email || !email.includes("@")) {
       return NextResponse.json({ error: "Valid email address is required" }, { status: 400 })
+    }
+
+    // Store subscriber first
+    const isNewSubscriber = storeSubscriber(email)
+
+    if (!isNewSubscriber) {
+      return NextResponse.json(
+        {
+          message: "You're already subscribed to our newsletter!",
+        },
+        { status: 200 },
+      )
     }
 
     // Send welcome email to subscriber
@@ -107,6 +164,7 @@ export async function POST(request: NextRequest) {
           <p><strong>Email:</strong> ${email}</p>
           <p><strong>Date:</strong> ${new Date().toLocaleString()}</p>
           <p><strong>Source:</strong> AMA Fashion Website</p>
+          <p><strong>Total Subscribers:</strong> ${JSON.parse(fs.readFileSync(SUBSCRIBERS_FILE, "utf8")).length}</p>
         `,
       })
       console.log("Notification email sent successfully")
