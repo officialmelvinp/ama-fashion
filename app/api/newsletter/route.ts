@@ -1,68 +1,22 @@
 import { type NextRequest, NextResponse } from "next/server"
 import nodemailer from "nodemailer"
-import fs from "fs"
-import path from "path"
+import { addSubscriber } from "@/lib/database"
 
 // Email configuration
 const emailConfig = {
   host: "elmelvinp.com",
   port: 465,
-  secure: true, // true for 465, false for other ports
+  secure: true,
   auth: {
-    user: process.env.EMAIL_USER, // contact@elmelvinp.com
-    pass: process.env.EMAIL_PASSWORD, // your email password
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASSWORD,
   },
 }
 
-// Create transporter - Fixed method name
 const transporter = nodemailer.createTransport(emailConfig)
-
-// Path to subscribers file
-const SUBSCRIBERS_DIR = path.join(process.cwd(), "data")
-const SUBSCRIBERS_FILE = path.join(SUBSCRIBERS_DIR, "subscribers.json")
-
-// Ensure data directory exists
-if (!fs.existsSync(SUBSCRIBERS_DIR)) {
-  fs.mkdirSync(SUBSCRIBERS_DIR, { recursive: true })
-}
-
-// Initialize subscribers file if it doesn't exist
-if (!fs.existsSync(SUBSCRIBERS_FILE)) {
-  fs.writeFileSync(SUBSCRIBERS_FILE, JSON.stringify([]), "utf8")
-}
-
-// Function to store subscriber
-function storeSubscriber(email: string) {
-  try {
-    const data = fs.readFileSync(SUBSCRIBERS_FILE, "utf8")
-    const subscribers = JSON.parse(data)
-
-    // Check if email already exists
-    const existingSubscriber = subscribers.find((sub: any) => sub.email === email)
-    if (existingSubscriber) {
-      console.log("Email already subscribed:", email)
-      return false // Already exists
-    }
-
-    // Add new subscriber
-    subscribers.push({
-      email,
-      createdAt: new Date().toISOString(),
-      status: "active",
-    })
-
-    fs.writeFileSync(SUBSCRIBERS_FILE, JSON.stringify(subscribers, null, 2), "utf8")
-    console.log("Subscriber stored successfully:", email)
-    return true // Successfully added
-  } catch (error) {
-    console.error("Error storing subscriber:", error)
-    return false
-  }
-}
 
 export async function POST(request: NextRequest) {
   try {
-    // Log that the API route was hit
     console.log("API route hit: /api/newsletter")
 
     const { email } = await request.json()
@@ -73,19 +27,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Valid email address is required" }, { status: 400 })
     }
 
-    // Store subscriber first
-    const isNewSubscriber = storeSubscriber(email)
+    // Add subscriber to database
+    const result = await addSubscriber(email)
 
-    if (!isNewSubscriber) {
-      return NextResponse.json(
-        {
-          message: "You're already subscribed to our newsletter!",
-        },
-        { status: 200 },
-      )
+    if (!result.success) {
+      return NextResponse.json({ error: result.message }, { status: 500 })
     }
 
-    // Send welcome email to subscriber
+    if (!result.isNew) {
+      return NextResponse.json({ message: result.message }, { status: 200 })
+    }
+
+    // Send welcome email to new subscriber
     const welcomeEmailHtml = `
       <!DOCTYPE html>
       <html>
@@ -151,29 +104,26 @@ export async function POST(request: NextRequest) {
         subject: "Welcome to AMA - Your Journey Begins",
         html: welcomeEmailHtml,
       })
-      console.log("Welcome email sent successfully")
 
-      // Send notification to you about new subscriber
-      console.log("Sending notification email to:", process.env.EMAIL_USER)
+      // Send notification email
+      console.log("Sending notification email")
       await transporter.sendMail({
         from: `"AMA Newsletter" <${process.env.EMAIL_USER}>`,
-        to: process.env.EMAIL_USER, // sends to contact@elmelvinp.com
+        to: process.env.EMAIL_USER,
         subject: "New Newsletter Subscription - AMA Fashion",
         html: `
           <h3>New Newsletter Subscription</h3>
           <p><strong>Email:</strong> ${email}</p>
           <p><strong>Date:</strong> ${new Date().toLocaleString()}</p>
           <p><strong>Source:</strong> AMA Fashion Website</p>
-          <p><strong>Total Subscribers:</strong> ${JSON.parse(fs.readFileSync(SUBSCRIBERS_FILE, "utf8")).length}</p>
         `,
       })
-      console.log("Notification email sent successfully")
     } catch (emailError) {
       console.error("Email sending error:", emailError)
-      return NextResponse.json({ error: "Failed to send email. Please try again." }, { status: 500 })
+      // Don't fail the whole request if email fails
     }
 
-    return NextResponse.json({ message: "Successfully subscribed to newsletter" }, { status: 200 })
+    return NextResponse.json({ message: result.message }, { status: 200 })
   } catch (error) {
     console.error("Newsletter subscription error:", error)
     return NextResponse.json({ error: "Failed to subscribe. Please try again." }, { status: 500 })

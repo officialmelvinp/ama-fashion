@@ -8,8 +8,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Download, Users, Mail, Calendar, Search, Trash2 } from "lucide-react"
 
 type Subscriber = {
+  id: number
   email: string
-  createdAt: string
+  created_at: string
   status: string
 }
 
@@ -18,10 +19,11 @@ export default function AdminDashboard() {
   const [isLoading, setIsLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [isExporting, setIsExporting] = useState(false)
+  const [stats, setStats] = useState({ total: 0, thisMonth: 0, thisWeek: 0 })
   const router = useRouter()
 
   useEffect(() => {
-    const fetchSubscribers = async () => {
+    const fetchData = async () => {
       try {
         const response = await fetch("/api/admin/subscribers")
         if (response.status === 401) {
@@ -31,6 +33,25 @@ export default function AdminDashboard() {
         if (response.ok) {
           const data = await response.json()
           setSubscribers(data.subscribers)
+
+          // Calculate stats from the data
+          const now = new Date()
+          const thisMonth = data.subscribers.filter((sub: Subscriber) => {
+            const subDate = new Date(sub.created_at)
+            return subDate.getMonth() === now.getMonth() && subDate.getFullYear() === now.getFullYear()
+          }).length
+
+          const thisWeek = data.subscribers.filter((sub: Subscriber) => {
+            const subDate = new Date(sub.created_at)
+            const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+            return subDate >= weekAgo
+          }).length
+
+          setStats({
+            total: data.subscribers.length,
+            thisMonth,
+            thisWeek,
+          })
         }
       } catch (error) {
         console.error("Failed to fetch subscribers:", error)
@@ -39,7 +60,7 @@ export default function AdminDashboard() {
       }
     }
 
-    fetchSubscribers()
+    fetchData()
   }, [router])
 
   const filteredSubscribers = subscribers.filter((sub) => sub.email.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -48,7 +69,9 @@ export default function AdminDashboard() {
     setIsExporting(true)
     const csvContent = [
       "Email,Date Subscribed,Status",
-      ...filteredSubscribers.map((sub) => `${sub.email},${new Date(sub.createdAt).toLocaleDateString()},${sub.status}`),
+      ...filteredSubscribers.map(
+        (sub) => `${sub.email},${new Date(sub.created_at).toLocaleDateString()},${sub.status}`,
+      ),
     ].join("\n")
 
     const blob = new Blob([csvContent], { type: "text/csv" })
@@ -75,6 +98,7 @@ export default function AdminDashboard() {
 
       if (response.ok) {
         setSubscribers((prev) => prev.filter((sub) => sub.email !== email))
+        setStats((prev) => ({ ...prev, total: prev.total - 1 }))
       }
     } catch (error) {
       console.error("Failed to remove subscriber:", error)
@@ -85,21 +109,6 @@ export default function AdminDashboard() {
     document.cookie = "admin_auth=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;"
     router.push("/admin/login")
   }
-
-  // Calculate stats
-  const totalSubscribers = subscribers.length
-  const thisMonth = subscribers.filter((sub) => {
-    const subDate = new Date(sub.createdAt)
-    const now = new Date()
-    return subDate.getMonth() === now.getMonth() && subDate.getFullYear() === now.getFullYear()
-  }).length
-
-  const thisWeek = subscribers.filter((sub) => {
-    const subDate = new Date(sub.createdAt)
-    const now = new Date()
-    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-    return subDate >= weekAgo
-  }).length
 
   return (
     <div className="min-h-screen bg-[#f8f3ea]">
@@ -127,7 +136,7 @@ export default function AdminDashboard() {
               <Users className="h-4 w-4 text-[#2c2824]" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-[#2c2824]">{totalSubscribers}</div>
+              <div className="text-2xl font-bold text-[#2c2824]">{stats.total}</div>
             </CardContent>
           </Card>
 
@@ -137,7 +146,7 @@ export default function AdminDashboard() {
               <Calendar className="h-4 w-4 text-[#2c2824]" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-[#2c2824]">{thisMonth}</div>
+              <div className="text-2xl font-bold text-[#2c2824]">{stats.thisMonth}</div>
             </CardContent>
           </Card>
 
@@ -147,7 +156,7 @@ export default function AdminDashboard() {
               <Mail className="h-4 w-4 text-[#2c2824]" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-[#2c2824]">{thisWeek}</div>
+              <div className="text-2xl font-bold text-[#2c2824]">{stats.thisWeek}</div>
             </CardContent>
           </Card>
         </div>
@@ -216,14 +225,14 @@ export default function AdminDashboard() {
                             </td>
                           </tr>
                         ) : (
-                          filteredSubscribers.map((subscriber, index) => (
-                            <tr key={index} className="hover:bg-gray-50">
+                          filteredSubscribers.map((subscriber) => (
+                            <tr key={subscriber.id} className="hover:bg-gray-50">
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="text-sm font-medium text-gray-900">{subscriber.email}</div>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="text-sm text-gray-500">
-                                  {new Date(subscriber.createdAt).toLocaleDateString("en-US", {
+                                  {new Date(subscriber.created_at).toLocaleDateString("en-US", {
                                     year: "numeric",
                                     month: "short",
                                     day: "numeric",
@@ -254,7 +263,7 @@ export default function AdminDashboard() {
                 </div>
 
                 <div className="mt-4 text-sm text-gray-500">
-                  Showing {filteredSubscribers.length} of {totalSubscribers} subscribers
+                  Showing {filteredSubscribers.length} of {stats.total} subscribers
                 </div>
               </>
             )}
