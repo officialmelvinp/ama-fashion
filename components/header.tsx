@@ -36,15 +36,6 @@ export default function Header({ bgColor = "bg-transparent", textColor = "text-w
             HOME
           </Link>
           <Link
-            href="/about"
-            className={cn(
-              `text-sm md:text-base tracking-widest hover:opacity-70 transition-opacity ${textColor}`,
-              pathname === "/about" ? "opacity-100" : "opacity-80",
-            )}
-          >
-            ABOUT
-          </Link>
-          <Link
             href="/shop"
             className={cn(
               `text-sm md:text-base tracking-widest hover:opacity-70 transition-opacity ${textColor}`,

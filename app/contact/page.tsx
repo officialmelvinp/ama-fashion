@@ -197,7 +197,7 @@ export default function ContactPage() {
                     <div>
                       <h3 className="font-medium text-[#2c2824] mb-1">Email</h3>
                       <a href="mailto:hello@amafashion.com" className="text-[#2c2824]/80 hover:text-[#2c2824]">
-                        hello@amafashion.com
+                        support@amariahco.com
                       </a>
                     </div>
                   </div>
@@ -227,7 +227,7 @@ export default function ContactPage() {
                         rel="noopener noreferrer"
                         className="text-[#2c2824]/80 hover:text-[#2c2824]"
                       >
-                        +{whatsappNumber}
+                        +447707783963
                       </a>
                     </div>
                   </div>
@@ -257,7 +257,7 @@ export default function ContactPage() {
                     </div>
                     <div>
                       <h3 className="font-medium text-[#2c2824] mb-1">Location</h3>
-                      <p className="text-[#2c2824]/80">Dubai, United Arab Emirates</p>
+                      <p className="text-[#2c2824]/80">United Kingdom - United Arab Emirates - Nigeria</p>
                     </div>
                   </div>
                 </div>

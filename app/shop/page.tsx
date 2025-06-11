@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import Header from "@/components/header"
@@ -21,265 +21,23 @@ type Product = {
 }
 
 // ============= PRODUCT DATA =============
-// BATIK PRODUCTS
-const batikProducts: Product[] = [
-  {
-    id: "ayaba-bubu",
-    name: "Ayaba Bubu",
-    subtitle: "The Sovereign Kaftan",
-    materials: ["batik", "ankara"],
-    materialLine: "Available in Batik, Ankara (100% hand-dyed cotton)",
-    description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
-    price: "850 AED ($230 USD)",
-    images: ["/images/ama3.jpeg"],
-    category: "ayaba-bubu",
-    essences: ["everyday", "sacred"],
-  },
-  {
-    id: "manifest-set",
-    name: "The Manifest Set",
-    subtitle: "Shirt Dress + Skirt",
-    materials: ["batik"],
-    materialLine: "Available in Batik (100% cotton)",
-    description: "A pairing of ease and presence. One-size drape, bound by craft.",
-    price: "950 AED ($255 USD)",
-    images: ["/images/ama5.jpeg"],
-    category: "the-manifested-set",
-    essences: ["sacred", "gatherings"],
-  },
-  {
-    id: "oba-wrapper",
-    name: "Oba Wrapper",
-    subtitle: "Sacred Ceremonial Wrap",
-    materials: ["aso-oke", "batik"],
-    materialLine: "Available in Aso Oke, Batik (100% hand-woven cotton)",
-    description: "Ancestral elegance. A ceremonial wrap woven with reverence, worn with honor.",
-    price: "1,200 AED ($325 USD)",
-    colors: ["Royal Blue", "Deep Gold"],
-    images: ["/images/ama8.jpeg"],
-    category: "oba-wrapper",
-    essences: ["sacred", "gatherings"],
-  },
-]
-
-// ANKARA PRODUCTS
-const ankaraProducts: Product[] = [
-  {
-    id: "ayaba-bubu",
-    name: "Ayaba Bubu",
-    subtitle: "The Sovereign Kaftan",
-    materials: ["batik", "ankara"],
-    materialLine: "Available in Batik, Ankara (100% hand-dyed cotton)",
-    description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
-    price: "850 AED ($230 USD)",
-    images: ["/images/ama3.jpeg"],
-    category: "ayaba-bubu",
-    essences: ["everyday", "sacred"],
-  },
-  {
-    id: "candy-combat",
-    name: "Candy Combat",
-    subtitle: "Ease Trousers",
-    materials: ["batik", "ankara", "aso-oke"],
-    materialLine: "Available in Batik, Ankara with Aso Oke pockets (100% cotton)",
-    description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
-    price: "650 AED ($175 USD)",
-    images: ["/images/ama4.jpeg"],
-    category: "candy-combat",
-    essences: ["everyday", "gatherings"],
-  },
-]
-
-// ASO OKE PRODUCTS
-const asoOkeProducts: Product[] = [
-  {
-    id: "candy-combat",
-    name: "Candy Combat",
-    subtitle: "Ease Trousers",
-    materials: ["batik", "ankara", "aso-oke"],
-    materialLine: "Available in Batik, Ankara with Aso Oke pockets (100% cotton)",
-    description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
-    price: "650 AED ($175 USD)",
-    images: ["/images/ama4.jpeg"],
-    category: "candy-combat",
-    essences: ["everyday", "gatherings"],
-  },
-  {
-    id: "oba-wrapper",
-    name: "Oba Wrapper",
-    subtitle: "Sacred Ceremonial Wrap",
-    materials: ["aso-oke", "batik"],
-    materialLine: "Available in Aso Oke, Batik (100% hand-woven cotton)",
-    description: "Ancestral elegance. A ceremonial wrap woven with reverence, worn with honor.",
-    price: "1,200 AED ($325 USD)",
-    colors: ["Royal Blue", "Deep Gold"],
-    images: ["/images/ama8.jpeg"],
-    category: "oba-wrapper",
-    essences: ["sacred", "gatherings"],
-  },
-]
-
-// LINEN PRODUCTS
-const linenProducts: Product[] = [
-  {
-    id: "milkmaid-dress",
-    name: "Milkmaid Dress",
-    subtitle: "Soft Presence",
-    materials: ["linen"],
-    materialLine: "Available in Linen (100% cotton)",
-    description: "Harvested grace. Linen softness, hued in memory.",
-    price: "750 AED ($200 USD)",
-    colors: ["Baby Blue", "Baby Pink"],
-    images: ["/images/ama6.jpeg", "/images/ama7.jpeg"],
-    category: "milkmaid-dress",
-    essences: ["everyday", "gatherings"],
-  },
-]
-
-// EVERYDAY PRODUCTS
-const everydayProducts: Product[] = [
-  {
-    id: "ayaba-bubu",
-    name: "Ayaba Bubu",
-    subtitle: "The Sovereign Kaftan",
-    materials: ["batik", "ankara"],
-    materialLine: "Available in Batik, Ankara (100% hand-dyed cotton)",
-    description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
-    price: "850 AED ($230 USD)",
-    images: ["/images/ama3.jpeg"],
-    category: "ayaba-bubu",
-    essences: ["everyday", "sacred"],
-  },
-  {
-    id: "candy-combat",
-    name: "Candy Combat",
-    subtitle: "Ease Trousers",
-    materials: ["batik", "ankara", "aso-oke"],
-    materialLine: "Available in Batik, Ankara with Aso Oke pockets (100% cotton)",
-    description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
-    price: "650 AED ($175 USD)",
-    images: ["/images/ama4.jpeg"],
-    category: "candy-combat",
-    essences: ["everyday", "gatherings"],
-  },
-  {
-    id: "milkmaid-dress",
-    name: "Milkmaid Dress",
-    subtitle: "Soft Presence",
-    materials: ["linen"],
-    materialLine: "Available in Linen (100% cotton)",
-    description: "Harvested grace. Linen softness, hued in memory.",
-    price: "750 AED ($200 USD)",
-    colors: ["Baby Blue", "Baby Pink"],
-    images: ["/images/ama6.jpeg", "/images/ama7.jpeg"],
-    category: "milkmaid-dress",
-    essences: ["everyday", "gatherings"],
-  },
-]
-
-// SACRED PRODUCTS
-const sacredProducts: Product[] = [
-  {
-    id: "ayaba-bubu",
-    name: "Ayaba Bubu",
-    subtitle: "The Sovereign Kaftan",
-    materials: ["batik", "ankara"],
-    materialLine: "Available in Batik, Ankara (100% hand-dyed cotton)",
-    description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
-    price: "850 AED ($230 USD)",
-    images: ["/images/ama3.jpeg"],
-    category: "ayaba-bubu",
-    essences: ["everyday", "sacred"],
-  },
-  {
-    id: "manifest-set",
-    name: "The Manifest Set",
-    subtitle: "Shirt Dress + Skirt",
-    materials: ["batik"],
-    materialLine: "Available in Batik (100% cotton)",
-    description: "A pairing of ease and presence. One-size drape, bound by craft.",
-    price: "950 AED ($255 USD)",
-    images: ["/images/ama5.jpeg"],
-    category: "the-manifested-set",
-    essences: ["sacred", "gatherings"],
-  },
-  {
-    id: "oba-wrapper",
-    name: "Oba Wrapper",
-    subtitle: "Sacred Ceremonial Wrap",
-    materials: ["aso-oke", "batik"],
-    materialLine: "Available in Aso Oke, Batik (100% hand-woven cotton)",
-    description: "Ancestral elegance. A ceremonial wrap woven with reverence, worn with honor.",
-    price: "1,200 AED ($325 USD)",
-    colors: ["Royal Blue", "Deep Gold"],
-    images: ["/images/ama8.jpeg"],
-    category: "oba-wrapper",
-    essences: ["sacred", "gatherings"],
-  },
-]
-
-// GATHERINGS PRODUCTS
-const gatheringsProducts: Product[] = [
-  {
-    id: "candy-combat",
-    name: "Candy Combat",
-    subtitle: "Ease Trousers",
-    materials: ["batik", "ankara", "aso-oke"],
-    materialLine: "Available in Batik, Ankara with Aso Oke pockets (100% cotton)",
-    description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
-    price: "650 AED ($175 USD)",
-    images: ["/images/ama4.jpeg"],
-    category: "candy-combat",
-    essences: ["everyday", "gatherings"],
-  },
-  {
-    id: "manifest-set",
-    name: "The Manifest Set",
-    subtitle: "Shirt Dress + Skirt",
-    materials: ["batik"],
-    materialLine: "Available in Batik (100% cotton)",
-    description: "A pairing of ease and presence. One-size drape, bound by craft.",
-    price: "950 AED ($255 USD)",
-    images: ["/images/ama5.jpeg"],
-    category: "the-manifested-set",
-    essences: ["sacred", "gatherings"],
-  },
-  {
-    id: "milkmaid-dress",
-    name: "Milkmaid Dress",
-    subtitle: "Soft Presence",
-    materials: ["linen"],
-    materialLine: "Available in Linen (100% cotton)",
-    description: "Harvested grace. Linen softness, hued in memory.",
-    price: "750 AED ($200 USD)",
-    colors: ["Baby Blue", "Baby Pink"],
-    images: ["/images/ama6.jpeg", "/images/ama7.jpeg"],
-    category: "milkmaid-dress",
-    essences: ["everyday", "gatherings"],
-  },
-  {
-    id: "oba-wrapper",
-    name: "Oba Wrapper",
-    subtitle: "Sacred Ceremonial Wrap",
-    materials: ["aso-oke", "batik"],
-    materialLine: "Available in Aso Oke, Batik (100% hand-woven cotton)",
-    description: "Ancestral elegance. A ceremonial wrap woven with reverence, worn with honor.",
-    price: "1,200 AED ($325 USD)",
-    colors: ["Royal Blue", "Deep Gold"],
-    images: ["/images/ama8.jpeg"],
-    category: "oba-wrapper",
-    essences: ["sacred", "gatherings"],
-  },
-]
-
-// ALL PRODUCTS (combined)
 const allProducts: Product[] = [
-  ...batikProducts,
-  ...linenProducts,
+  {
+    id: "ayaba-bubu",
+    name: "Ayaba Bubu",
+    subtitle: "Royalty, Rendered in Thread",
+    materials: ["batik", "ankara"],
+    materialLine: "Available in Batik, Ankara (100% hand-dyed cotton)",
+    description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
+    price: "850 AED ($230 USD)",
+    images: ["/images/ama3.jpeg"],
+    category: "ayaba-bubu",
+    essences: ["everyday", "sacred"],
+  },
   {
     id: "candy-combat",
     name: "Candy Combat",
-    subtitle: "Ease Trousers",
+    subtitle: "Softness, Armed",
     materials: ["batik", "ankara", "aso-oke"],
     materialLine: "Available in Batik, Ankara with Aso Oke pockets (100% cotton)",
     description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
@@ -289,99 +47,127 @@ const allProducts: Product[] = [
     essences: ["everyday", "gatherings"],
   },
   {
-    id: "oba-wrapper",
-    name: "Oba Wrapper",
-    subtitle: "Sacred Ceremonial Wrap",
-    materials: ["aso-oke", "batik"],
-    materialLine: "Available in Aso Oke, Batik (100% hand-woven cotton)",
-    description: "Ancestral elegance. A ceremonial wrap woven with reverence, worn with honor.",
-    price: "1,200 AED ($325 USD)",
-    colors: ["Royal Blue", "Deep Gold"],
-    images: ["/images/ama8.jpeg"],
-    category: "oba-wrapper",
+    id: "manifest-set",
+    name: "The Manifest Set",
+    subtitle: "What You Asked For, Woven",
+    materials: ["batik"],
+    materialLine: "Available in Batik (100% cotton)",
+    description: "A pairing of ease and presence. One-size drape, bound by craft.",
+    price: "950 AED ($255 USD)",
+    images: ["/images/ama5.jpeg"],
+    category: "the-manifested-set",
     essences: ["sacred", "gatherings"],
   },
-].filter(
-  (product, index, self) =>
-    // Remove duplicates by ID
-    index === self.findIndex((p) => p.id === product.id),
-)
+  {
+    id: "Ayọ̀mídé",
+    name: "Ayọ̀mídé",
+    subtitle: "A Quiet Ode to Joy",
+    materials: ["linen"],
+    materialLine: "Available in Linen (100% cotton)",
+    description: "Harvested grace. Linen softness, hued in memory.",
+    price: "750 AED ($200 USD)",
+    colors: ["Baby Blue", "Baby Pink"],
+    images: ["/images/ama6.jpeg", "/images/ama7.jpeg"],
+    category: "milkmaid-dress",
+    essences: ["everyday", "gatherings"],
+  },
+  // {
+  //   id: "oba-wrapper",
+  //   name: "Oba Wrapper",
+  //   subtitle: "Sacred Ceremonial Wrap",
+  //   materials: ["aso-oke", "batik"],
+  //   materialLine: "Available in Aso Oke, Batik (100% hand-woven cotton)",
+  //   description: "Ancestral elegance. A ceremonial wrap woven with reverence, worn with honor.",
+  //   price: "1,200 AED ($325 USD)",
+  //   colors: ["Royal Blue", "Deep Gold"],
+  //   images: ["/images/ama8.jpeg"],
+  //   category: "oba-wrapper",
+  //   essences: ["sacred", "gatherings"],
+  // },
+
+  // Add Ayọ̀mídé product (you can update this with actual product details)
+  {
+    id: "ayomide-dress",
+    name: "Ayọ̀mídé Dress",
+    subtitle: "A Quiet Ode to Joy",
+    materials: ["adire"],
+    materialLine: "Available in Adire (100% hand-dyed cotton)",
+    description: "Joy woven into form. A dress that carries the lightness of being.",
+    price: "780 AED ($210 USD)",
+    images: ["/images/ama4.jpeg"], // Update with actual image
+    category: "ayomide",
+    essences: ["everyday", "sacred"],
+  },
+]
 
 export default function ShopPage() {
   // ============= STATE MANAGEMENT =============
-  const [activeFilter, setActiveFilter] = useState<{ type: "material" | "essence" | null; value: string }>({
-    type: null,
-    value: "all",
-  })
+  const [activeFilter, setActiveFilter] = useState<string>("all")
+
+  // ============= HANDLE URL HASH FROM HOMEPAGE =============
+  useEffect(() => {
+    // Check for hash in URL when component mounts
+    const hash = window.location.hash.replace("#", "")
+
+    if (hash) {
+      // Map homepage hash links to filter categories
+      const hashToFilter: { [key: string]: string } = {
+        // Collections from homepage
+        "ayaba-bubu": "ayaba-bubu",
+        "candy-combat": "candy-combat",
+        "the-manifested-set": "the-manifested-set",
+        ayomide: "ayomide",
+        // Fabrics from homepage - filter by material
+        batik: "batik",
+        adire: "adire",
+        linen: "linen",
+      }
+
+      const filterValue = hashToFilter[hash]
+      if (filterValue) {
+        setActiveFilter(filterValue)
+        // Scroll to the section if it exists
+        setTimeout(() => {
+          const element = document.getElementById(hash)
+          if (element) {
+            element.scrollIntoView({ behavior: "smooth" })
+          }
+        }, 100)
+      }
+    }
+  }, [])
 
   // ============= FILTER LOGIC =============
-  // Get products based on active filter
   const getFilteredProducts = () => {
-    let products = []
-
-    if (activeFilter.type === null || activeFilter.value === "all") {
-      products = allProducts
-    } else if (activeFilter.type === "material") {
-      switch (activeFilter.value) {
-        case "batik":
-          products = batikProducts
-          break
-        case "ankara":
-          products = ankaraProducts
-          break
-        case "aso-oke":
-          products = asoOkeProducts
-          break
-        case "linen":
-          products = linenProducts
-          break
-        default:
-          products = allProducts
-      }
-    } else if (activeFilter.type === "essence") {
-      switch (activeFilter.value) {
-        case "everyday":
-          products = everydayProducts
-          break
-        case "sacred":
-          products = sacredProducts
-          break
-        case "gatherings":
-          products = gatheringsProducts
-          break
-        default:
-          products = allProducts
-      }
-    } else {
-      products = allProducts
+    if (activeFilter === "all") {
+      return allProducts
     }
 
-    // Remove duplicates by ID
-    return products.filter((product, index, self) => index === self.findIndex((p) => p.id === product.id))
+    // Filter by collection category
+    if (["ayaba-bubu", "candy-combat", "the-manifested-set", "ayomide"].includes(activeFilter)) {
+      return allProducts.filter((product) => product.category === activeFilter)
+    }
+
+    // Filter by fabric/material
+    if (["batik", "adire", "linen"].includes(activeFilter)) {
+      return allProducts.filter((product) =>
+        product.materials.some((material) => material.toLowerCase().includes(activeFilter)),
+      )
+    }
+
+    return allProducts
   }
 
   const filteredProducts = getFilteredProducts()
 
   // ============= EVENT HANDLERS =============
-  // Handle material filter click
-  const handleMaterialFilter = (material: string) => {
-    if (activeFilter.type === "material" && activeFilter.value === material) {
-      // If clicking the same material filter, turn it off
-      setActiveFilter({ type: null, value: "all" })
+  const handleCollectionFilter = (collection: string) => {
+    setActiveFilter(collection)
+    // Update URL hash without page reload
+    if (collection === "all") {
+      window.history.pushState(null, "", window.location.pathname)
     } else {
-      // Otherwise, activate this material filter
-      setActiveFilter({ type: "material", value: material })
-    }
-  }
-
-  // Handle essence filter click
-  const handleEssenceFilter = (essence: string) => {
-    if (activeFilter.type === "essence" && activeFilter.value === essence) {
-      // If clicking the same essence filter, turn it off
-      setActiveFilter({ type: null, value: "all" })
-    } else {
-      // Otherwise, activate this essence filter
-      setActiveFilter({ type: "essence", value: essence })
+      window.history.pushState(null, "", `#${collection}`)
     }
   }
 
@@ -405,19 +191,17 @@ export default function ShopPage() {
           </p>
         </div>
 
-        {/* ============= FILTER BUTTONS ============= */}
+        {/* ============= COLLECTION FILTER BUTTONS (UPDATED) ============= */}
         <div className="mb-16">
-          <div className="flex flex-col md:flex-row justify-center gap-8 mb-8">
-            {/* Material Filters */}
-            <div className={activeFilter.type === "essence" ? "opacity-50" : ""}>
-              <h3 className="text-sm mb-3 opacity-70 text-center md:text-left font-medium">By Material</h3>
-              <div className="flex flex-wrap gap-2 justify-center md:justify-start">
-                {/* All Materials Button */}
+          <div className="flex justify-center">
+            <div className="text-center">
+              <h3 className="text-sm mb-4 opacity-70 font-medium">Filter by Collection</h3>
+              <div className="flex flex-wrap gap-3 justify-center">
+                {/* All Button */}
                 <button
-                  onClick={() => handleMaterialFilter("all")}
-                  disabled={activeFilter.type === "essence"}
-                  className={`px-4 py-2 rounded-full text-sm transition-colors ${
-                    activeFilter.type === "material" && activeFilter.value === "all"
+                  onClick={() => handleCollectionFilter("all")}
+                  className={`px-6 py-3 rounded-full text-sm transition-colors ${
+                    activeFilter === "all"
                       ? "bg-[#2c2824] text-white"
                       : "bg-[#f4f0e8] text-[#2c2824] hover:bg-[#2c2824]/10"
                   }`}
@@ -425,12 +209,69 @@ export default function ShopPage() {
                   All
                 </button>
 
-                {/* Batik Button */}
+                {/* Ayaba Bùbá Button */}
                 <button
-                  onClick={() => handleMaterialFilter("batik")}
-                  disabled={activeFilter.type === "essence"}
-                  className={`px-4 py-2 rounded-full text-sm transition-colors ${
-                    activeFilter.type === "material" && activeFilter.value === "batik"
+                  onClick={() => handleCollectionFilter("ayaba-bubu")}
+                  className={`px-6 py-3 rounded-full text-sm transition-colors ${
+                    activeFilter === "ayaba-bubu"
+                      ? "bg-[#2c2824] text-white"
+                      : "bg-[#f4f0e8] text-[#2c2824] hover:bg-[#2c2824]/10"
+                  }`}
+                >
+                  Ayaba Bùbá
+                </button>
+
+                {/* Candy Combat Button */}
+                <button
+                  onClick={() => handleCollectionFilter("candy-combat")}
+                  className={`px-6 py-3 rounded-full text-sm transition-colors ${
+                    activeFilter === "candy-combat"
+                      ? "bg-[#2c2824] text-white"
+                      : "bg-[#f4f0e8] text-[#2c2824] hover:bg-[#2c2824]/10"
+                  }`}
+                >
+                  Candy Combat
+                </button>
+
+                {/* The Manifested Set Button */}
+                <button
+                  onClick={() => handleCollectionFilter("the-manifested-set")}
+                  className={`px-6 py-3 rounded-full text-sm transition-colors ${
+                    activeFilter === "the-manifested-set"
+                      ? "bg-[#2c2824] text-white"
+                      : "bg-[#f4f0e8] text-[#2c2824] hover:bg-[#2c2824]/10"
+                  }`}
+                >
+                  The Manifested Set
+                </button>
+
+                {/* Ayọ̀mídé Button */}
+                <button
+                  onClick={() => handleCollectionFilter("ayomide")}
+                  className={`px-6 py-3 rounded-full text-sm transition-colors ${
+                    activeFilter === "ayomide"
+                      ? "bg-[#2c2824] text-white"
+                      : "bg-[#f4f0e8] text-[#2c2824] hover:bg-[#2c2824]/10"
+                  }`}
+                >
+                  Ayọ̀mídé
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ============= FABRIC FILTER SECTION (COMMENTED OUT) ============= */}
+        {/* 
+        <div className="mb-16">
+          <div className="flex justify-center">
+            <div className="text-center">
+              <h3 className="text-sm mb-4 opacity-70 font-medium">Filter by Fabric</h3>
+              <div className="flex flex-wrap gap-3 justify-center">
+                <button
+                  onClick={() => handleCollectionFilter("batik")}
+                  className={`px-6 py-3 rounded-full text-sm transition-colors ${
+                    activeFilter === "batik"
                       ? "bg-[#2c2824] text-white"
                       : "bg-[#f4f0e8] text-[#2c2824] hover:bg-[#2c2824]/10"
                   }`}
@@ -438,38 +279,21 @@ export default function ShopPage() {
                   Batik
                 </button>
 
-                {/* Ankara Button */}
                 <button
-                  onClick={() => handleMaterialFilter("ankara")}
-                  disabled={activeFilter.type === "essence"}
-                  className={`px-4 py-2 rounded-full text-sm transition-colors ${
-                    activeFilter.type === "material" && activeFilter.value === "ankara"
+                  onClick={() => handleCollectionFilter("adire")}
+                  className={`px-6 py-3 rounded-full text-sm transition-colors ${
+                    activeFilter === "adire"
                       ? "bg-[#2c2824] text-white"
                       : "bg-[#f4f0e8] text-[#2c2824] hover:bg-[#2c2824]/10"
                   }`}
                 >
-                  Ankara
+                  Adire
                 </button>
 
-                {/* Aso Oke Button */}
                 <button
-                  onClick={() => handleMaterialFilter("aso-oke")}
-                  disabled={activeFilter.type === "essence"}
-                  className={`px-4 py-2 rounded-full text-sm transition-colors ${
-                    activeFilter.type === "material" && activeFilter.value === "aso-oke"
-                      ? "bg-[#2c2824] text-white"
-                      : "bg-[#f4f0e8] text-[#2c2824] hover:bg-[#2c2824]/10"
-                  }`}
-                >
-                  Aso Oke
-                </button>
-
-                {/* Linen Button */}
-                <button
-                  onClick={() => handleMaterialFilter("linen")}
-                  disabled={activeFilter.type === "essence"}
-                  className={`px-4 py-2 rounded-full text-sm transition-colors ${
-                    activeFilter.type === "material" && activeFilter.value === "linen"
+                  onClick={() => handleCollectionFilter("linen")}
+                  className={`px-6 py-3 rounded-full text-sm transition-colors ${
+                    activeFilter === "linen"
                       ? "bg-[#2c2824] text-white"
                       : "bg-[#f4f0e8] text-[#2c2824] hover:bg-[#2c2824]/10"
                   }`}
@@ -478,66 +302,9 @@ export default function ShopPage() {
                 </button>
               </div>
             </div>
-
-            {/* Essence Filters */}
-            <div className={activeFilter.type === "material" ? "opacity-50" : ""}>
-              <h3 className="text-sm mb-3 opacity-70 text-center md:text-left font-medium">By Essence</h3>
-              <div className="flex flex-wrap gap-2 justify-center md:justify-start">
-                {/* All Essences Button */}
-                <button
-                  onClick={() => handleEssenceFilter("all")}
-                  disabled={activeFilter.type === "material"}
-                  className={`px-4 py-2 rounded-full text-sm transition-colors ${
-                    activeFilter.type === "essence" && activeFilter.value === "all"
-                      ? "bg-[#2c2824] text-white"
-                      : "bg-[#f4f0e8] text-[#2c2824] hover:bg-[#2c2824]/10"
-                  }`}
-                >
-                  All
-                </button>
-
-                {/* Everyday Button */}
-                <button
-                  onClick={() => handleEssenceFilter("everyday")}
-                  disabled={activeFilter.type === "material"}
-                  className={`px-4 py-2 rounded-full text-sm transition-colors ${
-                    activeFilter.type === "essence" && activeFilter.value === "everyday"
-                      ? "bg-[#2c2824] text-white"
-                      : "bg-[#f4f0e8] text-[#2c2824] hover:bg-[#2c2824]/10"
-                  }`}
-                >
-                  Everyday
-                </button>
-
-                {/* Sacred wear Button */}
-                <button
-                  onClick={() => handleEssenceFilter("sacred")}
-                  disabled={activeFilter.type === "material"}
-                  className={`px-4 py-2 rounded-full text-sm transition-colors ${
-                    activeFilter.type === "essence" && activeFilter.value === "sacred"
-                      ? "bg-[#2c2824] text-white"
-                      : "bg-[#f4f0e8] text-[#2c2824] hover:bg-[#2c2824]/10"
-                  }`}
-                >
-                  Sacred wear
-                </button>
-
-                {/* Gatherings Button */}
-                <button
-                  onClick={() => handleEssenceFilter("gatherings")}
-                  disabled={activeFilter.type === "material"}
-                  className={`px-4 py-2 rounded-full text-sm transition-colors ${
-                    activeFilter.type === "essence" && activeFilter.value === "gatherings"
-                      ? "bg-[#2c2824] text-white"
-                      : "bg-[#f4f0e8] text-[#2c2824] hover:bg-[#2c2824]/10"
-                  }`}
-                >
-                  Gatherings
-                </button>
-              </div>
-            </div>
           </div>
         </div>
+        */}
 
         {/* ============= PRODUCT DISPLAY ============= */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-16 max-w-6xl mx-auto">
@@ -592,6 +359,13 @@ export default function ShopPage() {
             </div>
           ))}
         </div>
+
+        {/* Show message when no products found */}
+        {filteredProducts.length === 0 && (
+          <div className="text-center py-16">
+            <p className="text-xl text-[#2c2824]/60 font-serif italic">No products found for this selection.</p>
+          </div>
+        )}
       </div>
     </div>
   )

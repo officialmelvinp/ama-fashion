@@ -38,16 +38,6 @@ export default function MobileNav({ textColor = "text-white" }: MobileNavProps) 
               HOME
             </Link>
             <Link
-              href="/about"
-              className={cn(
-                "text-base tracking-widest hover:opacity-70 transition-opacity text-white",
-                pathname === "/about" ? "opacity-100" : "opacity-80",
-              )}
-              onClick={() => setIsOpen(false)}
-            >
-              ABOUT
-            </Link>
-            <Link
               href="/shop"
               className={cn(
                 "text-base tracking-widest hover:opacity-70 transition-opacity text-white",
