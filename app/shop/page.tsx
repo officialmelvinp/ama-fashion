@@ -58,37 +58,11 @@ const allProducts: Product[] = [
     category: "the-manifested-set",
     essences: ["sacred", "gatherings"],
   },
+ 
+  // // Add Ayọ̀mídé product (you can update this with actual product details)
   {
     id: "Ayọ̀mídé",
     name: "Ayọ̀mídé",
-    subtitle: "A Quiet Ode to Joy",
-    materials: ["linen"],
-    materialLine: "Available in Linen (100% cotton)",
-    description: "Harvested grace. Linen softness, hued in memory.",
-    price: "750 AED ($200 USD)",
-    colors: ["Baby Blue", "Baby Pink"],
-    images: ["/images/ama6.jpeg", "/images/ama7.jpeg"],
-    category: "milkmaid-dress",
-    essences: ["everyday", "gatherings"],
-  },
-  // {
-  //   id: "oba-wrapper",
-  //   name: "Oba Wrapper",
-  //   subtitle: "Sacred Ceremonial Wrap",
-  //   materials: ["aso-oke", "batik"],
-  //   materialLine: "Available in Aso Oke, Batik (100% hand-woven cotton)",
-  //   description: "Ancestral elegance. A ceremonial wrap woven with reverence, worn with honor.",
-  //   price: "1,200 AED ($325 USD)",
-  //   colors: ["Royal Blue", "Deep Gold"],
-  //   images: ["/images/ama8.jpeg"],
-  //   category: "oba-wrapper",
-  //   essences: ["sacred", "gatherings"],
-  // },
-
-  // Add Ayọ̀mídé product (you can update this with actual product details)
-  {
-    id: "ayomide-dress",
-    name: "Ayọ̀mídé Dress",
     subtitle: "A Quiet Ode to Joy",
     materials: ["adire"],
     materialLine: "Available in Adire (100% hand-dyed cotton)",
@@ -116,7 +90,7 @@ export default function ShopPage() {
         "ayaba-bubu": "ayaba-bubu",
         "candy-combat": "candy-combat",
         "the-manifested-set": "the-manifested-set",
-        ayomide: "ayomide",
+        "ayomide": "ayomide",
         // Fabrics from homepage - filter by material
         batik: "batik",
         adire: "adire",
@@ -218,7 +192,7 @@ export default function ShopPage() {
                       : "bg-[#f4f0e8] text-[#2c2824] hover:bg-[#2c2824]/10"
                   }`}
                 >
-                  Ayaba Bùbá
+                  Ayaba Bùbu
                 </button>
 
                 {/* Candy Combat Button */}
@@ -320,15 +294,15 @@ export default function ShopPage() {
                 {/* Hover effect overlay for specific products */}
                 {product.id === "candy-combat" && (
                   <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-center justify-center">
-                    <p className="text-white text-sm font-medium">Zoom on Aso Oke pocket detail</p>
+                    <p className="text-white text-sm font-medium">Zoom candy combat detail</p>
                   </div>
                 )}
-                {product.id === "manifest-set" && (
+                {product.id === "Batik" && (
                   <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-center justify-center">
                     <p className="text-white text-sm font-medium">Texture focus on batik drape</p>
                   </div>
                 )}
-                {product.id === "milkmaid-dress" && (
+                {product.id === "Linen" && (
                   <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-center justify-center">
                     <p className="text-white text-sm font-medium">Slow zoom on linen weave</p>
                   </div>
