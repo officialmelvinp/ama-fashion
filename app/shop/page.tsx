@@ -67,7 +67,7 @@ const allProducts: Product[] = [
     description: "Harvested grace. Linen softness, hued in memory.",
     price: "750 AED ($200 USD)",
     colors: ["Baby Blue", "Baby Pink"],
-    images: ["/images/ama6.jpeg"],
+    images: ["/images/ama6.jpeg", "/images/ama7.jpeg"],
     category: "milkmaid-dress",
     essences: ["everyday", "gatherings"],
   },
@@ -85,19 +85,19 @@ const allProducts: Product[] = [
   //   essences: ["sacred", "gatherings"],
   // },
 
-  // // Add Ayọ̀mídé product (you can update this with actual product details)
-  // {
-  //   id: "ayomide-dress",
-  //   name: "Ayọ̀mídé Dress",
-  //   subtitle: "A Quiet Ode to Joy",
-  //   materials: ["adire"],
-  //   materialLine: "Available in Adire (100% hand-dyed cotton)",
-  //   description: "Joy woven into form. A dress that carries the lightness of being.",
-  //   price: "780 AED ($210 USD)",
-  //   images: ["/images/ama4.jpeg"], // Update with actual image
-  //   category: "ayomide",
-  //   essences: ["everyday", "sacred"],
-  // },
+  // Add Ayọ̀mídé product (you can update this with actual product details)
+  {
+    id: "ayomide-dress",
+    name: "Ayọ̀mídé Dress",
+    subtitle: "A Quiet Ode to Joy",
+    materials: ["adire"],
+    materialLine: "Available in Adire (100% hand-dyed cotton)",
+    description: "Joy woven into form. A dress that carries the lightness of being.",
+    price: "780 AED ($210 USD)",
+    images: ["/images/ama4.jpeg"], // Update with actual image
+    category: "ayomide",
+    essences: ["everyday", "sacred"],
+  },
 ]
 
 export default function ShopPage() {
@@ -336,9 +336,8 @@ export default function ShopPage() {
               </div>
 
               <div className="space-y-3">
-                <h2 className="font-serif text-2xl md:text-3xl text-[#2c2824]">
-                  {product.name} — {product.subtitle}
-                </h2>
+                <h2 className="font-serif text-2xl md:text-3xl text-[#2c2824]">{product.name}</h2>
+                <h3 className="font-serif text-lg md:text-base text-[#2c2824]/80 -mt-1">{product.subtitle}</h3>
 
                 <p className="text-sm text-[#2c2824]/80">{product.materialLine}</p>
 
