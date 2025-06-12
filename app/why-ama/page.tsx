@@ -21,20 +21,20 @@ export default function WhyAMAPage() {
           <div className="grid gap-24">
             {/* Our Lineage */}
             <section>
-              <h2 className="text-4xl md:text-5xl font-serif mb-8 text-[#2c2824]">Our Lineage</h2>
-              <div className="grid md:grid-cols-2 gap-12 items-center">
+              <h2 className="text-2xl md:text-3xl font-serif tracking-wider mb-4 text-[#2c2824]">Our Lineage</h2>
+              <div className="grid md:grid-cols-2 gap-12 items-start">
                 <div>
-                  <p className="text-2xl leading-relaxed text-[#2c2824] mb-6">
+                  <p className="text-xl md:text-2xl italic opacity-80 text-[#2c2824] mb-6">
                     AMA is born of four generations, beginning with Princess Adétọ́lá of Òkè-Igbó. Raised in a palace and
                     draped in adìrẹ, ankara, and handwoven cloths, her elegance became legacy.
                   </p>
-                  <p className="text-2xl leading-relaxed text-[#2c2824] mb-6">
+                  <p className="text-xl md:text-2xl italic opacity-80 text-[#2c2824] mb-6">
                     Her granddaughter, Olásùbọ̀mí, created AMA in her memory carrying that lineage from Nigeria to the UK
                     to the UAE. She named her daughter Amariah, meaning "God has promised" a name that holds spiritual
                     intention and the weight of inheritance. AMA, at its core, is a manifestation of that promise:
                     legacy preserved, reimagined in cloth.
                   </p>
-                  <p className="text-lg leading-relaxed text-[#2c2824] italic font-medium">
+                  <p className="text-xl md:text-2xl italic opacity-80 text-[#2c2824]">
                     Fabric as archive. Migration as muse. Womanhood as sacred inheritance.
                   </p>
                 </div>
@@ -43,7 +43,7 @@ export default function WhyAMAPage() {
                     src="/images/iyamuke.jpeg"
                     alt="Princess Adétọ́lá heritage"
                     fill
-                    className="object-cover rounded-lg"
+                    className="object-contain rounded-lg"
                   />
                 </div>
               </div>
@@ -51,18 +51,18 @@ export default function WhyAMAPage() {
 
             {/* Our Craft */}
             <section>
-              <h2 className="text-4xl md:text-5xl font-serif mb-8 text-[#2c2824]">Our Craft</h2>
+              <h2 className="text-2xl md:text-3xl font-serif tracking-wider mb-4 text-[#2c2824]">Our Craft</h2>
               <div className="grid md:grid-cols-2 gap-12 items-center">
                 <div className="relative aspect-square md:order-1">
                   <Image
                     src="/images/craft.jpeg"
                     alt="Artisan hands working with fabric"
                     fill
-                    className="object-cover rounded-lg"
+                    className="object-contain rounded-lg"
                   />
                 </div>
                 <div>
-                  <p className="text-2xl leading-relaxed text-[#2c2824] mb-6">
+                  <p className="text-xl md:text-2xl italic opacity-80 text-[#2c2824]">
                     Hand-dyed batiks. Heritage adìrẹ. Timeless linen. Each garment is a ritual, crafted in honor of
                     those who wore them before, and those who still shape them by hand. Slowness is our devotion. Craft
                     is our offering.
@@ -72,36 +72,34 @@ export default function WhyAMAPage() {
             </section>
 
             {/* Manifestation and Materials Side by Side */}
-<div className="grid md:grid-cols-2 gap-16">
-  {/* Our Manifestation */}
-  <section>
-    <h2 className="text-4xl md:text-5xl font-serif mb-8 text-[#2c2824]">Our Manifestation</h2>
-    <div>
-      <p className="text-2xl leading-relaxed text-[#2c2824]">
-        Minimalism as ancestral editing. Simplicity as sacred space. AMA pieces invite presence quiet,
-        intentional, and enduring.
-      </p>
-    </div>
-  </section>
+            <div className="grid md:grid-cols-2 gap-16">
+              {/* Our Manifestation */}
+              <section className="flex flex-col">
+                <h2 className="text-2xl md:text-3xl font-serif tracking-wider mb-4 text-[#2c2824]">
+                  Our Manifestation
+                </h2>
+                <p className="text-xl md:text-2xl italic opacity-80 text-[#2c2824]">
+                  Minimalism as ancestral editing. Simplicity as sacred space. AMA pieces invite presence quiet,
+                  intentional, and enduring.
+                </p>
+              </section>
 
-  {/* Our Materials */}
-  <section>
-    <h2 className="text-4xl md:text-5xl font-serif mb-8 text-[#2c2824]">Our Materials</h2>
-    <div>
-      <p className="text-2xl leading-relaxed text-[#2c2824]">
-        100% cotton adìrẹ, dyed in tradition. Ankara rich with heritage. Linen that softens with time. All
-        sourced with reverence. All made to carry memory.
-      </p>
-    </div>
-  </section>
-</div>
+              {/* Our Materials */}
+              <section className="flex flex-col">
+                <h2 className="text-2xl md:text-3xl font-serif tracking-wider mb-4 text-[#2c2824]">Our Materials</h2>
+                <p className="text-xl md:text-2xl italic opacity-80 text-[#2c2824]">
+                  100% cotton adìrẹ, dyed in tradition. Ankara rich with heritage. Linen that softens with time. All
+                  sourced with reverence. All made to carry memory.
+                </p>
+              </section>
+            </div>
 
             {/* Our Philosophy */}
             <section>
-              <h2 className="text-4xl md:text-5xl font-serif mb-8 text-[#2c2824]">Our Philosophy</h2>
-              <div className="grid md:grid-cols-2 gap-12 items-center">
+              <h2 className="text-2xl md:text-3xl font-serif tracking-wider mb-4 text-[#2c2824]">Our Philosophy</h2>
+              <div className="grid md:grid-cols-2 gap-12 items-start">
                 <div>
-                  <p className="text-2xl leading-relaxed text-[#2c2824]">
+                  <p className="text-xl md:text-2xl italic opacity-80 text-[#2c2824]">
                     We reject fashion as noise. At AMA, clothing is ritual. Connection. A quiet revolution in thread.
                     This is how a princess becomes a movement.
                   </p>
