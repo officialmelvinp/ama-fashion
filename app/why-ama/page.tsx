@@ -8,7 +8,7 @@ export default function WhyAMAPage() {
       <Header bgColor="bg-white/90 backdrop-blur-sm" textColor="text-[#2c2824]" />
 
       <div className="container mx-auto py-24 px-4">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <h1 className="text-4xl md:text-5xl font-serif mb-8 text-[#2c2824]">Why AMA</h1>
             <blockquote className="text-xl md:text-2xl italic opacity-80 text-[#2c2824]">
@@ -19,25 +19,29 @@ export default function WhyAMAPage() {
           </div>
 
           <div className="grid gap-24">
-            {/* Our Roots */}
+            {/* Our Lineage */}
             <section>
-              <h2 className="text-2xl font-serif mb-8 text-[#2c2824]">Our Roots</h2>
+              <h2 className="text-3xl font-serif mb-8 text-[#8B4513]">Our Lineage</h2>
               <div className="grid md:grid-cols-2 gap-12 items-center">
                 <div>
-                  <p className="opacity-80 leading-relaxed text-[#2c2824]">
-                    AMA is born from Nigeria, UK, UAE — crafted from migration, memory, and spirit. Our designs carry
-                    the essence of these diverse landscapes, honoring the journey of fabric across borders and
-                    generations.
+                  <p className="text-lg leading-relaxed text-[#2c2824] mb-6">
+                    AMA is born of four generations, beginning with Princess Adétọ́lá of Òkè-Igbó. Raised in a palace and
+                    draped in adìrẹ, ankara, and handwoven cloths, her elegance became legacy.
                   </p>
-                  <p className="opacity-80 leading-relaxed mt-4 text-[#2c2824]">
-                    We believe that clothing is more than adornment—it is a living archive of cultural memory, a tactile
-                    connection to ancestry, and a daily ritual of self-expression.
+                  <p className="text-lg leading-relaxed text-[#2c2824] mb-6">
+                    Her granddaughter, Olásùbọ̀mí, created AMA in her memory carrying that lineage from Nigeria to the UK
+                    to the UAE. She named her daughter Amariah, meaning "God has promised" a name that holds spiritual
+                    intention and the weight of inheritance. AMA, at its core, is a manifestation of that promise:
+                    legacy preserved, reimagined in cloth.
+                  </p>
+                  <p className="text-lg leading-relaxed text-[#2c2824] italic font-medium">
+                    Fabric as archive. Migration as muse. Womanhood as sacred inheritance.
                   </p>
                 </div>
                 <div className="relative aspect-square">
                   <Image
-                    src="/images/ama4.jpeg?height=600&width=600"
-                    alt="West African landscape"
+                    src="/images/iyamuke.jpeg"
+                    alt="Princess Adétọ́lá heritage"
                     fill
                     className="object-cover rounded-lg"
                   />
@@ -47,25 +51,21 @@ export default function WhyAMAPage() {
 
             {/* Our Craft */}
             <section>
-              <h2 className="text-2xl font-serif mb-8 text-[#2c2824]">Our Craft</h2>
+              <h2 className="text-3xl font-serif mb-8 text-[#8B4513]">Our Craft</h2>
               <div className="grid md:grid-cols-2 gap-12 items-center">
                 <div className="relative aspect-square md:order-1">
                   <Image
-                    src="/images/ama5.jpeg?height=600&width=600"
+                    src="/images/ama5.jpeg"
                     alt="Artisan hands working with fabric"
                     fill
                     className="object-cover rounded-lg"
                   />
                 </div>
                 <div>
-                  <p className="opacity-80 leading-relaxed text-[#2c2824]">
-                    Hand-dyed batiks. Heritage Ankaras. Timeless linen. Every piece is a ritual. Our garments are
-                    created with reverence for traditional techniques and the skilled hands that bring them to life.
-                  </p>
-                  <p className="opacity-80 leading-relaxed mt-4 text-[#2c2824]">
-                    We honor the slow, intentional process of creation—from the careful selection of materials to the
-                    meditative practice of dyeing and stitching. Each step is an offering, a prayer made visible through
-                    craft.
+                  <p className="text-lg leading-relaxed text-[#2c2824] mb-6">
+                    Hand-dyed batiks. Heritage adìrẹ. Timeless linen. Each garment is a ritual, crafted in honor of
+                    those who wore them before, and those who still shape them by hand. Slowness is our devotion. Craft
+                    is our offering.
                   </p>
                 </div>
               </div>
@@ -73,27 +73,42 @@ export default function WhyAMAPage() {
 
             {/* Our Manifestation */}
             <section>
-              <h2 className="text-2xl font-serif mb-8 text-[#2c2824]">Our Manifestation</h2>
+              <h2 className="text-3xl font-serif mb-8 text-[#8B4513]">Our Manifestation</h2>
+              <div className="max-w-4xl">
+                <p className="text-lg leading-relaxed text-[#2c2824]">
+                  Minimalism as ancestral editing. Simplicity as sacred space. AMA pieces invite presence quiet,
+                  intentional, and enduring.
+                </p>
+              </div>
+            </section>
+
+            {/* Our Materials */}
+            <section>
+              <h2 className="text-3xl font-serif mb-8 text-[#8B4513]">Our Materials</h2>
+              <div className="max-w-4xl">
+                <p className="text-lg leading-relaxed text-[#2c2824]">
+                  100% cotton adìrẹ, dyed in tradition. Ankara rich with heritage. Linen that softens with time. All
+                  sourced with reverence. All made to carry memory.
+                </p>
+              </div>
+            </section>
+
+            {/* Our Philosophy */}
+            <section>
+              <h2 className="text-3xl font-serif mb-8 text-[#8B4513]">Our Philosophy</h2>
               <div className="grid md:grid-cols-2 gap-12 items-center">
                 <div>
-                  <p className="opacity-80 leading-relaxed text-[#2c2824]">
-                    Minimalism isn&apos;t emptiness — it&apos;s memory curated. Intention woven fiber by fiber. Our
-                    designs embrace simplicity as a canvas for presence, allowing the inherent beauty of our materials
-                    and the spirit of the wearer to speak without distraction.
-                  </p>
-                  <p className="opacity-80 leading-relaxed mt-4 text-[#2c2824]">
-                    We believe in creating garments that transcend trends, that become more meaningful with each wear,
-                    and that honor the body as a sacred vessel. This is clothing as manifestation—bringing intention
-                    into material form.
+                  <p className="text-lg leading-relaxed text-[#2c2824]">
+                    We reject fashion as noise. At AMA, clothing is ritual. Connection. A quiet revolution in thread.
+                    This is how a princess becomes a movement.
                   </p>
                 </div>
-                <div className="relative aspect-square">
-                  <Image
-                    src="/images/ama3.jpeg?height=600&width=600"
-                    alt="Elegant minimalist garment"
-                    fill
-                    className="object-cover rounded-lg"
-                  />
+                <div className="relative aspect-video bg-[#f4f0e8] rounded-lg flex items-center justify-center">
+                  {/* Placeholder for video - replace with actual video component when ready */}
+                  <div className="text-center">
+                    <p className="text-[#2c2824] opacity-60 mb-2">Video Coming Soon</p>
+                    <p className="text-sm text-[#2c2824] opacity-40">Reel/Video to be added here</p>
+                  </div>
                 </div>
               </div>
             </section>
