@@ -40,7 +40,7 @@ export default function WhyAMAPage() {
                 </div>
                 <div className="relative aspect-square">
                   <Image
-                    src="/images/iyamuke.jpeg"
+                    src="/images/craft.jpeg"
                     alt="Princess Adétọ́lá heritage"
                     fill
                     className="object-contain rounded-lg"
@@ -54,13 +54,13 @@ export default function WhyAMAPage() {
   <div className="grid md:grid-cols-2 gap-12 items-start">
     <div className="relative aspect-square md:order-1">
       <Image
-        src="/images/craft.jpeg"
+        src="/images/subs.jpeg"
         alt="Artisan hands working with fabric"
         fill
         className="object-contain rounded-lg"
       />
     </div>
-    <div>
+    <div className="mt-16">
       <h2 className="text-2xl md:text-3xl font-serif tracking-wider mb-2 text-[#2c2824]">Our Craft</h2>
       <p className="text-xl md:text-2xl italic opacity-80 text-[#2c2824]">
         Hand-dyed batiks. Heritage adìrẹ. Timeless linen. Each garment is a ritual, crafted in honor of
@@ -70,7 +70,6 @@ export default function WhyAMAPage() {
     </div>
   </div>
 </section>
-
             {/* Manifestation and Materials Side by Side */}
             <div className="grid md:grid-cols-2 gap-16">
               {/* Our Manifestation */}
