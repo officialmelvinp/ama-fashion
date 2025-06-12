@@ -24,11 +24,11 @@ export default function WhyAMAPage() {
               <h2 className="text-3xl font-serif mb-8 text-[#8B4513]">Our Lineage</h2>
               <div className="grid md:grid-cols-2 gap-12 items-center">
                 <div>
-                  <p className="text-lg leading-relaxed text-[#2c2824] mb-6">
+                  <p className="text-2xl leading-relaxed text-[#2c2824] mb-6">
                     AMA is born of four generations, beginning with Princess Adétọ́lá of Òkè-Igbó. Raised in a palace and
                     draped in adìrẹ, ankara, and handwoven cloths, her elegance became legacy.
                   </p>
-                  <p className="text-lg leading-relaxed text-[#2c2824] mb-6">
+                  <p className="text-2xl leading-relaxed text-[#2c2824] mb-6">
                     Her granddaughter, Olásùbọ̀mí, created AMA in her memory carrying that lineage from Nigeria to the UK
                     to the UAE. She named her daughter Amariah, meaning "God has promised" a name that holds spiritual
                     intention and the weight of inheritance. AMA, at its core, is a manifestation of that promise:
@@ -62,7 +62,7 @@ export default function WhyAMAPage() {
                   />
                 </div>
                 <div>
-                  <p className="text-lg leading-relaxed text-[#2c2824] mb-6">
+                  <p className="text-2xl leading-relaxed text-[#2c2824] mb-6">
                     Hand-dyed batiks. Heritage adìrẹ. Timeless linen. Each garment is a ritual, crafted in honor of
                     those who wore them before, and those who still shape them by hand. Slowness is our devotion. Craft
                     is our offering.
@@ -75,7 +75,7 @@ export default function WhyAMAPage() {
             <section>
               <h2 className="text-3xl font-serif mb-8 text-[#8B4513]">Our Manifestation</h2>
               <div className="max-w-4xl">
-                <p className="text-lg leading-relaxed text-[#2c2824]">
+                <p className="text-2xl leading-relaxed text-[#2c2824]">
                   Minimalism as ancestral editing. Simplicity as sacred space. AMA pieces invite presence quiet,
                   intentional, and enduring.
                 </p>
@@ -86,7 +86,7 @@ export default function WhyAMAPage() {
             <section>
               <h2 className="text-3xl font-serif mb-8 text-[#8B4513]">Our Materials</h2>
               <div className="max-w-4xl">
-                <p className="text-lg leading-relaxed text-[#2c2824]">
+                <p className="text-2xl leading-relaxed text-[#2c2824]">
                   100% cotton adìrẹ, dyed in tradition. Ankara rich with heritage. Linen that softens with time. All
                   sourced with reverence. All made to carry memory.
                 </p>
@@ -98,7 +98,7 @@ export default function WhyAMAPage() {
               <h2 className="text-3xl font-serif mb-8 text-[#8B4513]">Our Philosophy</h2>
               <div className="grid md:grid-cols-2 gap-12 items-center">
                 <div>
-                  <p className="text-lg leading-relaxed text-[#2c2824]">
+                  <p className="text-2xl leading-relaxed text-[#2c2824]">
                     We reject fashion as noise. At AMA, clothing is ritual. Connection. A quiet revolution in thread.
                     This is how a princess becomes a movement.
                   </p>
