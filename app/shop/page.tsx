@@ -22,8 +22,9 @@ type Product = {
 
 // ============= PRODUCT DATA =============
 const allProducts: Product[] = [
+  // Ayaba Bubu - 12 items
   {
-    id: "ayaba-bubu",
+    id: "ayaba-bubu-1",
     name: "Ayaba Bubu",
     subtitle: "Royalty, Rendered in Thread",
     materials: ["batik", "ankara"],
@@ -35,7 +36,140 @@ const allProducts: Product[] = [
     essences: ["everyday", "sacred"],
   },
   {
-    id: "candy-combat",
+    id: "ayaba-bubu-2",
+    name: "Ayaba Bubu",
+    subtitle: "Royalty, Rendered in Thread",
+    materials: ["batik", "ankara"],
+    materialLine: "Available in Batik, Ankara (100% hand-dyed cotton)",
+    description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
+    price: "850 AED ($230 USD)",
+    images: ["/images/ama3.jpeg"],
+    category: "ayaba-bubu",
+    essences: ["everyday", "sacred"],
+  },
+  {
+    id: "ayaba-bubu-3",
+    name: "Ayaba Bubu",
+    subtitle: "Royalty, Rendered in Thread",
+    materials: ["batik", "ankara"],
+    materialLine: "Available in Batik, Ankara (100% hand-dyed cotton)",
+    description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
+    price: "850 AED ($230 USD)",
+    images: ["/images/ama3.jpeg"],
+    category: "ayaba-bubu",
+    essences: ["everyday", "sacred"],
+  },
+  {
+    id: "ayaba-bubu-4",
+    name: "Ayaba Bubu",
+    subtitle: "Royalty, Rendered in Thread",
+    materials: ["batik", "ankara"],
+    materialLine: "Available in Batik, Ankara (100% hand-dyed cotton)",
+    description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
+    price: "850 AED ($230 USD)",
+    images: ["/images/ama3.jpeg"],
+    category: "ayaba-bubu",
+    essences: ["everyday", "sacred"],
+  },
+  {
+    id: "ayaba-bubu-5",
+    name: "Ayaba Bubu",
+    subtitle: "Royalty, Rendered in Thread",
+    materials: ["batik", "ankara"],
+    materialLine: "Available in Batik, Ankara (100% hand-dyed cotton)",
+    description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
+    price: "850 AED ($230 USD)",
+    images: ["/images/ama3.jpeg"],
+    category: "ayaba-bubu",
+    essences: ["everyday", "sacred"],
+  },
+  {
+    id: "ayaba-bubu-6",
+    name: "Ayaba Bubu",
+    subtitle: "Royalty, Rendered in Thread",
+    materials: ["batik", "ankara"],
+    materialLine: "Available in Batik, Ankara (100% hand-dyed cotton)",
+    description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
+    price: "850 AED ($230 USD)",
+    images: ["/images/ama3.jpeg"],
+    category: "ayaba-bubu",
+    essences: ["everyday", "sacred"],
+  },
+  {
+    id: "ayaba-bubu-7",
+    name: "Ayaba Bubu",
+    subtitle: "Royalty, Rendered in Thread",
+    materials: ["batik", "ankara"],
+    materialLine: "Available in Batik, Ankara (100% hand-dyed cotton)",
+    description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
+    price: "850 AED ($230 USD)",
+    images: ["/images/ama3.jpeg"],
+    category: "ayaba-bubu",
+    essences: ["everyday", "sacred"],
+  },
+  {
+    id: "ayaba-bubu-8",
+    name: "Ayaba Bubu",
+    subtitle: "Royalty, Rendered in Thread",
+    materials: ["batik", "ankara"],
+    materialLine: "Available in Batik, Ankara (100% hand-dyed cotton)",
+    description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
+    price: "850 AED ($230 USD)",
+    images: ["/images/ama3.jpeg"],
+    category: "ayaba-bubu",
+    essences: ["everyday", "sacred"],
+  },
+  {
+    id: "ayaba-bubu-9",
+    name: "Ayaba Bubu",
+    subtitle: "Royalty, Rendered in Thread",
+    materials: ["batik", "ankara"],
+    materialLine: "Available in Batik, Ankara (100% hand-dyed cotton)",
+    description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
+    price: "850 AED ($230 USD)",
+    images: ["/images/ama3.jpeg"],
+    category: "ayaba-bubu",
+    essences: ["everyday", "sacred"],
+  },
+  {
+    id: "ayaba-bubu-10",
+    name: "Ayaba Bubu",
+    subtitle: "Royalty, Rendered in Thread",
+    materials: ["batik", "ankara"],
+    materialLine: "Available in Batik, Ankara (100% hand-dyed cotton)",
+    description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
+    price: "850 AED ($230 USD)",
+    images: ["/images/ama3.jpeg"],
+    category: "ayaba-bubu",
+    essences: ["everyday", "sacred"],
+  },
+  {
+    id: "ayaba-bubu-11",
+    name: "Ayaba Bubu",
+    subtitle: "Royalty, Rendered in Thread",
+    materials: ["batik", "ankara"],
+    materialLine: "Available in Batik, Ankara (100% hand-dyed cotton)",
+    description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
+    price: "850 AED ($230 USD)",
+    images: ["/images/ama3.jpeg"],
+    category: "ayaba-bubu",
+    essences: ["everyday", "sacred"],
+  },
+  {
+    id: "ayaba-bubu-12",
+    name: "Ayaba Bubu",
+    subtitle: "Royalty, Rendered in Thread",
+    materials: ["batik", "ankara"],
+    materialLine: "Available in Batik, Ankara (100% hand-dyed cotton)",
+    description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
+    price: "850 AED ($230 USD)",
+    images: ["/images/ama3.jpeg"],
+    category: "ayaba-bubu",
+    essences: ["everyday", "sacred"],
+  },
+  // Candy Combat - 12 items
+  {
+    id: "candy-combat-1",
     name: "Candy Combat",
     subtitle: "Softness, Armed",
     materials: ["batik", "ankara", "aso-oke"],
@@ -47,7 +181,140 @@ const allProducts: Product[] = [
     essences: ["everyday", "gatherings"],
   },
   {
-    id: "manifest-set",
+    id: "candy-combat-2",
+    name: "Candy Combat",
+    subtitle: "Softness, Armed",
+    materials: ["batik", "ankara", "aso-oke"],
+    materialLine: "Available in Batik, Ankara with Aso Oke pockets (100% cotton)",
+    description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
+    price: "650 AED ($175 USD)",
+    images: ["/images/ama4.jpeg"],
+    category: "candy-combat",
+    essences: ["everyday", "gatherings"],
+  },
+  {
+    id: "candy-combat-3",
+    name: "Candy Combat",
+    subtitle: "Softness, Armed",
+    materials: ["batik", "ankara", "aso-oke"],
+    materialLine: "Available in Batik, Ankara with Aso Oke pockets (100% cotton)",
+    description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
+    price: "650 AED ($175 USD)",
+    images: ["/images/ama4.jpeg"],
+    category: "candy-combat",
+    essences: ["everyday", "gatherings"],
+  },
+  {
+    id: "candy-combat-4",
+    name: "Candy Combat",
+    subtitle: "Softness, Armed",
+    materials: ["batik", "ankara", "aso-oke"],
+    materialLine: "Available in Batik, Ankara with Aso Oke pockets (100% cotton)",
+    description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
+    price: "650 AED ($175 USD)",
+    images: ["/images/ama4.jpeg"],
+    category: "candy-combat",
+    essences: ["everyday", "gatherings"],
+  },
+  {
+    id: "candy-combat-5",
+    name: "Candy Combat",
+    subtitle: "Softness, Armed",
+    materials: ["batik", "ankara", "aso-oke"],
+    materialLine: "Available in Batik, Ankara with Aso Oke pockets (100% cotton)",
+    description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
+    price: "650 AED ($175 USD)",
+    images: ["/images/ama4.jpeg"],
+    category: "candy-combat",
+    essences: ["everyday", "gatherings"],
+  },
+  {
+    id: "candy-combat-6",
+    name: "Candy Combat",
+    subtitle: "Softness, Armed",
+    materials: ["batik", "ankara", "aso-oke"],
+    materialLine: "Available in Batik, Ankara with Aso Oke pockets (100% cotton)",
+    description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
+    price: "650 AED ($175 USD)",
+    images: ["/images/ama4.jpeg"],
+    category: "candy-combat",
+    essences: ["everyday", "gatherings"],
+  },
+  {
+    id: "candy-combat-7",
+    name: "Candy Combat",
+    subtitle: "Softness, Armed",
+    materials: ["batik", "ankara", "aso-oke"],
+    materialLine: "Available in Batik, Ankara with Aso Oke pockets (100% cotton)",
+    description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
+    price: "650 AED ($175 USD)",
+    images: ["/images/ama4.jpeg"],
+    category: "candy-combat",
+    essences: ["everyday", "gatherings"],
+  },
+  {
+    id: "candy-combat-8",
+    name: "Candy Combat",
+    subtitle: "Softness, Armed",
+    materials: ["batik", "ankara", "aso-oke"],
+    materialLine: "Available in Batik, Ankara with Aso Oke pockets (100% cotton)",
+    description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
+    price: "650 AED ($175 USD)",
+    images: ["/images/ama4.jpeg"],
+    category: "candy-combat",
+    essences: ["everyday", "gatherings"],
+  },
+  {
+    id: "candy-combat-9",
+    name: "Candy Combat",
+    subtitle: "Softness, Armed",
+    materials: ["batik", "ankara", "aso-oke"],
+    materialLine: "Available in Batik, Ankara with Aso Oke pockets (100% cotton)",
+    description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
+    price: "650 AED ($175 USD)",
+    images: ["/images/ama4.jpeg"],
+    category: "candy-combat",
+    essences: ["everyday", "gatherings"],
+  },
+  {
+    id: "candy-combat-10",
+    name: "Candy Combat",
+    subtitle: "Softness, Armed",
+    materials: ["batik", "ankara", "aso-oke"],
+    materialLine: "Available in Batik, Ankara with Aso Oke pockets (100% cotton)",
+    description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
+    price: "650 AED ($175 USD)",
+    images: ["/images/ama4.jpeg"],
+    category: "candy-combat",
+    essences: ["everyday", "gatherings"],
+  },
+  {
+    id: "candy-combat-11",
+    name: "Candy Combat",
+    subtitle: "Softness, Armed",
+    materials: ["batik", "ankara", "aso-oke"],
+    materialLine: "Available in Batik, Ankara with Aso Oke pockets (100% cotton)",
+    description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
+    price: "650 AED ($175 USD)",
+    images: ["/images/ama4.jpeg"],
+    category: "candy-combat",
+    essences: ["everyday", "gatherings"],
+  },
+  {
+    id: "candy-combat-12",
+    name: "Candy Combat",
+    subtitle: "Softness, Armed",
+    materials: ["batik", "ankara", "aso-oke"],
+    materialLine: "Available in Batik, Ankara with Aso Oke pockets (100% cotton)",
+    description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
+    price: "650 AED ($175 USD)",
+    images: ["/images/ama4.jpeg"],
+    category: "candy-combat",
+    essences: ["everyday", "gatherings"],
+  },
+  // The Manifested Set - 1 item
+  {
+    id: "manifest-set-1",
     name: "The Manifest Set",
     subtitle: "What You Asked For, Woven",
     materials: ["batik"],
@@ -58,17 +325,28 @@ const allProducts: Product[] = [
     category: "the-manifested-set",
     essences: ["sacred", "gatherings"],
   },
- 
-  // // Add Ayọ̀mídé product (you can update this with actual product details)
+  // Ayọ̀mídé - 2 items
   {
-    id: "Ayọ̀mídé",
+    id: "ayomide-1",
     name: "Ayọ̀mídé",
     subtitle: "A Quiet Ode to Joy",
     materials: ["adire"],
     materialLine: "Available in Adire (100% hand-dyed cotton)",
     description: "Joy woven into form. A dress that carries the lightness of being.",
     price: "780 AED ($210 USD)",
-    images: ["/images/ama4.jpeg"], // Update with actual image
+    images: ["/images/ama6.jpeg"],
+    category: "ayomide",
+    essences: ["everyday", "sacred"],
+  },
+  {
+    id: "ayomide-2",
+    name: "Ayọ̀mídé",
+    subtitle: "A Quiet Ode to Joy",
+    materials: ["adire"],
+    materialLine: "Available in Adire (100% hand-dyed cotton)",
+    description: "Joy woven into form. A dress that carries the lightness of being.",
+    price: "780 AED ($210 USD)",
+    images: ["/images/ama6.jpeg"],
     category: "ayomide",
     essences: ["everyday", "sacred"],
   },
@@ -90,7 +368,7 @@ export default function ShopPage() {
         "ayaba-bubu": "ayaba-bubu",
         "candy-combat": "candy-combat",
         "the-manifested-set": "the-manifested-set",
-        "ayomide": "ayomide",
+        ayomide: "ayomide",
         // Fabrics from homepage - filter by material
         batik: "batik",
         adire: "adire",
@@ -134,6 +412,22 @@ export default function ShopPage() {
 
   const filteredProducts = getFilteredProducts()
 
+  // ============= DYNAMIC GRID LAYOUT LOGIC =============
+  const getGridClasses = () => {
+    // For "The Manifested Set" - center single item
+    if (activeFilter === "the-manifested-set") {
+      return "flex justify-center"
+    }
+
+    // For "Ayomide" - 2 items side by side
+    if (activeFilter === "ayomide") {
+      return "grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 max-w-4xl mx-auto"
+    }
+
+    // For "Ayaba Bubu", "Candy Combat" and "All" - responsive grid
+    return "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-16 max-w-7xl mx-auto"
+  }
+
   // ============= EVENT HANDLERS =============
   const handleCollectionFilter = (collection: string) => {
     setActiveFilter(collection)
@@ -160,21 +454,21 @@ export default function ShopPage() {
       <div className="container mx-auto py-24 px-4">
         {/* Top mood line */}
         <div className="max-w-4xl mx-auto mb-16 text-center">
-          <p className="text-xl md:text-2xl font-serif text-[#2c2824] italic">
+          <p className="text-lg md:text-xl lg:text-2xl font-serif text-[#2c2824] italic">
             Fabrics that remember. Garments that manifest lineage.
           </p>
         </div>
 
-        {/* ============= COLLECTION FILTER BUTTONS (UPDATED) ============= */}
+        {/* ============= COLLECTION FILTER BUTTONS ============= */}
         <div className="mb-16">
           <div className="flex justify-center">
             <div className="text-center">
               <h3 className="text-sm mb-4 opacity-70 font-medium">Filter by Collection</h3>
-              <div className="flex flex-wrap gap-3 justify-center">
+              <div className="flex flex-wrap gap-2 md:gap-3 justify-center">
                 {/* All Button */}
                 <button
                   onClick={() => handleCollectionFilter("all")}
-                  className={`px-6 py-3 rounded-full text-sm transition-colors ${
+                  className={`px-4 md:px-6 py-2 md:py-3 rounded-full text-xs md:text-sm transition-colors ${
                     activeFilter === "all"
                       ? "bg-[#2c2824] text-white"
                       : "bg-[#f4f0e8] text-[#2c2824] hover:bg-[#2c2824]/10"
@@ -186,19 +480,19 @@ export default function ShopPage() {
                 {/* Ayaba Bùbá Button */}
                 <button
                   onClick={() => handleCollectionFilter("ayaba-bubu")}
-                  className={`px-6 py-3 rounded-full text-sm transition-colors ${
+                  className={`px-4 md:px-6 py-2 md:py-3 rounded-full text-xs md:text-sm transition-colors ${
                     activeFilter === "ayaba-bubu"
                       ? "bg-[#2c2824] text-white"
                       : "bg-[#f4f0e8] text-[#2c2824] hover:bg-[#2c2824]/10"
                   }`}
                 >
-                  Ayaba Bùbu
+                  Ayaba Bùbá
                 </button>
 
                 {/* Candy Combat Button */}
                 <button
                   onClick={() => handleCollectionFilter("candy-combat")}
-                  className={`px-6 py-3 rounded-full text-sm transition-colors ${
+                  className={`px-4 md:px-6 py-2 md:py-3 rounded-full text-xs md:text-sm transition-colors ${
                     activeFilter === "candy-combat"
                       ? "bg-[#2c2824] text-white"
                       : "bg-[#f4f0e8] text-[#2c2824] hover:bg-[#2c2824]/10"
@@ -210,7 +504,7 @@ export default function ShopPage() {
                 {/* The Manifested Set Button */}
                 <button
                   onClick={() => handleCollectionFilter("the-manifested-set")}
-                  className={`px-6 py-3 rounded-full text-sm transition-colors ${
+                  className={`px-4 md:px-6 py-2 md:py-3 rounded-full text-xs md:text-sm transition-colors ${
                     activeFilter === "the-manifested-set"
                       ? "bg-[#2c2824] text-white"
                       : "bg-[#f4f0e8] text-[#2c2824] hover:bg-[#2c2824]/10"
@@ -222,7 +516,7 @@ export default function ShopPage() {
                 {/* Ayọ̀mídé Button */}
                 <button
                   onClick={() => handleCollectionFilter("ayomide")}
-                  className={`px-6 py-3 rounded-full text-sm transition-colors ${
+                  className={`px-4 md:px-6 py-2 md:py-3 rounded-full text-xs md:text-sm transition-colors ${
                     activeFilter === "ayomide"
                       ? "bg-[#2c2824] text-white"
                       : "bg-[#f4f0e8] text-[#2c2824] hover:bg-[#2c2824]/10"
@@ -235,55 +529,10 @@ export default function ShopPage() {
           </div>
         </div>
 
-        {/* ============= FABRIC FILTER SECTION (COMMENTED OUT) ============= */}
-        {/* 
-        <div className="mb-16">
-          <div className="flex justify-center">
-            <div className="text-center">
-              <h3 className="text-sm mb-4 opacity-70 font-medium">Filter by Fabric</h3>
-              <div className="flex flex-wrap gap-3 justify-center">
-                <button
-                  onClick={() => handleCollectionFilter("batik")}
-                  className={`px-6 py-3 rounded-full text-sm transition-colors ${
-                    activeFilter === "batik"
-                      ? "bg-[#2c2824] text-white"
-                      : "bg-[#f4f0e8] text-[#2c2824] hover:bg-[#2c2824]/10"
-                  }`}
-                >
-                  Batik
-                </button>
-
-                <button
-                  onClick={() => handleCollectionFilter("adire")}
-                  className={`px-6 py-3 rounded-full text-sm transition-colors ${
-                    activeFilter === "adire"
-                      ? "bg-[#2c2824] text-white"
-                      : "bg-[#f4f0e8] text-[#2c2824] hover:bg-[#2c2824]/10"
-                  }`}
-                >
-                  Adire
-                </button>
-
-                <button
-                  onClick={() => handleCollectionFilter("linen")}
-                  className={`px-6 py-3 rounded-full text-sm transition-colors ${
-                    activeFilter === "linen"
-                      ? "bg-[#2c2824] text-white"
-                      : "bg-[#f4f0e8] text-[#2c2824] hover:bg-[#2c2824]/10"
-                  }`}
-                >
-                  Linen
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-        */}
-
         {/* ============= PRODUCT DISPLAY ============= */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-16 max-w-6xl mx-auto">
+        <div className={getGridClasses()}>
           {filteredProducts.map((product) => (
-            <div key={product.id} className="flex flex-col" id={product.category}>
+            <div key={product.id} className="flex flex-col max-w-md mx-auto" id={product.category}>
               <div className="relative aspect-[3/4] overflow-hidden mb-6 group">
                 <Image
                   src={product.images[0] || "/placeholder.svg"}
@@ -292,38 +541,30 @@ export default function ShopPage() {
                   className="object-cover transition-transform duration-700 group-hover:scale-110"
                 />
                 {/* Hover effect overlay for specific products */}
-                {product.id === "candy-combat" && (
+                {product.id.includes("candy-combat") && (
                   <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-center justify-center">
                     <p className="text-white text-sm font-medium">Zoom candy combat detail</p>
                   </div>
                 )}
-                {product.id === "Batik" && (
-                  <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-center justify-center">
-                    <p className="text-white text-sm font-medium">Texture focus on batik drape</p>
-                  </div>
-                )}
-                {product.id === "Linen" && (
-                  <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-center justify-center">
-                    <p className="text-white text-sm font-medium">Slow zoom on linen weave</p>
-                  </div>
-                )}
               </div>
 
-              <div className="space-y-3">
-                <h2 className="font-serif text-2xl md:text-3xl text-[#2c2824]">{product.name}</h2>
-                <h3 className="font-serif text-lg md:text-base text-[#2c2824]/80 -mt-1">{product.subtitle}</h3>
+              <div className="space-y-3 text-center md:text-left">
+                <h2 className="font-serif text-xl md:text-2xl lg:text-3xl text-[#2c2824]">{product.name}</h2>
+                <h3 className="font-serif text-base md:text-lg text-[#2c2824]/80 -mt-1">{product.subtitle}</h3>
 
-                <p className="text-sm text-[#2c2824]/80">{product.materialLine}</p>
+                <p className="text-xs md:text-sm text-[#2c2824]/80">{product.materialLine}</p>
 
-                {product.colors && <p className="text-sm text-[#2c2824]/80">Colors: {product.colors.join(" | ")}</p>}
+                {product.colors && (
+                  <p className="text-xs md:text-sm text-[#2c2824]/80">Colors: {product.colors.join(" | ")}</p>
+                )}
 
-                <p className="text-sm italic text-[#2c2824] leading-relaxed">{product.description}</p>
+                <p className="text-xs md:text-sm italic text-[#2c2824] leading-relaxed">{product.description}</p>
 
                 <div className="flex items-center justify-between pt-4">
-                  <span className="font-medium text-lg text-[#2c2824]">{product.price}</span>
+                  <span className="font-medium text-base md:text-lg text-[#2c2824]">{product.price}</span>
                   <Button
                     onClick={() => handleBuyNow(product)}
-                    className="bg-[#2c2824] text-white hover:bg-[#2c2824]/90 px-8 py-2"
+                    className="bg-[#2c2824] text-white hover:bg-[#2c2824]/90 px-6 md:px-8 py-2 text-sm md:text-base"
                   >
                     Buy Now
                   </Button>
@@ -336,7 +577,9 @@ export default function ShopPage() {
         {/* Show message when no products found */}
         {filteredProducts.length === 0 && (
           <div className="text-center py-16">
-            <p className="text-xl text-[#2c2824]/60 font-serif italic">No products found for this selection.</p>
+            <p className="text-lg md:text-xl text-[#2c2824]/60 font-serif italic">
+              No products found for this selection.
+            </p>
           </div>
         )}
       </div>
