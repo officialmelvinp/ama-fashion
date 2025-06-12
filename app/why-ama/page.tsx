@@ -55,7 +55,7 @@ export default function WhyAMAPage() {
               <div className="grid md:grid-cols-2 gap-12 items-center">
                 <div className="relative aspect-square md:order-1">
                   <Image
-                    src="/images/ama5.jpeg"
+                    src="/images/craft.jpeg"
                     alt="Artisan hands working with fabric"
                     fill
                     className="object-cover rounded-lg"
