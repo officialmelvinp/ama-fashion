@@ -49,27 +49,27 @@ export default function WhyAMAPage() {
               </div>
             </section>
 
-            {/* Our Craft */}
-            <section>
-              <h2 className="text-2xl md:text-3xl font-serif tracking-wider mb-4 text-[#2c2824]">Our Craft</h2>
-              <div className="grid md:grid-cols-2 gap-12 items-center">
-                <div className="relative aspect-square md:order-1">
-                  <Image
-                    src="/images/craft.jpeg"
-                    alt="Artisan hands working with fabric"
-                    fill
-                    className="object-contain rounded-lg"
-                  />
-                </div>
-                <div>
-                  <p className="text-xl md:text-2xl italic opacity-80 text-[#2c2824]">
-                    Hand-dyed batiks. Heritage adìrẹ. Timeless linen. Each garment is a ritual, crafted in honor of
-                    those who wore them before, and those who still shape them by hand. Slowness is our devotion. Craft
-                    is our offering.
-                  </p>
-                </div>
-              </div>
-            </section>
+{/* Our Craft */}
+<section>
+  <div className="grid md:grid-cols-2 gap-12 items-start">
+    <div className="relative aspect-square md:order-1">
+      <Image
+        src="/images/craft.jpeg"
+        alt="Artisan hands working with fabric"
+        fill
+        className="object-contain rounded-lg"
+      />
+    </div>
+    <div>
+      <h2 className="text-2xl md:text-3xl font-serif tracking-wider mb-2 text-[#2c2824]">Our Craft</h2>
+      <p className="text-xl md:text-2xl italic opacity-80 text-[#2c2824]">
+        Hand-dyed batiks. Heritage adìrẹ. Timeless linen. Each garment is a ritual, crafted in honor of
+        those who wore them before, and those who still shape them by hand. Slowness is our devotion. Craft
+        is our offering.
+      </p>
+    </div>
+  </div>
+</section>
 
             {/* Manifestation and Materials Side by Side */}
             <div className="grid md:grid-cols-2 gap-16">
@@ -95,24 +95,24 @@ export default function WhyAMAPage() {
             </div>
 
             {/* Our Philosophy */}
-            <section>
-              <h2 className="text-2xl md:text-3xl font-serif tracking-wider mb-4 text-[#2c2824]">Our Philosophy</h2>
-              <div className="grid md:grid-cols-2 gap-12 items-start">
-                <div>
-                  <p className="text-xl md:text-2xl italic opacity-80 text-[#2c2824]">
-                    We reject fashion as noise. At AMA, clothing is ritual. Connection. A quiet revolution in thread.
-                    This is how a princess becomes a movement.
-                  </p>
-                </div>
-                <div className="relative aspect-video bg-[#f4f0e8] rounded-lg flex items-center justify-center">
-                  {/* Placeholder for video - replace with actual video component when ready */}
-                  <div className="text-center">
-                    <p className="text-[#2c2824] opacity-60 mb-2">Video Coming Soon</p>
-                    <p className="text-sm text-[#2c2824] opacity-40">Reel/Video to be added here</p>
-                  </div>
-                </div>
-              </div>
-            </section>
+<section>
+  <div className="grid md:grid-cols-2 gap-12 items-start">
+    <div className="mt-8">
+      <h2 className="text-2xl md:text-3xl font-serif tracking-wider mb-4 text-[#2c2824]">Our Philosophy</h2>
+      <p className="text-xl md:text-2xl italic opacity-80 text-[#2c2824]">
+        We reject fashion as noise. At AMA, clothing is ritual. Connection. A quiet revolution in thread.
+        This is how a princess becomes a movement.
+      </p>
+    </div>
+    <div className="relative aspect-video bg-[#f4f0e8] rounded-lg flex items-center justify-center">
+      {/* Placeholder for video - replace with actual video component when ready */}
+      <div className="text-center">
+        <p className="text-[#2c2824] opacity-60 mb-2">Video Coming Soon</p>
+        <p className="text-sm text-[#2c2824] opacity-40">Reel/Video to be added here</p>
+      </div>
+    </div>
+  </div>
+</section>
           </div>
         </div>
       </div>
