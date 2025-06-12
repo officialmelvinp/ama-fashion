@@ -21,7 +21,7 @@ export default function WhyAMAPage() {
           <div className="grid gap-24">
             {/* Our Lineage */}
             <section>
-              <h2 className="text-3xl font-serif mb-8 text-[#8B4513]">Our Lineage</h2>
+              <h2 className="text-4xl md:text-5xl font-serif mb-8 text-[#2c2824]">Our Lineage</h2>
               <div className="grid md:grid-cols-2 gap-12 items-center">
                 <div>
                   <p className="text-2xl leading-relaxed text-[#2c2824] mb-6">
@@ -51,7 +51,7 @@ export default function WhyAMAPage() {
 
             {/* Our Craft */}
             <section>
-              <h2 className="text-3xl font-serif mb-8 text-[#8B4513]">Our Craft</h2>
+              <h2 className="text-4xl md:text-5xl font-serif mb-8 text-[#2c2824]">Our Craft</h2>
               <div className="grid md:grid-cols-2 gap-12 items-center">
                 <div className="relative aspect-square md:order-1">
                   <Image
@@ -71,31 +71,34 @@ export default function WhyAMAPage() {
               </div>
             </section>
 
-            {/* Our Manifestation */}
-            <section>
-              <h2 className="text-3xl font-serif mb-8 text-[#8B4513]">Our Manifestation</h2>
-              <div className="max-w-4xl">
-                <p className="text-2xl leading-relaxed text-[#2c2824]">
-                  Minimalism as ancestral editing. Simplicity as sacred space. AMA pieces invite presence quiet,
-                  intentional, and enduring.
-                </p>
-              </div>
-            </section>
+            {/* Manifestation and Materials Side by Side */}
+<div className="grid md:grid-cols-2 gap-16">
+  {/* Our Manifestation */}
+  <section>
+    <h2 className="text-4xl md:text-5xl font-serif mb-8 text-[#2c2824]">Our Manifestation</h2>
+    <div>
+      <p className="text-2xl leading-relaxed text-[#2c2824]">
+        Minimalism as ancestral editing. Simplicity as sacred space. AMA pieces invite presence quiet,
+        intentional, and enduring.
+      </p>
+    </div>
+  </section>
 
-            {/* Our Materials */}
-            <section>
-              <h2 className="text-3xl font-serif mb-8 text-[#8B4513]">Our Materials</h2>
-              <div className="max-w-4xl">
-                <p className="text-2xl leading-relaxed text-[#2c2824]">
-                  100% cotton adìrẹ, dyed in tradition. Ankara rich with heritage. Linen that softens with time. All
-                  sourced with reverence. All made to carry memory.
-                </p>
-              </div>
-            </section>
+  {/* Our Materials */}
+  <section>
+    <h2 className="text-4xl md:text-5xl font-serif mb-8 text-[#2c2824]">Our Materials</h2>
+    <div>
+      <p className="text-2xl leading-relaxed text-[#2c2824]">
+        100% cotton adìrẹ, dyed in tradition. Ankara rich with heritage. Linen that softens with time. All
+        sourced with reverence. All made to carry memory.
+      </p>
+    </div>
+  </section>
+</div>
 
             {/* Our Philosophy */}
             <section>
-              <h2 className="text-3xl font-serif mb-8 text-[#8B4513]">Our Philosophy</h2>
+              <h2 className="text-4xl md:text-5xl font-serif mb-8 text-[#2c2824]">Our Philosophy</h2>
               <div className="grid md:grid-cols-2 gap-12 items-center">
                 <div>
                   <p className="text-2xl leading-relaxed text-[#2c2824]">
