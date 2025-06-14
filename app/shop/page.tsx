@@ -476,7 +476,7 @@ export default function ShopPage() {
                   All
                 </button>
 
-                {/* Ayaba Bùbá Button */}
+                {/* Ayaba Bùbù Button */}
                 <button
                   onClick={() => handleCollectionFilter("ayaba-bubu")}
                   className={`px-4 md:px-6 py-2 md:py-3 rounded-full text-xs md:text-sm transition-colors ${
