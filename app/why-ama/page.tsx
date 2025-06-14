@@ -59,7 +59,7 @@ export default function WhyAMAPage() {
             {/* Our Craft */}
             <section>
               {/* Further reduced negative margin for mobile */}
-              <section className="-mt-8 md:-mt-20"></section>
+              <section className="-mt-10 md:-mt-20"></section>
               <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-start">
                 {/* Text content - will be first on mobile, second on desktop */}
                 <div className="order-1 md:order-2 text-center md:text-left md:mt-36">
