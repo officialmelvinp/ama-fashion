@@ -339,8 +339,8 @@ const allProducts: Product[] = [
     essences: ["everyday", "sacred"],
   },
   {
-    id: "ayomide-purple",
-    name: "Ayọ̀mídé Purple",
+    id: "ayomide-pink",
+    name: "Ayọ̀mídé Pink",
     subtitle: "A Quiet Ode to Joy",
     materials: ["adire"],
     description: "Joy woven into form. A dress that carries the lightness of being.",
@@ -485,7 +485,7 @@ export default function ShopPage() {
                       : "bg-[#f4f0e8] text-[#2c2824] hover:bg-[#2c2824]/10"
                   }`}
                 >
-                  Ayaba Bùbá
+                  Ayaba Bùbù
                 </button>
 
                 {/* Candy Combat Button */}
