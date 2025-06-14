@@ -70,7 +70,7 @@ export default function WhyAMAPage() {
                   </p>
                 </div>
                 {/* Image - further reduced top margin on mobile */}
-                <div className="relative aspect-square order-2 md:order-1 -mt-1 md:mt-0">
+                <div className="relative aspect-square order-2 md:order-1 -mt-2 md:mt-0">
                   <Image
                     src="/images/subs.jpeg"
                     alt="Artisan hands working with fabric"
