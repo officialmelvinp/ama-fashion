@@ -313,6 +313,7 @@ const allProducts: Product[] = [
     essences: ["everyday", "gatherings"],
     productCode: "12",
   },
+
   // The Manifested Set - 1 item
   {
     id: "manifest-set-1",
@@ -444,6 +445,21 @@ export default function ShopPage() {
     window.location.href = "/checkout"
   }
 
+  // ============= HELPER FUNCTION TO SPLIT DESCRIPTION =============
+  const getDescriptionParts = (description: string) => {
+    const parts = description.split(". ")
+    if (parts.length >= 2) {
+      return {
+        firstPart: parts[0] + ".",
+        secondPart: parts.slice(1).join(". "),
+      }
+    }
+    return {
+      firstPart: description,
+      secondPart: "",
+    }
+  }
+
   // ============= RENDER UI =============
   return (
     <div className="min-h-screen">
@@ -530,46 +546,55 @@ export default function ShopPage() {
 
         {/* ============= PRODUCT DISPLAY ============= */}
         <div className={getGridClasses()}>
-          {filteredProducts.map((product) => (
-            <div key={product.id} className="flex flex-col max-w-md mx-auto" id={product.category}>
-              <div className="relative aspect-[3/4] overflow-hidden mb-6 group">
-                <Image
-                  src={product.images[0] || "/placeholder.svg"}
-                  alt={product.name}
-                  fill
-                  className="object-cover transition-transform duration-700 group-hover:scale-110"
-                />
-                {/* Hover effect overlay for specific products */}
-              </div>
+          {filteredProducts.map((product) => {
+            const descriptionParts = getDescriptionParts(product.description)
 
-              {/* Product Code - Centered under image */}
-              {product.productCode && (
-                <div className="text-center mb-4">
-                  <span className="text-sm font-medium text-[#2c2824]/60">
-                    {product.name} {product.productCode}
-                  </span>
+            return (
+              <div key={product.id} className="flex flex-col max-w-md mx-auto" id={product.category}>
+                <div className="relative aspect-[3/4] overflow-hidden mb-6 group">
+                  <Image
+                    src={product.images[0] || "/placeholder.svg"}
+                    alt={product.name}
+                    fill
+                    className="object-cover transition-transform duration-700 group-hover:scale-110"
+                  />
+                  {/* Hover effect overlay for specific products */}
                 </div>
-              )}
 
-              {/* Product Information - All Centered */}
-              <div className="text-center space-y-1">
-                <h2 className="font-serif text-xl md:text-2xl text-[#2c2824]">{product.name}</h2>
-                <h3 className="font-serif text-base md:text-lg text-[#2c2824]/80">{product.subtitle}</h3>
-                <p className="text-sm italic text-[#2c2824] leading-relaxed">{product.description}</p>
-                <p className="font-medium text-base md:text-lg text-[#2c2824] pt-1">{product.price}</p>
+                {/* Product Code - Centered under image */}
+                {product.productCode && (
+                  <div className="text-center mb-4">
+                    <span className="text-sm font-medium text-[#2c2824]/60">
+                      {product.name} {product.productCode}
+                    </span>
+                  </div>
+                )}
 
-                {/* Buy Now Button - Centered below price */}
-                <div className="pt-2">
-                  <Button
-                    onClick={() => handleBuyNow(product)}
-                    className="bg-[#2c2824] text-white hover:bg-[#2c2824]/90 px-8 py-2 text-sm md:text-base"
-                  >
-                    Buy Now
-                  </Button>
+                {/* Product Information - All Centered */}
+                <div className="text-center space-y-1">
+                  <h2 className="font-serif text-xl md:text-2xl text-[#2c2824]">{product.name}</h2>
+                  <h3 className="font-serif text-base md:text-lg text-[#2c2824]/80">{product.subtitle}</h3>
+                  {/* Second part of description (A kaftan stitched...) */}
+                  {descriptionParts.secondPart && (
+                    <p className="text-sm italic text-[#2c2824] leading-relaxed">{descriptionParts.secondPart}</p>
+                  )}
+                  {/* First part of description (Freedom in form.) */}
+                  <p className="text-sm italic text-[#2c2824] leading-relaxed">{descriptionParts.firstPart}</p>
+                  <p className="font-medium text-base md:text-lg text-[#2c2824] pt-1">{product.price}</p>
+
+                  {/* Buy Now Button - Centered below price */}
+                  <div className="pt-2">
+                    <Button
+                      onClick={() => handleBuyNow(product)}
+                      className="bg-[#2c2824] text-white hover:bg-[#2c2824]/90 px-8 py-2 text-sm md:text-base"
+                    >
+                      Buy Now
+                    </Button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
 
         {/* Show message when no products found */}
