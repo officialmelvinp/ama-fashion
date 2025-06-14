@@ -16,8 +16,9 @@ type Product = {
   images: string[]
   category: string
   essences: string[]
-  materialLine: string
   colors?: string[]
+  materialLine?: string
+  productCode?: string
 }
 
 // ============= PRODUCT DATA =============
@@ -28,144 +29,144 @@ const allProducts: Product[] = [
     name: "Ayaba Bubu",
     subtitle: "Royalty, Rendered in Thread",
     materials: ["batik", "ankara"],
-    materialLine: "Available in Batik, Ankara (100% hand-dyed cotton)",
     description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
     price: "850 AED ($230 USD)",
     images: ["/images/ama3.jpeg"],
     category: "ayaba-bubu",
     essences: ["everyday", "sacred"],
+    productCode: "01",
   },
   {
     id: "ayaba-bubu-2",
     name: "Ayaba Bubu",
     subtitle: "Royalty, Rendered in Thread",
     materials: ["batik", "ankara"],
-    materialLine: "Available in Batik, Ankara (100% hand-dyed cotton)",
     description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
     price: "850 AED ($230 USD)",
     images: ["/images/ama3.jpeg"],
     category: "ayaba-bubu",
     essences: ["everyday", "sacred"],
+    productCode: "02",
   },
   {
     id: "ayaba-bubu-3",
     name: "Ayaba Bubu",
     subtitle: "Royalty, Rendered in Thread",
     materials: ["batik", "ankara"],
-    materialLine: "Available in Batik, Ankara (100% hand-dyed cotton)",
     description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
     price: "850 AED ($230 USD)",
     images: ["/images/ama3.jpeg"],
     category: "ayaba-bubu",
     essences: ["everyday", "sacred"],
+    productCode: "03",
   },
   {
     id: "ayaba-bubu-4",
     name: "Ayaba Bubu",
     subtitle: "Royalty, Rendered in Thread",
     materials: ["batik", "ankara"],
-    materialLine: "Available in Batik, Ankara (100% hand-dyed cotton)",
     description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
     price: "850 AED ($230 USD)",
     images: ["/images/ama3.jpeg"],
     category: "ayaba-bubu",
     essences: ["everyday", "sacred"],
+    productCode: "04",
   },
   {
     id: "ayaba-bubu-5",
     name: "Ayaba Bubu",
     subtitle: "Royalty, Rendered in Thread",
     materials: ["batik", "ankara"],
-    materialLine: "Available in Batik, Ankara (100% hand-dyed cotton)",
     description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
     price: "850 AED ($230 USD)",
     images: ["/images/ama3.jpeg"],
     category: "ayaba-bubu",
     essences: ["everyday", "sacred"],
+    productCode: "05",
   },
   {
     id: "ayaba-bubu-6",
     name: "Ayaba Bubu",
     subtitle: "Royalty, Rendered in Thread",
     materials: ["batik", "ankara"],
-    materialLine: "Available in Batik, Ankara (100% hand-dyed cotton)",
     description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
     price: "850 AED ($230 USD)",
     images: ["/images/ama3.jpeg"],
     category: "ayaba-bubu",
     essences: ["everyday", "sacred"],
+    productCode: "06",
   },
   {
     id: "ayaba-bubu-7",
     name: "Ayaba Bubu",
     subtitle: "Royalty, Rendered in Thread",
     materials: ["batik", "ankara"],
-    materialLine: "Available in Batik, Ankara (100% hand-dyed cotton)",
     description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
     price: "850 AED ($230 USD)",
     images: ["/images/ama3.jpeg"],
     category: "ayaba-bubu",
     essences: ["everyday", "sacred"],
+    productCode: "07",
   },
   {
     id: "ayaba-bubu-8",
     name: "Ayaba Bubu",
     subtitle: "Royalty, Rendered in Thread",
     materials: ["batik", "ankara"],
-    materialLine: "Available in Batik, Ankara (100% hand-dyed cotton)",
     description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
     price: "850 AED ($230 USD)",
     images: ["/images/ama3.jpeg"],
     category: "ayaba-bubu",
     essences: ["everyday", "sacred"],
+    productCode: "08",
   },
   {
     id: "ayaba-bubu-9",
     name: "Ayaba Bubu",
     subtitle: "Royalty, Rendered in Thread",
     materials: ["batik", "ankara"],
-    materialLine: "Available in Batik, Ankara (100% hand-dyed cotton)",
     description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
     price: "850 AED ($230 USD)",
     images: ["/images/ama3.jpeg"],
     category: "ayaba-bubu",
     essences: ["everyday", "sacred"],
+    productCode: "09",
   },
   {
     id: "ayaba-bubu-10",
     name: "Ayaba Bubu",
     subtitle: "Royalty, Rendered in Thread",
     materials: ["batik", "ankara"],
-    materialLine: "Available in Batik, Ankara (100% hand-dyed cotton)",
     description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
     price: "850 AED ($230 USD)",
     images: ["/images/ama3.jpeg"],
     category: "ayaba-bubu",
     essences: ["everyday", "sacred"],
+    productCode: "10",
   },
   {
     id: "ayaba-bubu-11",
     name: "Ayaba Bubu",
     subtitle: "Royalty, Rendered in Thread",
     materials: ["batik", "ankara"],
-    materialLine: "Available in Batik, Ankara (100% hand-dyed cotton)",
     description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
     price: "850 AED ($230 USD)",
     images: ["/images/ama3.jpeg"],
     category: "ayaba-bubu",
     essences: ["everyday", "sacred"],
+    productCode: "11",
   },
   {
     id: "ayaba-bubu-12",
     name: "Ayaba Bubu",
     subtitle: "Royalty, Rendered in Thread",
     materials: ["batik", "ankara"],
-    materialLine: "Available in Batik, Ankara (100% hand-dyed cotton)",
     description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
     price: "850 AED ($230 USD)",
     images: ["/images/ama3.jpeg"],
     category: "ayaba-bubu",
     essences: ["everyday", "sacred"],
+    productCode: "12",
   },
   // Candy Combat - 12 items
   {
@@ -173,144 +174,144 @@ const allProducts: Product[] = [
     name: "Candy Combat",
     subtitle: "Softness, Armed",
     materials: ["batik", "ankara", "aso-oke"],
-    materialLine: "Available in Batik, Ankara with Aso Oke pockets (100% cotton)",
     description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
     price: "650 AED ($175 USD)",
     images: ["/images/ama4.jpeg"],
     category: "candy-combat",
     essences: ["everyday", "gatherings"],
+    productCode: "01",
   },
   {
     id: "candy-combat-2",
     name: "Candy Combat",
     subtitle: "Softness, Armed",
     materials: ["batik", "ankara", "aso-oke"],
-    materialLine: "Available in Batik, Ankara with Aso Oke pockets (100% cotton)",
     description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
     price: "650 AED ($175 USD)",
     images: ["/images/ama4.jpeg"],
     category: "candy-combat",
     essences: ["everyday", "gatherings"],
+    productCode: "02",
   },
   {
     id: "candy-combat-3",
     name: "Candy Combat",
     subtitle: "Softness, Armed",
     materials: ["batik", "ankara", "aso-oke"],
-    materialLine: "Available in Batik, Ankara with Aso Oke pockets (100% cotton)",
     description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
     price: "650 AED ($175 USD)",
     images: ["/images/ama4.jpeg"],
     category: "candy-combat",
     essences: ["everyday", "gatherings"],
+    productCode: "03",
   },
   {
     id: "candy-combat-4",
     name: "Candy Combat",
     subtitle: "Softness, Armed",
     materials: ["batik", "ankara", "aso-oke"],
-    materialLine: "Available in Batik, Ankara with Aso Oke pockets (100% cotton)",
     description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
     price: "650 AED ($175 USD)",
     images: ["/images/ama4.jpeg"],
     category: "candy-combat",
     essences: ["everyday", "gatherings"],
+    productCode: "04",
   },
   {
     id: "candy-combat-5",
     name: "Candy Combat",
     subtitle: "Softness, Armed",
     materials: ["batik", "ankara", "aso-oke"],
-    materialLine: "Available in Batik, Ankara with Aso Oke pockets (100% cotton)",
     description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
     price: "650 AED ($175 USD)",
     images: ["/images/ama4.jpeg"],
     category: "candy-combat",
     essences: ["everyday", "gatherings"],
+    productCode: "05",
   },
   {
     id: "candy-combat-6",
     name: "Candy Combat",
     subtitle: "Softness, Armed",
     materials: ["batik", "ankara", "aso-oke"],
-    materialLine: "Available in Batik, Ankara with Aso Oke pockets (100% cotton)",
     description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
     price: "650 AED ($175 USD)",
     images: ["/images/ama4.jpeg"],
     category: "candy-combat",
     essences: ["everyday", "gatherings"],
+    productCode: "06",
   },
   {
     id: "candy-combat-7",
     name: "Candy Combat",
     subtitle: "Softness, Armed",
     materials: ["batik", "ankara", "aso-oke"],
-    materialLine: "Available in Batik, Ankara with Aso Oke pockets (100% cotton)",
     description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
     price: "650 AED ($175 USD)",
     images: ["/images/ama4.jpeg"],
     category: "candy-combat",
     essences: ["everyday", "gatherings"],
+    productCode: "07",
   },
   {
     id: "candy-combat-8",
     name: "Candy Combat",
     subtitle: "Softness, Armed",
     materials: ["batik", "ankara", "aso-oke"],
-    materialLine: "Available in Batik, Ankara with Aso Oke pockets (100% cotton)",
     description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
     price: "650 AED ($175 USD)",
     images: ["/images/ama4.jpeg"],
     category: "candy-combat",
     essences: ["everyday", "gatherings"],
+    productCode: "08",
   },
   {
     id: "candy-combat-9",
     name: "Candy Combat",
     subtitle: "Softness, Armed",
     materials: ["batik", "ankara", "aso-oke"],
-    materialLine: "Available in Batik, Ankara with Aso Oke pockets (100% cotton)",
     description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
     price: "650 AED ($175 USD)",
     images: ["/images/ama4.jpeg"],
     category: "candy-combat",
     essences: ["everyday", "gatherings"],
+    productCode: "09",
   },
   {
     id: "candy-combat-10",
     name: "Candy Combat",
     subtitle: "Softness, Armed",
     materials: ["batik", "ankara", "aso-oke"],
-    materialLine: "Available in Batik, Ankara with Aso Oke pockets (100% cotton)",
     description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
     price: "650 AED ($175 USD)",
     images: ["/images/ama4.jpeg"],
     category: "candy-combat",
     essences: ["everyday", "gatherings"],
+    productCode: "10",
   },
   {
     id: "candy-combat-11",
     name: "Candy Combat",
     subtitle: "Softness, Armed",
     materials: ["batik", "ankara", "aso-oke"],
-    materialLine: "Available in Batik, Ankara with Aso Oke pockets (100% cotton)",
     description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
     price: "650 AED ($175 USD)",
     images: ["/images/ama4.jpeg"],
     category: "candy-combat",
     essences: ["everyday", "gatherings"],
+    productCode: "11",
   },
   {
     id: "candy-combat-12",
     name: "Candy Combat",
     subtitle: "Softness, Armed",
     materials: ["batik", "ankara", "aso-oke"],
-    materialLine: "Available in Batik, Ankara with Aso Oke pockets (100% cotton)",
     description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
     price: "650 AED ($175 USD)",
     images: ["/images/ama4.jpeg"],
     category: "candy-combat",
     essences: ["everyday", "gatherings"],
+    productCode: "12",
   },
   // The Manifested Set - 1 item
   {
@@ -318,20 +319,19 @@ const allProducts: Product[] = [
     name: "The Manifest Set",
     subtitle: "What You Asked For, Woven",
     materials: ["batik"],
-    materialLine: "Available in Batik (100% cotton)",
     description: "A pairing of ease and presence. One-size drape, bound by craft.",
     price: "950 AED ($255 USD)",
     images: ["/images/ama5.jpeg"],
     category: "the-manifested-set",
     essences: ["sacred", "gatherings"],
+    productCode: "01",
   },
-  // Ayọ̀mídé - 2 items
+  // Ayọ̀mídé - 2 items with colors
   {
-    id: "ayomide-1",
-    name: "Ayọ̀mídé",
+    id: "ayomide-blue",
+    name: "Ayọ̀mídé Blue",
     subtitle: "A Quiet Ode to Joy",
     materials: ["adire"],
-    materialLine: "Available in Adire (100% hand-dyed cotton)",
     description: "Joy woven into form. A dress that carries the lightness of being.",
     price: "780 AED ($210 USD)",
     images: ["/images/ama6.jpeg"],
@@ -339,11 +339,10 @@ const allProducts: Product[] = [
     essences: ["everyday", "sacred"],
   },
   {
-    id: "ayomide-2",
-    name: "Ayọ̀mídé",
+    id: "ayomide-purple",
+    name: "Ayọ̀mídé Purple",
     subtitle: "A Quiet Ode to Joy",
     materials: ["adire"],
-    materialLine: "Available in Adire (100% hand-dyed cotton)",
     description: "Joy woven into form. A dress that carries the lightness of being.",
     price: "780 AED ($210 USD)",
     images: ["/images/ama6.jpeg"],
@@ -541,30 +540,29 @@ export default function ShopPage() {
                   className="object-cover transition-transform duration-700 group-hover:scale-110"
                 />
                 {/* Hover effect overlay for specific products */}
-                {product.id.includes("candy-combat") && (
-                  <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-center justify-center">
-                    <p className="text-white text-sm font-medium">Zoom candy combat detail</p>
-                  </div>
-                )}
               </div>
 
-              <div className="space-y-3 text-center md:text-left">
-                <h2 className="font-serif text-xl md:text-2xl lg:text-3xl text-[#2c2824]">{product.name}</h2>
-                <h3 className="font-serif text-base md:text-lg text-[#2c2824]/80 -mt-1">{product.subtitle}</h3>
+              {/* Product Code - Centered under image */}
+              {product.productCode && (
+                <div className="text-center mb-4">
+                  <span className="text-sm font-medium text-[#2c2824]/60">
+                    {product.name} {product.productCode}
+                  </span>
+                </div>
+              )}
 
-                <p className="text-xs md:text-sm text-[#2c2824]/80">{product.materialLine}</p>
+              {/* Product Information - All Centered */}
+              <div className="text-center space-y-1">
+                <h2 className="font-serif text-xl md:text-2xl text-[#2c2824]">{product.name}</h2>
+                <h3 className="font-serif text-base md:text-lg text-[#2c2824]/80">{product.subtitle}</h3>
+                <p className="text-sm italic text-[#2c2824] leading-relaxed">{product.description}</p>
+                <p className="font-medium text-base md:text-lg text-[#2c2824] pt-1">{product.price}</p>
 
-                {product.colors && (
-                  <p className="text-xs md:text-sm text-[#2c2824]/80">Colors: {product.colors.join(" | ")}</p>
-                )}
-
-                <p className="text-xs md:text-sm italic text-[#2c2824] leading-relaxed">{product.description}</p>
-
-                <div className="flex items-center justify-between pt-4">
-                  <span className="font-medium text-base md:text-lg text-[#2c2824]">{product.price}</span>
+                {/* Buy Now Button - Centered below price */}
+                <div className="pt-2">
                   <Button
                     onClick={() => handleBuyNow(product)}
-                    className="bg-[#2c2824] text-white hover:bg-[#2c2824]/90 px-6 md:px-8 py-2 text-sm md:text-base"
+                    className="bg-[#2c2824] text-white hover:bg-[#2c2824]/90 px-8 py-2 text-sm md:text-base"
                   >
                     Buy Now
                   </Button>
