@@ -82,7 +82,7 @@ export default function WhyAMAPage() {
             </section>
 
            {/* Manifestation and Materials Side by Side */}
-<div className="grid md:grid-cols-2 gap-8 md:gap-16 -mt-8 md:-mt-20">
+<div className="grid md:grid-cols-2 gap-8 md:gap-16 -mt-10 md:-mt-20">
   {/* Our Manifestation */}
   <section className="flex flex-col text-center md:text-left">
     <h2 className="text-2xl md:text-3xl font-serif tracking-wider mb-4 text-[#2c2824]">
