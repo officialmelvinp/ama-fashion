@@ -81,49 +81,48 @@ export default function WhyAMAPage() {
               </div>
             </section>
 
-            {/* Manifestation and Materials Side by Side */}
-            <div className="grid md:grid-cols-2 gap-8 md:gap-16 md:-mt-20">
-              {/* Our Manifestation */}
-              <section className="flex flex-col text-center md:text-left">
-                <h2 className="text-2xl md:text-3xl font-serif tracking-wider mb-4 text-[#2c2824]">
-                  Our Manifestation
-                </h2>
-                <p className="text-xl md:text-1xl italic opacity-80 text-[#2c2824]">
-                  Minimalism as ancestral editing. Simplicity as sacred space. AMA pieces invite presence quiet,
-                  intentional, and enduring.
-                </p>
-              </section>
+           {/* Manifestation and Materials Side by Side */}
+<div className="grid md:grid-cols-2 gap-8 md:gap-16 -mt-8 md:-mt-20">
+  {/* Our Manifestation */}
+  <section className="flex flex-col text-center md:text-left">
+    <h2 className="text-2xl md:text-3xl font-serif tracking-wider mb-4 text-[#2c2824]">
+      Our Manifestation
+    </h2>
+    <p className="text-xl md:text-1xl italic opacity-80 text-[#2c2824]">
+      Minimalism as ancestral editing. Simplicity as sacred space. AMA pieces invite presence quiet,
+      intentional, and enduring.
+    </p>
+  </section>
 
-              {/* Our Materials */}
-              <section className="flex flex-col text-center md:text-left mt-4 md:mt-0">
-                <h2 className="text-2xl md:text-3xl font-serif tracking-wider mb-4 text-[#2c2824]">Our Materials</h2>
-                <p className="text-xl md:text-1xl italic opacity-80 text-[#2c2824]">
-                  100% cotton adìrẹ, dyed in tradition. Ankara rich with heritage. Linen that softens with time. All
-                  sourced with reverence. All made to carry memory.
-                </p>
-              </section>
-            </div>
+  {/* Our Materials */}
+  <section className="flex flex-col text-center md:text-left mt-2 md:mt-0">
+    <h2 className="text-2xl md:text-3xl font-serif tracking-wider mb-4 text-[#2c2824]">Our Materials</h2>
+    <p className="text-xl md:text-1xl italic opacity-80 text-[#2c2824]">
+      100% cotton adìrẹ, dyed in tradition. Ankara rich with heritage. Linen that softens with time. All
+      sourced with reverence. All made to carry memory.
+    </p>
+  </section>
+</div>
 
-            {/* Our Philosophy */}
-            <section className="md:-mt-8">
-              <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-start">
-                <div className="text-center md:text-left md:mt-8">
-                  <h2 className="text-2xl md:text-3xl font-serif tracking-wider mb-4 text-[#2c2824]">Our Philosophy</h2>
-                  <p className="text-xl md:text-1xl italic opacity-80 text-[#2c2824]">
-                    We reject fashion as noise. At AMA, clothing is ritual. Connection. A quiet revolution in thread.
-                    This is how a princess becomes a movement.
-                  </p>
-                </div>
-                <div className="relative aspect-video bg-[#f4f0e8] rounded-lg flex items-center justify-center mt-6 md:mt-0">
-                  {/* Placeholder for video - replace with actual video component when ready */}
-                  <div className="text-center">
-                    <p className="text-[#2c2824] opacity-60 mb-2">Video Coming Soon</p>
-                    <p className="text-sm text-[#2c2824] opacity-40">Reel/Video to be added here</p>
-                  </div>
-                </div>
-              </div>
-            </section>
-          </div>
+{/* Our Philosophy */}
+<section className="-mt-6 md:-mt-8">
+  <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-start">
+    <div className="text-center md:text-left md:mt-8">
+      <h2 className="text-2xl md:text-3xl font-serif tracking-wider mb-4 text-[#2c2824]">Our Philosophy</h2>
+      <p className="text-xl md:text-1xl italic opacity-80 text-[#2c2824]">
+        We reject fashion as noise. At AMA, clothing is ritual. Connection. A quiet revolution in thread.
+        This is how a princess becomes a movement.
+      </p>
+    </div>
+    <div className="relative aspect-video bg-[#f4f0e8] rounded-lg flex items-center justify-center mt-4 md:mt-0">
+      {/* Placeholder for video - replace with actual video component when ready */}
+      <div className="text-center">
+        <p className="text-[#2c2824] opacity-60 mb-2">Video Coming Soon</p>
+        <p className="text-sm text-[#2c2824] opacity-40">Reel/Video to be added here</p>
+      </div>
+    </div>
+  </div>
+</section>          </div>
         </div>
       </div>
     </div>
