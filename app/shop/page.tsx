@@ -23,10 +23,10 @@ type Product = {
 
 // ============= PRODUCT DATA =============
 const allProducts: Product[] = [
-  // Ayaba Bubu - 12 items
+  // Ayaba Bubu - 12 items (now with numbers in name)
   {
     id: "ayaba-bubu-1",
-    name: "Ayaba Bubu",
+    name: "Àyaba 01",
     subtitle: "Royalty, Rendered in Thread",
     materials: ["batik", "ankara"],
     description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
@@ -34,11 +34,10 @@ const allProducts: Product[] = [
     images: ["/images/ama3.jpeg"],
     category: "ayaba-bubu",
     essences: ["everyday", "sacred"],
-    productCode: "01",
   },
   {
     id: "ayaba-bubu-2",
-    name: "Ayaba Bubu",
+    name: "Àyaba 02",
     subtitle: "Royalty, Rendered in Thread",
     materials: ["batik", "ankara"],
     description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
@@ -46,11 +45,10 @@ const allProducts: Product[] = [
     images: ["/images/ama3.jpeg"],
     category: "ayaba-bubu",
     essences: ["everyday", "sacred"],
-    productCode: "02",
   },
   {
     id: "ayaba-bubu-3",
-    name: "Ayaba Bubu",
+    name: "Àyaba 03",
     subtitle: "Royalty, Rendered in Thread",
     materials: ["batik", "ankara"],
     description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
@@ -58,11 +56,10 @@ const allProducts: Product[] = [
     images: ["/images/ama3.jpeg"],
     category: "ayaba-bubu",
     essences: ["everyday", "sacred"],
-    productCode: "03",
   },
   {
     id: "ayaba-bubu-4",
-    name: "Ayaba Bubu",
+    name: "Àyaba 04",
     subtitle: "Royalty, Rendered in Thread",
     materials: ["batik", "ankara"],
     description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
@@ -70,11 +67,10 @@ const allProducts: Product[] = [
     images: ["/images/ama3.jpeg"],
     category: "ayaba-bubu",
     essences: ["everyday", "sacred"],
-    productCode: "04",
   },
   {
     id: "ayaba-bubu-5",
-    name: "Ayaba Bubu",
+    name: "Àyaba 05",
     subtitle: "Royalty, Rendered in Thread",
     materials: ["batik", "ankara"],
     description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
@@ -82,11 +78,10 @@ const allProducts: Product[] = [
     images: ["/images/ama3.jpeg"],
     category: "ayaba-bubu",
     essences: ["everyday", "sacred"],
-    productCode: "05",
   },
   {
     id: "ayaba-bubu-6",
-    name: "Ayaba Bubu",
+    name: "Àyaba 06",
     subtitle: "Royalty, Rendered in Thread",
     materials: ["batik", "ankara"],
     description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
@@ -94,11 +89,10 @@ const allProducts: Product[] = [
     images: ["/images/ama3.jpeg"],
     category: "ayaba-bubu",
     essences: ["everyday", "sacred"],
-    productCode: "06",
   },
   {
     id: "ayaba-bubu-7",
-    name: "Ayaba Bubu",
+    name: "Àyaba 07",
     subtitle: "Royalty, Rendered in Thread",
     materials: ["batik", "ankara"],
     description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
@@ -106,11 +100,10 @@ const allProducts: Product[] = [
     images: ["/images/ama3.jpeg"],
     category: "ayaba-bubu",
     essences: ["everyday", "sacred"],
-    productCode: "07",
   },
   {
     id: "ayaba-bubu-8",
-    name: "Ayaba Bubu",
+    name: "Àyaba 08",
     subtitle: "Royalty, Rendered in Thread",
     materials: ["batik", "ankara"],
     description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
@@ -118,11 +111,10 @@ const allProducts: Product[] = [
     images: ["/images/ama3.jpeg"],
     category: "ayaba-bubu",
     essences: ["everyday", "sacred"],
-    productCode: "08",
   },
   {
     id: "ayaba-bubu-9",
-    name: "Ayaba Bubu",
+    name: "Àyaba 09",
     subtitle: "Royalty, Rendered in Thread",
     materials: ["batik", "ankara"],
     description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
@@ -130,11 +122,10 @@ const allProducts: Product[] = [
     images: ["/images/ama3.jpeg"],
     category: "ayaba-bubu",
     essences: ["everyday", "sacred"],
-    productCode: "09",
   },
   {
     id: "ayaba-bubu-10",
-    name: "Ayaba Bubu",
+    name: "Àyaba 10",
     subtitle: "Royalty, Rendered in Thread",
     materials: ["batik", "ankara"],
     description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
@@ -142,11 +133,10 @@ const allProducts: Product[] = [
     images: ["/images/ama3.jpeg"],
     category: "ayaba-bubu",
     essences: ["everyday", "sacred"],
-    productCode: "10",
   },
   {
     id: "ayaba-bubu-11",
-    name: "Ayaba Bubu",
+    name: "Àyaba 11",
     subtitle: "Royalty, Rendered in Thread",
     materials: ["batik", "ankara"],
     description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
@@ -154,11 +144,10 @@ const allProducts: Product[] = [
     images: ["/images/ama3.jpeg"],
     category: "ayaba-bubu",
     essences: ["everyday", "sacred"],
-    productCode: "11",
   },
   {
     id: "ayaba-bubu-12",
-    name: "Ayaba Bubu",
+    name: "Àyaba 12",
     subtitle: "Royalty, Rendered in Thread",
     materials: ["batik", "ankara"],
     description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
@@ -166,12 +155,11 @@ const allProducts: Product[] = [
     images: ["/images/ama3.jpeg"],
     category: "ayaba-bubu",
     essences: ["everyday", "sacred"],
-    productCode: "12",
   },
-  // Candy Combat - 12 items
+  // Candy Combat - 12 items (now with numbers in name)
   {
     id: "candy-combat-1",
-    name: "Candy Combat",
+    name: "Candy Combat 01",
     subtitle: "Softness, Armed",
     materials: ["batik", "ankara", "aso-oke"],
     description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
@@ -179,11 +167,10 @@ const allProducts: Product[] = [
     images: ["/images/ama4.jpeg"],
     category: "candy-combat",
     essences: ["everyday", "gatherings"],
-    productCode: "01",
   },
   {
     id: "candy-combat-2",
-    name: "Candy Combat",
+    name: "Candy Combat 02",
     subtitle: "Softness, Armed",
     materials: ["batik", "ankara", "aso-oke"],
     description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
@@ -191,11 +178,10 @@ const allProducts: Product[] = [
     images: ["/images/ama4.jpeg"],
     category: "candy-combat",
     essences: ["everyday", "gatherings"],
-    productCode: "02",
   },
   {
     id: "candy-combat-3",
-    name: "Candy Combat",
+    name: "Candy Combat 03",
     subtitle: "Softness, Armed",
     materials: ["batik", "ankara", "aso-oke"],
     description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
@@ -203,11 +189,10 @@ const allProducts: Product[] = [
     images: ["/images/ama4.jpeg"],
     category: "candy-combat",
     essences: ["everyday", "gatherings"],
-    productCode: "03",
   },
   {
     id: "candy-combat-4",
-    name: "Candy Combat",
+    name: "Candy Combat 04",
     subtitle: "Softness, Armed",
     materials: ["batik", "ankara", "aso-oke"],
     description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
@@ -215,11 +200,10 @@ const allProducts: Product[] = [
     images: ["/images/ama4.jpeg"],
     category: "candy-combat",
     essences: ["everyday", "gatherings"],
-    productCode: "04",
   },
   {
     id: "candy-combat-5",
-    name: "Candy Combat",
+    name: "Candy Combat 05",
     subtitle: "Softness, Armed",
     materials: ["batik", "ankara", "aso-oke"],
     description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
@@ -227,11 +211,10 @@ const allProducts: Product[] = [
     images: ["/images/ama4.jpeg"],
     category: "candy-combat",
     essences: ["everyday", "gatherings"],
-    productCode: "05",
   },
   {
     id: "candy-combat-6",
-    name: "Candy Combat",
+    name: "Candy Combat 06",
     subtitle: "Softness, Armed",
     materials: ["batik", "ankara", "aso-oke"],
     description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
@@ -239,11 +222,10 @@ const allProducts: Product[] = [
     images: ["/images/ama4.jpeg"],
     category: "candy-combat",
     essences: ["everyday", "gatherings"],
-    productCode: "06",
   },
   {
     id: "candy-combat-7",
-    name: "Candy Combat",
+    name: "Candy Combat 07",
     subtitle: "Softness, Armed",
     materials: ["batik", "ankara", "aso-oke"],
     description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
@@ -251,11 +233,10 @@ const allProducts: Product[] = [
     images: ["/images/ama4.jpeg"],
     category: "candy-combat",
     essences: ["everyday", "gatherings"],
-    productCode: "07",
   },
   {
     id: "candy-combat-8",
-    name: "Candy Combat",
+    name: "Candy Combat 08",
     subtitle: "Softness, Armed",
     materials: ["batik", "ankara", "aso-oke"],
     description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
@@ -263,11 +244,10 @@ const allProducts: Product[] = [
     images: ["/images/ama4.jpeg"],
     category: "candy-combat",
     essences: ["everyday", "gatherings"],
-    productCode: "08",
   },
   {
     id: "candy-combat-9",
-    name: "Candy Combat",
+    name: "Candy Combat 09",
     subtitle: "Softness, Armed",
     materials: ["batik", "ankara", "aso-oke"],
     description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
@@ -275,11 +255,10 @@ const allProducts: Product[] = [
     images: ["/images/ama4.jpeg"],
     category: "candy-combat",
     essences: ["everyday", "gatherings"],
-    productCode: "09",
   },
   {
     id: "candy-combat-10",
-    name: "Candy Combat",
+    name: "Candy Combat 10",
     subtitle: "Softness, Armed",
     materials: ["batik", "ankara", "aso-oke"],
     description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
@@ -287,11 +266,10 @@ const allProducts: Product[] = [
     images: ["/images/ama4.jpeg"],
     category: "candy-combat",
     essences: ["everyday", "gatherings"],
-    productCode: "10",
   },
   {
     id: "candy-combat-11",
-    name: "Candy Combat",
+    name: "Candy Combat 11",
     subtitle: "Softness, Armed",
     materials: ["batik", "ankara", "aso-oke"],
     description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
@@ -299,11 +277,10 @@ const allProducts: Product[] = [
     images: ["/images/ama4.jpeg"],
     category: "candy-combat",
     essences: ["everyday", "gatherings"],
-    productCode: "11",
   },
   {
     id: "candy-combat-12",
-    name: "Candy Combat",
+    name: "Candy Combat 12",
     subtitle: "Softness, Armed",
     materials: ["batik", "ankara", "aso-oke"],
     description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
@@ -311,10 +288,9 @@ const allProducts: Product[] = [
     images: ["/images/ama4.jpeg"],
     category: "candy-combat",
     essences: ["everyday", "gatherings"],
-    productCode: "12",
   },
 
-  // The Manifested Set - 1 item
+  // The Manifested Set - 1 item (no product code)
   {
     id: "manifest-set-1",
     name: "The Manifest Set",
@@ -325,9 +301,8 @@ const allProducts: Product[] = [
     images: ["/images/ama5.jpeg"],
     category: "the-manifested-set",
     essences: ["sacred", "gatherings"],
-    productCode: "01",
   },
-  // Ayọ̀mídé - 2 items with colors
+  // Ayọ̀mídé - 2 items (unchanged as requested)
   {
     id: "ayomide-blue",
     name: "Ayọ̀mídé Blue",
@@ -551,26 +526,17 @@ export default function ShopPage() {
 
             return (
               <div key={product.id} className="flex flex-col max-w-md mx-auto" id={product.category}>
-                <div className="relative aspect-[3/4] overflow-hidden mb-6 group">
+                {/* Reduced margin bottom to close gap after removing product code */}
+                <div className="relative aspect-[3/4] overflow-hidden mb-4 group">
                   <Image
                     src={product.images[0] || "/placeholder.svg"}
                     alt={product.name}
                     fill
                     className="object-cover transition-transform duration-700 group-hover:scale-110"
                   />
-                  {/* Hover effect overlay for specific products */}
                 </div>
 
-                {/* Product Code - Centered under image */}
-                {product.productCode && (
-                  <div className="text-center mb-4">
-                    <span className="text-sm font-medium text-[#2c2824]/60">
-                      {product.name} {product.productCode}
-                    </span>
-                  </div>
-                )}
-
-                {/* Product Information - All Centered */}
+                {/* Product Information - All Centered (removed product code section) */}
                 <div className="text-center space-y-1">
                   <h2 className="font-serif text-xl md:text-2xl text-[#2c2824]">{product.name}</h2>
                   <h3 className="font-serif text-base md:text-lg text-[#2c2824]/80">{product.subtitle}</h3>

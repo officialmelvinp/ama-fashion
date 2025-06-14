@@ -22,7 +22,7 @@ export default function WhyAMAPage() {
           <div className="grid gap-12 md:gap-24">
             {/* Our Lineage */}
             <section>
-              <h2 className="text-2xl md:text-3xl font-serif tracking-wider mb-4 text-[#2c2824] text-center md:text-left">
+              <h2 className="text-2xl md:text-3xl font-serif tracking-wider mb-4 text-amber-800 text-center md:text-left">
                 Our Lineage
               </h2>
               <div className="grid md:grid-cols-2 gap-8 md:gap-12">
@@ -39,7 +39,7 @@ export default function WhyAMAPage() {
                       promise: legacy preserved, reimagined in cloth.
                     </p>
                   </div>
-                  <p className="text-xl md:text-lg italic opacity-80 text-[#2c2824]">
+                  <p className="text-lg md:text-base italic opacity-80 text-[#2c2824]">
                     Fabric as archive. Migration as muse. Womanhood as sacred inheritance.
                   </p>
                 </div>
@@ -62,7 +62,9 @@ export default function WhyAMAPage() {
               <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-start">
                 {/* Text content - will be first on mobile, second on desktop */}
                 <div className="order-1 md:order-2 text-center md:text-left md:mt-36">
-                  <h2 className="text-2xl md:text-3xl font-serif tracking-wider mb-2 text-[#2c2824]">Our Craft</h2>
+                  <h2 className="text-2xl md:text-3xl font-serif tracking-wider mb-4 text-amber-800 text-center md:text-left">
+                Our Craft
+              </h2>
                   <p className="text-xl md:text-1xl italic opacity-80 text-[#2c2824]">
                     Hand-dyed batiks. Heritage adìrẹ. Timeless linen. Each garment is a ritual, crafted in honor of
                     those who wore them before, and those who still shape them by hand. Slowness is our devotion. Craft
@@ -85,9 +87,9 @@ export default function WhyAMAPage() {
 <div className="grid md:grid-cols-2 gap-8 md:gap-16 -mt-10 md:-mt-20">
   {/* Our Manifestation */}
   <section className="flex flex-col text-center md:text-left">
-    <h2 className="text-2xl md:text-3xl font-serif tracking-wider mb-4 text-[#2c2824]">
-      Our Manifestation
-    </h2>
+     <h2 className="text-2xl md:text-3xl font-serif tracking-wider mb-4 text-amber-800 text-center md:text-left">
+                Our Manifestation
+              </h2>
     <p className="text-xl md:text-1xl italic opacity-80 text-[#2c2824]">
       Minimalism as ancestral editing. Simplicity as sacred space. AMA pieces invite presence quiet,
       intentional, and enduring.
@@ -96,7 +98,9 @@ export default function WhyAMAPage() {
 
   {/* Our Materials */}
   <section className="flex flex-col text-center md:text-left mt-0 md:mt-0">
-    <h2 className="text-2xl md:text-3xl font-serif tracking-wider mb-4 text-[#2c2824]">Our Materials</h2>
+    <h2 className="text-2xl md:text-3xl font-serif tracking-wider mb-4 text-amber-800 text-center md:text-left">
+                Our Materials
+              </h2>
     <p className="text-xl md:text-1xl italic opacity-80 text-[#2c2824]">
       100% cotton adìrẹ, dyed in tradition. Ankara rich with heritage. Linen that softens with time. All
       sourced with reverence. All made to carry memory.
@@ -108,7 +112,9 @@ export default function WhyAMAPage() {
 <section className="-mt-6 md:-mt-8">
   <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-start">
     <div className="text-center md:text-left md:mt-8">
-      <h2 className="text-2xl md:text-3xl font-serif tracking-wider mb-4 text-[#2c2824]">Our Philosophy</h2>
+       <h2 className="text-2xl md:text-3xl font-serif tracking-wider mb-4 text-amber-800 text-center md:text-left">
+                Our Philosophy
+              </h2>
       <p className="text-xl md:text-1xl italic opacity-80 text-[#2c2824]">
         We reject fashion as noise. At AMA, clothing is ritual. Connection. A quiet revolution in thread.
         This is how a princess becomes a movement.
