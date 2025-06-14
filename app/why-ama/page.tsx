@@ -44,7 +44,7 @@ export default function WhyAMAPage() {
                   </p>
                 </div>
                 {/* Reduced heritage image top margin on mobile */}
-                <div className="relative w-full h-64 md:h-80 mt-4 md:-mt-8">
+                <div className="relative w-full h-64 md:h-80 mt-2 md:-mt-8">
                    
                   <Image
                     src="/images/craft.jpeg"
