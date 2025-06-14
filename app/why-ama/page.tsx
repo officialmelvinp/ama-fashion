@@ -18,7 +18,7 @@ export default function WhyAMAPage() {
             </blockquote>
           </div>
 
-          {/* Reduced gap on mobile from gap-24 to gap-12, keep gap-24 on md+ */}
+          {/* Uniform gap on mobile, keep gap-24 on md+ */}
           <div className="grid gap-12 md:gap-24">
             {/* Our Lineage */}
             <section>
@@ -43,9 +43,8 @@ export default function WhyAMAPage() {
                     Fabric as archive. Migration as muse. Womanhood as sacred inheritance.
                   </p>
                 </div>
-                {/* Reduced heritage image top margin on mobile */}
+                {/* Heritage image */}
                 <div className="relative w-full h-64 md:h-80 mt-2 md:-mt-8">
-                   
                   <Image
                     src="/images/craft.jpeg"
                     alt="Princess Adétọ́lá heritage"
@@ -58,8 +57,8 @@ export default function WhyAMAPage() {
 
             {/* Our Craft */}
             <section>
-              {/* Further reduced negative margin for mobile */}
-              <section className="-mt-10 md:-mt-20"></section>
+              {/* Remove negative margin on mobile, keep on desktop */}
+              <section className="md:-mt-20"></section>
               <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-start">
                 {/* Text content - will be first on mobile, second on desktop */}
                 <div className="order-1 md:order-2 text-center md:text-left md:mt-36">
@@ -70,7 +69,7 @@ export default function WhyAMAPage() {
                     is our offering.
                   </p>
                 </div>
-                {/* Image - further reduced top margin on mobile */}
+                {/* Image */}
                 <div className="relative aspect-square order-2 md:order-1 -mt-10 md:mt-0">
                   <Image
                     src="/images/subs.jpeg"
@@ -83,7 +82,7 @@ export default function WhyAMAPage() {
             </section>
 
             {/* Manifestation and Materials Side by Side */}
-            <div className="grid md:grid-cols-2 gap-8 md:gap-16 -mt-8 md:-mt-20">
+            <div className="grid md:grid-cols-2 gap-8 md:gap-16 md:-mt-20">
               {/* Our Manifestation */}
               <section className="flex flex-col text-center md:text-left">
                 <h2 className="text-2xl md:text-3xl font-serif tracking-wider mb-4 text-[#2c2824]">
@@ -95,7 +94,7 @@ export default function WhyAMAPage() {
                 </p>
               </section>
 
-              {/* Our Materials - further reduced top margin on mobile */}
+              {/* Our Materials */}
               <section className="flex flex-col text-center md:text-left mt-4 md:mt-0">
                 <h2 className="text-2xl md:text-3xl font-serif tracking-wider mb-4 text-[#2c2824]">Our Materials</h2>
                 <p className="text-xl md:text-1xl italic opacity-80 text-[#2c2824]">
@@ -106,7 +105,7 @@ export default function WhyAMAPage() {
             </div>
 
             {/* Our Philosophy */}
-            <section className="-mt-6 md:-mt-8">
+            <section className="md:-mt-8">
               <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-start">
                 <div className="text-center md:text-left md:mt-8">
                   <h2 className="text-2xl md:text-3xl font-serif tracking-wider mb-4 text-[#2c2824]">Our Philosophy</h2>
