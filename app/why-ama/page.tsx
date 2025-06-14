@@ -95,7 +95,7 @@ export default function WhyAMAPage() {
   </section>
 
   {/* Our Materials */}
-  <section className="flex flex-col text-center md:text-left mt-2 md:mt-0">
+  <section className="flex flex-col text-center md:text-left mt-0 md:mt-0">
     <h2 className="text-2xl md:text-3xl font-serif tracking-wider mb-4 text-[#2c2824]">Our Materials</h2>
     <p className="text-xl md:text-1xl italic opacity-80 text-[#2c2824]">
       100% cotton adìrẹ, dyed in tradition. Ankara rich with heritage. Linen that softens with time. All
