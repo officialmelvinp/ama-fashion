@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label"
 import { useSearchParams } from "next/navigation"
 import Header from "@/components/header"
 
-const whatsappNumber = "971501234567" // Replace with your client's actual WhatsApp number
+const whatsappNumber = "+447707783963" // Replace with your client's actual WhatsApp number
 
 export default function ContactPage() {
   const searchParams = useSearchParams()
@@ -58,12 +58,10 @@ export default function ContactPage() {
       <div className="container mx-auto py-24 px-4">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-4xl md:text-5xl font-serif mb-8 text-center text-[#2c2824]">Connect With Us</h1>
-
-          <div className="text-center mb-16">
-            <p className="text-lg md:text-xl text-[#2c2824]/80 italic">
-              Every garment carries a story. Let&apos;s begin yours.
-            </p>
-          </div>
+      <div className="text-center mb-16">
+  <p className="text-lg md:text-xl text-[#2c2824]/80 italic">Every garment carries a story,</p>
+  <p className="text-lg md:text-xl text-[#2c2824]/80 italic">Let&apos;s begin yours.</p>
+</div>
 
           <div className="grid md:grid-cols-2 gap-12 items-start">
             {/* Contact Form */}
