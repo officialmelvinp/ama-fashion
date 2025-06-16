@@ -58,33 +58,9 @@ export default function Home() {
       <section className="bg-[#f4f0e8] py-6 md:py-10">
         <div className="container mx-auto px-8">
           <h2 className="font-serif text-4xl md:text-5xl text-center text-[#2c2824] mb-16 tracking-wide">
-            COLLECTIONS
+            COLLECTION
           </h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
-            <Link href="/shop#ayaba-bubu" className="group">
-              <div className="aspect-[3/4] relative mb-4 overflow-hidden">
-                <Image
-                  src="/images/ama4.jpeg"
-                  alt="Ayaba Bubu Collection"
-                  fill
-                  className="object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-              </div>
-              <h3 className="font-serif text-xl text-[#2c2824] text-center">Ayaba Bùbu</h3>
-            </Link>
-
-            <Link href="/shop#candy-combat" className="group">
-              <div className="aspect-[3/4] relative mb-4 overflow-hidden">
-                <Image
-                  src="/images/ama5.jpeg"
-                  alt="Candy Combat Collection"
-                  fill
-                  className="object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-              </div>
-              <h3 className="font-serif text-xl text-[#2c2824] text-center">Candy Combat</h3>
-            </Link>
-
             <Link href="/shop#the-manifested-set" className="group">
               <div className="aspect-[3/4] relative mb-4 overflow-hidden">
                 <Image
@@ -107,6 +83,29 @@ export default function Home() {
                 />
               </div>
               <h3 className="font-serif text-xl text-[#2c2824] text-center">Ayọ̀mídé</h3>
+            </Link>
+            <Link href="/shop#ayaba-bubu" className="group">
+              <div className="aspect-[3/4] relative mb-4 overflow-hidden">
+                <Image
+                  src="/images/ama4.jpeg"
+                  alt="Ayaba Bubu Collection"
+                  fill
+                  className="object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+              </div>
+              <h3 className="font-serif text-xl text-[#2c2824] text-center">Àyaba</h3>
+            </Link>
+
+            <Link href="/shop#candy-combat" className="group">
+              <div className="aspect-[3/4] relative mb-4 overflow-hidden">
+                <Image
+                  src="/images/ama5.jpeg"
+                  alt="Candy Combat Collection"
+                  fill
+                  className="object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+              </div>
+              <h3 className="font-serif text-xl text-[#2c2824] text-center">Candy Combat</h3>
             </Link>
           </div>
         </div>

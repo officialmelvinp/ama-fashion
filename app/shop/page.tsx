@@ -19,6 +19,7 @@ type Product = {
   colors?: string[]
   materialLine?: string
   productCode?: string
+  selectedColor?: string // ✅ Added this line
 }
 
 // ============= PRODUCT DATA =============
@@ -302,10 +303,10 @@ const allProducts: Product[] = [
     category: "the-manifested-set",
     essences: ["sacred", "gatherings"],
   },
-  // Ayọ̀mídé - 2 items (unchanged as requested)
+  // Ayọ̀mídé - 2 items with individual colors
   {
     id: "ayomide-blue",
-    name: "Ayọ̀mídé Blue",
+    name: "Ayọ̀mídé",
     subtitle: "A Quiet Ode to Joy",
     materials: ["adire"],
     description: "Joy woven into form. A dress that carries the lightness of being.",
@@ -313,10 +314,12 @@ const allProducts: Product[] = [
     images: ["/images/ama6.jpeg"],
     category: "ayomide",
     essences: ["everyday", "sacred"],
+    colors: ["#3B82F6"], // Blue hex code only
+    selectedColor: "#3B82F6", // Default to blue
   },
   {
     id: "ayomide-pink",
-    name: "Ayọ̀mídé Pink",
+    name: "Ayọ̀mídé",
     subtitle: "A Quiet Ode to Joy",
     materials: ["adire"],
     description: "Joy woven into form. A dress that carries the lightness of being.",
@@ -324,6 +327,8 @@ const allProducts: Product[] = [
     images: ["/images/ama6.jpeg"],
     category: "ayomide",
     essences: ["everyday", "sacred"],
+    colors: ["#EC4899"], // Pink hex code only
+    selectedColor: "#EC4899", // Default to pink
   },
 ]
 
@@ -444,8 +449,9 @@ export default function ShopPage() {
       <div className="container mx-auto py-24 px-4">
         {/* Top mood line */}
         <div className="max-w-4xl mx-auto mb-16 text-center">
+          <p className="text-lg md:text-xl lg:text-2xl font-serif text-[#2c2824] italic">Fabrics that remember.</p>
           <p className="text-lg md:text-xl lg:text-2xl font-serif text-[#2c2824] italic">
-            Fabrics that remember. Garments that manifest lineage.
+            Garments that manifest lineage.
           </p>
         </div>
 
@@ -467,6 +473,33 @@ export default function ShopPage() {
                   All
                 </button>
 
+                {/* The Manifested Set Button */}
+                <button
+                  onClick={() => handleCollectionFilter("the-manifested-set")}
+                  className={`px-4 md:px-6 py-2 md:py-3 rounded-full text-xs md:text-sm transition-colors ${
+                    activeFilter === "the-manifested-set"
+                      ? "bg-[#2c2824] text-white"
+                      : "bg-[#f4f0e8] text-[#2c2824] hover:bg-[#2c2824]/10"
+                  }`}
+                >
+                  The Manifested Set
+                </button>
+
+                
+                
+
+                {/* Ayọ̀mídé Button */}
+                <button
+                  onClick={() => handleCollectionFilter("ayomide")}
+                  className={`px-4 md:px-6 py-2 md:py-3 rounded-full text-xs md:text-sm transition-colors ${
+                    activeFilter === "ayomide"
+                      ? "bg-[#2c2824] text-white"
+                      : "bg-[#f4f0e8] text-[#2c2824] hover:bg-[#2c2824]/10"
+                  }`}
+                >
+                  Ayọ̀mídé
+                </button>
+
                 {/* Ayaba Bùbù Button */}
                 <button
                   onClick={() => handleCollectionFilter("ayaba-bubu")}
@@ -476,7 +509,7 @@ export default function ShopPage() {
                       : "bg-[#f4f0e8] text-[#2c2824] hover:bg-[#2c2824]/10"
                   }`}
                 >
-                  Ayaba Bùbù
+                  Àyaba
                 </button>
 
                 {/* Candy Combat Button */}
@@ -491,29 +524,6 @@ export default function ShopPage() {
                   Candy Combat
                 </button>
 
-                {/* The Manifested Set Button */}
-                <button
-                  onClick={() => handleCollectionFilter("the-manifested-set")}
-                  className={`px-4 md:px-6 py-2 md:py-3 rounded-full text-xs md:text-sm transition-colors ${
-                    activeFilter === "the-manifested-set"
-                      ? "bg-[#2c2824] text-white"
-                      : "bg-[#f4f0e8] text-[#2c2824] hover:bg-[#2c2824]/10"
-                  }`}
-                >
-                  The Manifested Set
-                </button>
-
-                {/* Ayọ̀mídé Button */}
-                <button
-                  onClick={() => handleCollectionFilter("ayomide")}
-                  className={`px-4 md:px-6 py-2 md:py-3 rounded-full text-xs md:text-sm transition-colors ${
-                    activeFilter === "ayomide"
-                      ? "bg-[#2c2824] text-white"
-                      : "bg-[#f4f0e8] text-[#2c2824] hover:bg-[#2c2824]/10"
-                  }`}
-                >
-                  Ayọ̀mídé
-                </button>
               </div>
             </div>
           </div>
@@ -536,10 +546,23 @@ export default function ShopPage() {
                   />
                 </div>
 
-                {/* Product Information - All Centered (removed product code section) */}
+                {/* Product Information - All Centered */}
                 <div className="text-center space-y-1">
-                  <h2 className="font-serif text-xl md:text-2xl text-[#2c2824]">{product.name}</h2>
+                  {/* Product name with color box beside it */}
+                  <div className="flex items-center justify-center gap-2">
+                    <h2 className="font-serif text-xl md:text-2xl text-[#2c2824]">{product.name}</h2>
+                    {/* Color box beside name - Only for Ayomide products */}
+                    {product.colors && product.category === "ayomide" && (
+                      <div
+                        className="w-5 h-5 rounded-full border-2 border-gray-300"
+                        style={{ backgroundColor: product.colors[0] }}
+                        title={product.colors[0] === "#3B82F6" ? "Blue" : "Pink"}
+                      />
+                    )}
+                  </div>
+
                   <h3 className="font-serif text-base md:text-lg text-[#2c2824]/80">{product.subtitle}</h3>
+
                   {/* Second part of description (A kaftan stitched...) */}
                   {descriptionParts.secondPart && (
                     <p className="text-sm italic text-[#2c2824] leading-relaxed">{descriptionParts.secondPart}</p>
