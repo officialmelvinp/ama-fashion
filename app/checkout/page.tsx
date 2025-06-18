@@ -52,6 +52,7 @@ export default function CheckoutPage() {
     notes: "",
   })
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string>("")
 
   useEffect(() => {
     // Get selected product from localStorage
@@ -79,24 +80,51 @@ export default function CheckoutPage() {
     if (!product) return
 
     setIsLoading(true)
+    setError("")
 
     try {
+      console.log("🚀 Starting checkout process...")
+      console.log("Product:", product.name, product.id)
+
       const price = extractPrice(product.price)
+      console.log("💰 Extracted price:", price, "AED")
+
+      // Check environment variables (client-side check)
+      console.log("🔧 Environment check:")
+      console.log("- NEXT_PUBLIC_PAYPAL_CLIENT_ID exists:", !!process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID)
+      console.log("- NODE_ENV:", process.env.NODE_ENV)
 
       // Store customer info for confirmation page
       localStorage.setItem("customerInfo", JSON.stringify(form))
+      console.log("💾 Customer info stored")
 
       // Create PayPal order
+      console.log("🏦 Creating PayPal order...")
       const order = await createPayPalOrder(product.id, price)
+      console.log("✅ PayPal order created:", order)
 
       // Redirect to PayPal
-      const approveLink = order.links.find((link: { rel: string }) => link.rel === "approve")
+      const approveLink = order.links?.find((link: { rel: string }) => link.rel === "approve")
+      console.log("🔗 Approve link:", approveLink)
+
       if (approveLink) {
+        console.log("🚀 Redirecting to PayPal...")
         window.location.href = approveLink.href
+      } else {
+        throw new Error("No approval link found in PayPal response")
       }
     } catch (error) {
-      console.error("Checkout error:", error)
-      alert("There was an error processing your order. Please try again.")
+      console.error("❌ Checkout error:", error)
+
+      // More detailed error handling
+      let errorMessage = "There was an error processing your order. Please try again."
+
+      if (error instanceof Error) {
+        console.error("Error details:", error.message)
+        errorMessage = `Error: ${error.message}`
+      }
+
+      setError(errorMessage)
     } finally {
       setIsLoading(false)
     }
@@ -161,6 +189,14 @@ export default function CheckoutPage() {
             {/* Checkout Form */}
             <div className="bg-white p-8 rounded-lg shadow-sm">
               <h2 className="text-xl font-serif mb-6 text-[#2c2824]">Shipping Information</h2>
+
+              {/* Error Display */}
+              {error && (
+                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-red-800 text-sm">{error}</p>
+                  <p className="text-red-600 text-xs mt-2">Check the browser console (F12) for more details.</p>
+                </div>
+              )}
 
               <form className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
