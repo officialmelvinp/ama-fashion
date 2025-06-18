@@ -7,8 +7,13 @@ const PAYPAL_CONFIG = {
   CLIENT_ID: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || "your-paypal-client-id-here",
   CLIENT_SECRET: process.env.PAYPAL_CLIENT_SECRET || "your-paypal-client-secret-here",
 
-  // Use sandbox for testing, live for production
-  BASE_URL: process.env.NODE_ENV === "production" ? "https://api.paypal.com" : "https://api.sandbox.paypal.com",
+  // Use PAYPAL_MODE environment variable, fallback to NODE_ENV check
+  BASE_URL:
+    process.env.PAYPAL_MODE === "live"
+      ? "https://api.paypal.com"
+      : process.env.NODE_ENV === "production"
+        ? "https://api.paypal.com"
+        : "https://api.sandbox.paypal.com",
 }
 
 // Get PayPal access token
@@ -26,7 +31,9 @@ async function getPayPalAccessToken(): Promise<string> {
     })
 
     if (!response.ok) {
-      throw new Error(`PayPal auth failed: ${response.status}`)
+      const errorText = await response.text()
+      console.error("PayPal auth failed:", response.status, errorText)
+      throw new Error(`PayPal auth failed: ${response.status} - ${errorText}`)
     }
 
     const data = await response.json()
@@ -40,6 +47,13 @@ async function getPayPalAccessToken(): Promise<string> {
 // Create PayPal order
 export async function createPayPalOrder(productId: string, amount: number) {
   try {
+    console.log("Creating PayPal order with config:", {
+      mode: process.env.PAYPAL_MODE || "sandbox",
+      baseUrl: PAYPAL_CONFIG.BASE_URL,
+      clientIdExists: !!PAYPAL_CONFIG.CLIENT_ID,
+      clientSecretExists: !!PAYPAL_CONFIG.CLIENT_SECRET,
+    })
+
     const accessToken = await getPayPalAccessToken()
 
     const orderData = {
