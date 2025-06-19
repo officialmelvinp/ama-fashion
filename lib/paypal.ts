@@ -19,7 +19,25 @@ const PAYPAL_CONFIG = {
 // Get PayPal access token
 async function getPayPalAccessToken(): Promise<string> {
   try {
+    // Debug logging
+    console.log("🔧 PayPal Config Debug:")
+    console.log("- CLIENT_ID length:", PAYPAL_CONFIG.CLIENT_ID?.length || 0)
+    console.log("- CLIENT_ID starts with:", PAYPAL_CONFIG.CLIENT_ID?.substring(0, 10) + "...")
+    console.log("- CLIENT_SECRET length:", PAYPAL_CONFIG.CLIENT_SECRET?.length || 0)
+    console.log("- CLIENT_SECRET starts with:", PAYPAL_CONFIG.CLIENT_SECRET?.substring(0, 10) + "...")
+    console.log("- BASE_URL:", PAYPAL_CONFIG.BASE_URL)
+    console.log("- PAYPAL_MODE:", process.env.PAYPAL_MODE)
+
+    // Check if credentials exist
+    if (!PAYPAL_CONFIG.CLIENT_ID || PAYPAL_CONFIG.CLIENT_ID === "your-paypal-client-id-here") {
+      throw new Error("PayPal Client ID is missing or not set")
+    }
+    if (!PAYPAL_CONFIG.CLIENT_SECRET || PAYPAL_CONFIG.CLIENT_SECRET === "your-paypal-client-secret-here") {
+      throw new Error("PayPal Client Secret is missing or not set")
+    }
+
     const auth = Buffer.from(`${PAYPAL_CONFIG.CLIENT_ID}:${PAYPAL_CONFIG.CLIENT_SECRET}`).toString("base64")
+    console.log("🔐 Auth string length:", auth.length)
 
     const response = await fetch(`${PAYPAL_CONFIG.BASE_URL}/v1/oauth2/token`, {
       method: "POST",
@@ -30,13 +48,16 @@ async function getPayPalAccessToken(): Promise<string> {
       body: "grant_type=client_credentials",
     })
 
+    console.log("📡 PayPal auth response status:", response.status)
+
     if (!response.ok) {
       const errorText = await response.text()
-      console.error("PayPal auth failed:", response.status, errorText)
+      console.error("❌ PayPal auth failed response:", errorText)
       throw new Error(`PayPal auth failed: ${response.status} - ${errorText}`)
     }
 
     const data = await response.json()
+    console.log("✅ PayPal auth successful")
     return data.access_token
   } catch (error) {
     console.error("PayPal authentication error:", error)

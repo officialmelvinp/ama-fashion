@@ -24,6 +24,46 @@ type Product = {
 
 // ============= PRODUCT DATA =============
 const allProducts: Product[] = [
+
+  // The Manifested Set - 1 item (no product code)
+  {
+    id: "manifest-set-1",
+    name: "The Manifest Set",
+    subtitle: "What You Asked For, Woven",
+    materials: ["batik"],
+    description: "A pairing of ease and presence. One-size drape, bound by craft.",
+    price: "950 AED ($255 USD)",
+    images: ["/images/ama5.jpeg"],
+    category: "the-manifested-set",
+    essences: ["sacred", "gatherings"],
+  },
+  // Ayọ̀mídé - 2 items with individual colors
+  {
+    id: "ayomide-blue",
+    name: "Ayọ̀mídé",
+    subtitle: "A Quiet Ode to Joy",
+    materials: ["adire"],
+    description: "Joy woven into form. A dress that carries the lightness of being.",
+    price: "780 AED ($210 USD)",
+    images: ["/images/ama6.jpeg"],
+    category: "ayomide",
+    essences: ["everyday", "sacred"],
+    colors: ["#3B82F6"], // Blue hex code only
+    selectedColor: "#3B82F6", // Default to blue
+  },
+  {
+    id: "ayomide-pink",
+    name: "Ayọ̀mídé",
+    subtitle: "A Quiet Ode to Joy",
+    materials: ["adire"],
+    description: "Joy woven into form. A dress that carries the lightness of being.",
+    price: "780 AED ($210 USD)",
+    images: ["/images/ama6.jpeg"],
+    category: "ayomide",
+    essences: ["everyday", "sacred"],
+    colors: ["#EC4899"], // Pink hex code only
+    selectedColor: "#EC4899", // Default to pink
+  },
   // Ayaba Bubu - 12 items (now with numbers in name)
   {
     id: "ayaba-bubu-1",
@@ -291,45 +331,7 @@ const allProducts: Product[] = [
     essences: ["everyday", "gatherings"],
   },
 
-  // The Manifested Set - 1 item (no product code)
-  {
-    id: "manifest-set-1",
-    name: "The Manifest Set",
-    subtitle: "What You Asked For, Woven",
-    materials: ["batik"],
-    description: "A pairing of ease and presence. One-size drape, bound by craft.",
-    price: "950 AED ($255 USD)",
-    images: ["/images/ama5.jpeg"],
-    category: "the-manifested-set",
-    essences: ["sacred", "gatherings"],
-  },
-  // Ayọ̀mídé - 2 items with individual colors
-  {
-    id: "ayomide-blue",
-    name: "Ayọ̀mídé",
-    subtitle: "A Quiet Ode to Joy",
-    materials: ["adire"],
-    description: "Joy woven into form. A dress that carries the lightness of being.",
-    price: "780 AED ($210 USD)",
-    images: ["/images/ama6.jpeg"],
-    category: "ayomide",
-    essences: ["everyday", "sacred"],
-    colors: ["#3B82F6"], // Blue hex code only
-    selectedColor: "#3B82F6", // Default to blue
-  },
-  {
-    id: "ayomide-pink",
-    name: "Ayọ̀mídé",
-    subtitle: "A Quiet Ode to Joy",
-    materials: ["adire"],
-    description: "Joy woven into form. A dress that carries the lightness of being.",
-    price: "780 AED ($210 USD)",
-    images: ["/images/ama6.jpeg"],
-    category: "ayomide",
-    essences: ["everyday", "sacred"],
-    colors: ["#EC4899"], // Pink hex code only
-    selectedColor: "#EC4899", // Default to pink
-  },
+  
 ]
 
 export default function ShopPage() {
