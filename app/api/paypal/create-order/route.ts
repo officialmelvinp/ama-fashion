@@ -34,10 +34,13 @@ export async function POST(request: NextRequest) {
     const accessToken = await getPayPalAccessToken()
     console.log("✅ Got PayPal access token")
 
-    // Convert AED to USD for sandbox testing (approximate rate: 1 AED = 0.27 USD)
-    const isProduction = process.env.PAYPAL_MODE === "live"
-    const currency = isProduction ? "AED" : "USD"
-    const convertedAmount = isProduction ? amount : Math.round(amount * 0.27)
+    // PayPal doesn't support AED - always use USD for processing
+    // Current exchange rate: 1 AED ≈ 0.27 USD (update this rate as needed)
+    const AED_TO_USD_RATE = 0.27
+    const currency = "USD" // Always use USD for PayPal
+    const convertedAmount = Math.round(amount * AED_TO_USD_RATE * 100) / 100 // Convert AED to USD with 2 decimal places
+
+    console.log(`💱 Converting ${amount} AED to ${convertedAmount} USD`)
 
     const orderData = {
       intent: "CAPTURE",
@@ -46,9 +49,9 @@ export async function POST(request: NextRequest) {
           reference_id: productId,
           amount: {
             currency_code: currency,
-            value: convertedAmount.toString(),
+            value: convertedAmount.toFixed(2), // Ensure 2 decimal places
           },
-          description: `AMA Fashion - ${productId}`,
+          description: `AMA Fashion - ${productId} (${amount} AED = ${convertedAmount} USD)`,
         },
       ],
       application_context: {
