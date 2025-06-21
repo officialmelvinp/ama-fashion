@@ -55,12 +55,9 @@ export async function POST(request: NextRequest) {
       ],
       application_context: {
         brand_name: "AMA Fashion",
-        landing_page: "GUEST_CHECKOUT", // 🎯 Force guest checkout instead of login
+        landing_page: "BILLING", // 🎯 This forces the card payment page (guest checkout)
         user_action: "PAY_NOW",
-        payment_method: {
-          payer_selected: "PAYPAL",
-          payee_preferred: "UNRESTRICTED", // 🎯 Allow all payment methods
-        },
+        shipping_preference: "NO_SHIPPING", // 🎯 Skip shipping since we handle it separately
         return_url: `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/payment-success`,
         cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/checkout`,
       },
