@@ -1,45 +1,44 @@
-"use client"
+"use client";
 
-import type React from "react"
-
-import { useState, useEffect } from "react"
-import Image from "next/image"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { createPayPalOrder } from "@/lib/paypal"
-import Header from "@/components/header"
+import type React from "react";
+import { useState, useEffect } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { createPayPalOrder } from "@/lib/paypal";
+import Header from "@/components/header";
 
 type Product = {
-  id: string
-  name: string
-  subtitle: string
-  materials: string[]
-  description: string
-  price: string
-  images: string[]
-  category: string
-  essences: string[]
-  materialLine: string
-  colors?: string[]
-}
+  id: string;
+  name: string;
+  subtitle: string;
+  materials: string[];
+  description: string;
+  price: string;
+  images: string[];
+  category: string;
+  essences: string[];
+  materialLine: string;
+  colors?: string[];
+};
 
 type CheckoutForm = {
-  firstName: string
-  lastName: string
-  email: string
-  phone: string
-  address: string
-  city: string
-  country: string
-  postalCode: string
-  notes: string
-}
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  country: string;
+  postalCode: string;
+  notes: string;
+};
 
 export default function CheckoutPage() {
-  const [product, setProduct] = useState<Product | null>(null)
+  const [product, setProduct] = useState<Product | null>(null);
   const [form, setForm] = useState<CheckoutForm>({
     firstName: "",
     lastName: "",
@@ -50,85 +49,58 @@ export default function CheckoutPage() {
     country: "",
     postalCode: "",
     notes: "",
-  })
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string>("")
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string>("");
 
   useEffect(() => {
-    // Get selected product from localStorage
-    const selectedProduct = localStorage.getItem("selectedProduct")
+    const selectedProduct = localStorage.getItem("selectedProduct");
     if (selectedProduct) {
-      setProduct(JSON.parse(selectedProduct))
+      setProduct(JSON.parse(selectedProduct));
     }
-  }, [])
+  }, []);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
     setForm((prev) => ({
       ...prev,
       [name]: value,
-    }))
-  }
+    }));
+  };
 
   const extractPrice = (priceString: string) => {
-    // Extract AED price from string like "850 AED ($230 USD)"
-    const aedMatch = priceString.match(/(\d+)\s*AED/)
-    return aedMatch ? Number.parseInt(aedMatch[1]) : 0
-  }
+    const aedMatch = priceString.match(/(\d+)\s*AED/);
+    return aedMatch ? Number.parseInt(aedMatch[1]) : 0;
+  };
 
   const handleCheckout = async () => {
-    if (!product) return
-
-    setIsLoading(true)
-    setError("")
+    if (!product) return;
+    setIsLoading(true);
+    setError("");
 
     try {
-      console.log("🚀 Starting checkout process...")
-      console.log("Product:", product.name, product.id)
+      const price = extractPrice(product.price);
+      localStorage.setItem("customerInfo", JSON.stringify(form));
 
-      const price = extractPrice(product.price)
-      console.log("💰 Extracted price:", price, "AED")
+      const order = await createPayPalOrder(product.id, price);
+      console.log("✅ PayPal order created:", order);
 
-      // Check environment variables (client-side check)
-      console.log("🔧 Environment check:")
-      console.log("- NEXT_PUBLIC_PAYPAL_CLIENT_ID exists:", !!process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID)
-      console.log("- NODE_ENV:", process.env.NODE_ENV)
-
-      // Store customer info for confirmation page
-      localStorage.setItem("customerInfo", JSON.stringify(form))
-      console.log("💾 Customer info stored")
-
-      // Create PayPal order
-      console.log("🏦 Creating PayPal order...")
-      const order = await createPayPalOrder(product.id, price)
-      console.log("✅ PayPal order created:", order)
-
-      // Redirect to PayPal
-      const approveLink = order.links?.find((link: { rel: string }) => link.rel === "approve")
-      console.log("🔗 Approve link:", approveLink)
-
+      const approveLink = order.links?.find((link: { rel: string }) => link.rel === "approve");
       if (approveLink) {
-        console.log("🚀 Redirecting to PayPal...")
-        window.location.href = approveLink.href
+        console.log("🚀 Redirecting to PayPal:", approveLink.href);
+        window.location.href = approveLink.href;
       } else {
-        throw new Error("No approval link found in PayPal response")
+        throw new Error("No PayPal approval link found");
       }
-    } catch (error) {
-      console.error("❌ Checkout error:", error)
-
-      // More detailed error handling
-      let errorMessage = "There was an error processing your order. Please try again."
-
-      if (error instanceof Error) {
-        console.error("Error details:", error.message)
-        errorMessage = `Error: ${error.message}`
-      }
-
-      setError(errorMessage)
+    } catch (err) {
+      console.error("❌ Checkout error:", err);
+      setError(err instanceof Error ? err.message : "An unknown error occurred");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   if (!product) {
     return (
@@ -140,23 +112,23 @@ export default function CheckoutPage() {
           </Link>
         </div>
       </div>
-    )
+    );
   }
 
   return (
     <div className="min-h-screen bg-[#f8f3ea]">
-      {/* Navigation Header */}
       <Header bgColor="bg-white/90 backdrop-blur-sm" textColor="text-[#2c2824]" />
 
       <div className="container mx-auto py-12 px-4">
         <div className="max-w-6xl mx-auto">
-          <h1 className="text-3xl md:text-4xl font-serif text-center mb-12 text-[#2c2824]">Complete Your Order</h1>
+          <h1 className="text-3xl md:text-4xl font-serif text-center mb-12 text-[#2c2824]">
+            Complete Your Order
+          </h1>
 
           <div className="grid lg:grid-cols-2 gap-12">
             {/* Product Summary */}
             <div className="bg-white p-8 rounded-lg shadow-sm">
               <h2 className="text-xl font-serif mb-6 text-[#2c2824]">Order Summary</h2>
-
               <div className="flex gap-6 mb-6">
                 <div className="relative w-24 h-32 flex-shrink-0">
                   <Image
@@ -172,7 +144,9 @@ export default function CheckoutPage() {
                   </h3>
                   <p className="text-sm text-[#2c2824]/80 mb-2">{product.materialLine}</p>
                   {product.colors && (
-                    <p className="text-sm text-[#2c2824]/80 mb-2">Colors: {product.colors.join(" | ")}</p>
+                    <p className="text-sm text-[#2c2824]/80 mb-2">
+                      Colors: {product.colors.join(" | ")}
+                    </p>
                   )}
                   <p className="text-sm italic text-[#2c2824]/90">{product.description}</p>
                 </div>
@@ -190,11 +164,12 @@ export default function CheckoutPage() {
             <div className="bg-white p-8 rounded-lg shadow-sm">
               <h2 className="text-xl font-serif mb-6 text-[#2c2824]">Shipping Information</h2>
 
-              {/* Error Display */}
               {error && (
                 <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
                   <p className="text-red-800 text-sm">{error}</p>
-                  <p className="text-red-600 text-xs mt-2">Check the browser console (F12) for more details.</p>
+                  <p className="text-red-600 text-xs mt-2">
+                    Check console (F12) for details.
+                  </p>
                 </div>
               )}
 
@@ -208,7 +183,6 @@ export default function CheckoutPage() {
                       value={form.firstName}
                       onChange={handleInputChange}
                       required
-                      className="mt-1"
                       autoComplete="given-name"
                     />
                   </div>
@@ -220,7 +194,6 @@ export default function CheckoutPage() {
                       value={form.lastName}
                       onChange={handleInputChange}
                       required
-                      className="mt-1"
                       autoComplete="family-name"
                     />
                   </div>
@@ -235,13 +208,12 @@ export default function CheckoutPage() {
                     value={form.email}
                     onChange={handleInputChange}
                     required
-                    className="mt-1"
                     autoComplete="email"
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="phone">Phone Number (for WhatsApp contact) *</Label>
+                  <Label htmlFor="phone">Phone Number *</Label>
                   <Input
                     id="phone"
                     name="phone"
@@ -249,7 +221,6 @@ export default function CheckoutPage() {
                     value={form.phone}
                     onChange={handleInputChange}
                     required
-                    className="mt-1"
                     placeholder="+971 50 123 4567"
                     autoComplete="tel"
                   />
@@ -263,7 +234,6 @@ export default function CheckoutPage() {
                     value={form.address}
                     onChange={handleInputChange}
                     required
-                    className="mt-1"
                     autoComplete="street-address"
                   />
                 </div>
@@ -277,7 +247,6 @@ export default function CheckoutPage() {
                       value={form.city}
                       onChange={handleInputChange}
                       required
-                      className="mt-1"
                       autoComplete="address-level2"
                     />
                   </div>
@@ -289,7 +258,6 @@ export default function CheckoutPage() {
                       value={form.country}
                       onChange={handleInputChange}
                       required
-                      className="mt-1"
                       autoComplete="country-name"
                     />
                   </div>
@@ -302,7 +270,6 @@ export default function CheckoutPage() {
                     name="postalCode"
                     value={form.postalCode}
                     onChange={handleInputChange}
-                    className="mt-1"
                     autoComplete="postal-code"
                   />
                 </div>
@@ -314,7 +281,6 @@ export default function CheckoutPage() {
                     name="notes"
                     value={form.notes}
                     onChange={handleInputChange}
-                    className="mt-1"
                     placeholder="Any special requests or delivery instructions..."
                     rows={3}
                   />
@@ -322,6 +288,7 @@ export default function CheckoutPage() {
 
                 <div className="pt-6">
                   <Button
+                    type="button"
                     onClick={handleCheckout}
                     disabled={
                       isLoading ||
@@ -341,7 +308,7 @@ export default function CheckoutPage() {
 
                 <div className="text-center text-sm text-[#2c2824]/60 mt-4">
                   <p>🔒 Secure payment powered by PayPal</p>
-                  <p>📱 You&apos;ll receive WhatsApp contact after payment for delivery coordination</p>
+                  <p>📱 WhatsApp contact after payment for delivery coordination</p>
                 </div>
               </form>
             </div>
@@ -349,5 +316,5 @@ export default function CheckoutPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
