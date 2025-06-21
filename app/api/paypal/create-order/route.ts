@@ -35,10 +35,9 @@ export async function POST(request: NextRequest) {
     console.log("✅ Got PayPal access token")
 
     // PayPal doesn't support AED - always use USD for processing
-    // Current exchange rate: 1 AED ≈ 0.27 USD (update this rate as needed)
     const AED_TO_USD_RATE = 0.27
-    const currency = "USD" // Always use USD for PayPal
-    const convertedAmount = Math.round(amount * AED_TO_USD_RATE * 100) / 100 // Convert AED to USD with 2 decimal places
+    const currency = "USD"
+    const convertedAmount = Math.round(amount * AED_TO_USD_RATE * 100) / 100
 
     console.log(`💱 Converting ${amount} AED to ${convertedAmount} USD`)
 
@@ -49,15 +48,19 @@ export async function POST(request: NextRequest) {
           reference_id: productId,
           amount: {
             currency_code: currency,
-            value: convertedAmount.toFixed(2), // Ensure 2 decimal places
+            value: convertedAmount.toFixed(2),
           },
           description: `AMA Fashion - ${productId} (${amount} AED = ${convertedAmount} USD)`,
         },
       ],
       application_context: {
         brand_name: "AMA Fashion",
-        landing_page: "NO_PREFERENCE",
+        landing_page: "GUEST_CHECKOUT", // 🎯 Force guest checkout instead of login
         user_action: "PAY_NOW",
+        payment_method: {
+          payer_selected: "PAYPAL",
+          payee_preferred: "UNRESTRICTED", // 🎯 Allow all payment methods
+        },
         return_url: `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/payment-success`,
         cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/checkout`,
       },

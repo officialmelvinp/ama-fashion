@@ -53,6 +53,7 @@ export default function CheckoutPage() {
   })
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string>("")
+  const [paymentMethod, setPaymentMethod] = useState<"paypal" | "stripe">("paypal")
 
   useEffect(() => {
     // Get selected product from localStorage
@@ -81,36 +82,22 @@ export default function CheckoutPage() {
     return Math.round(aedPrice * AED_TO_USD_RATE * 100) / 100
   }
 
-  const handleCheckout = async () => {
+  const handlePayPalCheckout = async () => {
     if (!product) return
 
     setIsLoading(true)
     setError("")
 
     try {
-      console.log("🚀 Starting checkout process...")
-      console.log("Product:", product.name, product.id)
+      console.log("🚀 Starting PayPal checkout process...")
 
       const price = extractPrice(product.price)
-      console.log("💰 Extracted price:", price, "AED")
-
-      // Check environment variables (client-side check)
-      console.log("🔧 Environment check:")
-      console.log("- NEXT_PUBLIC_PAYPAL_CLIENT_ID exists:", !!process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID)
-      console.log("- NODE_ENV:", process.env.NODE_ENV)
-
-      // Store customer info for confirmation page
       localStorage.setItem("customerInfo", JSON.stringify(form))
-      console.log("💾 Customer info stored")
 
-      // Create PayPal order
-      console.log("🏦 Creating PayPal order...")
       const order = await createPayPalOrder(product.id, price)
       console.log("✅ PayPal order created:", order)
 
-      // Redirect to PayPal
       const approveLink = order.links?.find((link: { rel: string }) => link.rel === "approve")
-      console.log("🔗 Approve link:", approveLink)
 
       if (approveLink) {
         console.log("🚀 Redirecting to PayPal...")
@@ -119,19 +106,57 @@ export default function CheckoutPage() {
         throw new Error("No approval link found in PayPal response")
       }
     } catch (error) {
-      console.error("❌ Checkout error:", error)
-
-      // More detailed error handling
-      let errorMessage = "There was an error processing your order. Please try again."
-
-      if (error instanceof Error) {
-        console.error("Error details:", error.message)
-        errorMessage = `Error: ${error.message}`
-      }
-
-      setError(errorMessage)
+      console.error("❌ PayPal checkout error:", error)
+      setError(error instanceof Error ? error.message : "PayPal checkout failed")
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handleStripeCheckout = async () => {
+    if (!product) return
+
+    setIsLoading(true)
+    setError("")
+
+    try {
+      console.log("🚀 Starting Stripe checkout process...")
+
+      const price = extractPrice(product.price)
+      localStorage.setItem("customerInfo", JSON.stringify(form))
+
+      // Create Stripe checkout session
+      const response = await fetch("/api/stripe/create-checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          productId: product.id,
+          amount: price,
+          customerInfo: form,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to create Stripe checkout session")
+      }
+
+      const { url } = await response.json()
+      window.location.href = url
+    } catch (error) {
+      console.error("❌ Stripe checkout error:", error)
+      setError(error instanceof Error ? error.message : "Stripe checkout failed")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleCheckout = () => {
+    if (paymentMethod === "paypal") {
+      handlePayPalCheckout()
+    } else {
+      handleStripeCheckout()
     }
   }
 
@@ -188,19 +213,54 @@ export default function CheckoutPage() {
                   <span>Total (AED):</span>
                   <span>{product.price}</span>
                 </div>
-                <div className="flex justify-between items-center text-sm text-[#2c2824]/70">
-                  <span>PayPal will charge (USD):</span>
-                  <span>${getUSDPrice(extractPrice(product.price)).toFixed(2)} USD</span>
-                </div>
-                <p className="text-xs text-[#2c2824]/60 mt-2">
-                  * PayPal processes in USD. Exchange rate: 1 AED = $0.27 USD
-                </p>
+                {paymentMethod === "paypal" && (
+                  <>
+                    <div className="flex justify-between items-center text-sm text-[#2c2824]/70">
+                      <span>PayPal will charge (USD):</span>
+                      <span>${getUSDPrice(extractPrice(product.price)).toFixed(2)} USD</span>
+                    </div>
+                    <p className="text-xs text-[#2c2824]/60 mt-2">
+                      * PayPal processes in USD. Exchange rate: 1 AED = $0.27 USD
+                    </p>
+                  </>
+                )}
               </div>
             </div>
 
             {/* Checkout Form */}
             <div className="bg-white p-8 rounded-lg shadow-sm">
               <h2 className="text-xl font-serif mb-6 text-[#2c2824]">Shipping Information</h2>
+
+              {/* Payment Method Selection */}
+              <div className="mb-6">
+                <Label className="text-base font-medium mb-3 block">Choose Payment Method</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod("paypal")}
+                    className={`p-4 border-2 rounded-lg text-center transition-colors ${
+                      paymentMethod === "paypal"
+                        ? "border-[#2c2824] bg-[#2c2824]/5"
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    <div className="font-medium text-[#2c2824]">PayPal</div>
+                    <div className="text-xs text-[#2c2824]/60 mt-1">PayPal or Card</div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod("stripe")}
+                    className={`p-4 border-2 rounded-lg text-center transition-colors ${
+                      paymentMethod === "stripe"
+                        ? "border-[#2c2824] bg-[#2c2824]/5"
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    <div className="font-medium text-[#2c2824]">Credit Card</div>
+                    <div className="text-xs text-[#2c2824]/60 mt-1">Direct card payment</div>
+                  </button>
+                </div>
+              </div>
 
               {/* Error Display */}
               {error && (
@@ -347,12 +407,12 @@ export default function CheckoutPage() {
                     }
                     className="w-full bg-[#2c2824] text-white hover:bg-[#2c2824]/90 py-3 text-lg"
                   >
-                    {isLoading ? "Processing..." : "Continue to PayPal"}
+                    {isLoading ? "Processing..." : paymentMethod === "paypal" ? "Continue to PayPal" : "Pay with Card"}
                   </Button>
                 </div>
 
                 <div className="text-center text-sm text-[#2c2824]/60 mt-4">
-                  <p>🔒 Secure payment powered by PayPal</p>
+                  <p>🔒 Secure payment powered by {paymentMethod === "paypal" ? "PayPal" : "Stripe"}</p>
                   <p>📱 You&apos;ll receive WhatsApp contact after payment for delivery coordination</p>
                 </div>
               </form>
