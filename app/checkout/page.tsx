@@ -245,7 +245,7 @@ export default function CheckoutPage() {
                     }`}
                   >
                     <div className="font-medium text-[#2c2824]">PayPal</div>
-                    <div className="text-xs text-[#2c2824]/60 mt-1">PayPal or Card</div>
+                    <div className="text-xs text-[#2c2824]/60 mt-1">PayPal account or card</div>
                   </button>
                   <button
                     type="button"
@@ -256,8 +256,8 @@ export default function CheckoutPage() {
                         : "border-gray-200 hover:border-gray-300"
                     }`}
                   >
-                    <div className="font-medium text-[#2c2824]">Credit Card</div>
-                    <div className="text-xs text-[#2c2824]/60 mt-1">Direct card payment</div>
+                    <div className="font-medium text-[#2c2824]">Credit/Debit Card</div>
+                    <div className="text-xs text-[#2c2824]/60 mt-1">Direct card payment (Stripe)</div>
                   </button>
                 </div>
               </div>
@@ -407,13 +407,20 @@ export default function CheckoutPage() {
                     }
                     className="w-full bg-[#2c2824] text-white hover:bg-[#2c2824]/90 py-3 text-lg"
                   >
-                    {isLoading ? "Processing..." : paymentMethod === "paypal" ? "Continue to PayPal" : "Pay with Card"}
+                    {isLoading
+                      ? "Processing..."
+                      : paymentMethod === "paypal"
+                        ? "Continue to PayPal"
+                        : "Pay with Card (Stripe)"}
                   </Button>
                 </div>
 
                 <div className="text-center text-sm text-[#2c2824]/60 mt-4">
                   <p>🔒 Secure payment powered by {paymentMethod === "paypal" ? "PayPal" : "Stripe"}</p>
                   <p>📱 You&apos;ll receive WhatsApp contact after payment for delivery coordination</p>
+                  {paymentMethod === "stripe" && (
+                    <p className="text-xs mt-1">💳 Direct card payment • No account required • AED supported</p>
+                  )}
                 </div>
               </form>
             </div>
