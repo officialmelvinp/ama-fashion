@@ -25,6 +25,52 @@ type Product = {
 
 // ============= PRODUCT DATA =============
 const allProducts: Product[] = [
+
+  // Ayọ̀mídé - 2 items with colors
+  {
+    id: "ayomide-blue",
+    name: "Ayọ̀mídé Blue",
+    subtitle: "A Quiet Ode to Joy",
+    materials: ["adire"],
+    description: "Joy woven into form. A dress that carries the lightness of being.",
+    priceAED: "780 AED",
+    priceGBP: "£168 GBP",
+    images: ["/images/ama6.jpeg"],
+    category: "ayomide",
+    essences: ["everyday", "sacred"],
+    colors: ["#3B82F6"], // Blue hex code only
+    selectedColor: "#3B82F6", // Default to blue
+  },
+
+   // The Manifested Set - 1 item
+  {
+    id: "manifest-set-1",
+    name: "The Manifest Set",
+    subtitle: "What You Asked For, Woven",
+    materials: ["batik"],
+    description: "A pairing of ease and presence. One-size drape, bound by craft.",
+    priceAED: "950 AED",
+    priceGBP: "£205 GBP",
+    images: ["/images/ama5.jpeg"],
+    category: "the-manifested-set",
+    essences: ["sacred", "gatherings"],
+  },
+  
+  {
+    id: "ayomide-purple",
+    name: "Ayọ̀mídé Purple",
+    subtitle: "A Quiet Ode to Joy",
+    materials: ["adire"],
+    description: "Joy woven into form. A dress that carries the lightness of being.",
+    priceAED: "780 AED",
+    priceGBP: "£168 GBP",
+    images: ["/images/ama6.jpeg"],
+    category: "ayomide",
+    essences: ["everyday", "sacred"],
+    colors: ["#EC4899"], // Pink hex code only
+    selectedColor: "#EC4899", // Default to pink
+  },
+
   // Ayaba Bubu - 12 items
   {
     id: "ayaba-bubu-1",
@@ -339,49 +385,8 @@ const allProducts: Product[] = [
     essences: ["everyday", "gatherings"],
     productCode: "12",
   },
-  // The Manifested Set - 1 item
-  {
-    id: "manifest-set-1",
-    name: "The Manifest Set",
-    subtitle: "What You Asked For, Woven",
-    materials: ["batik"],
-    description: "A pairing of ease and presence. One-size drape, bound by craft.",
-    priceAED: "950 AED",
-    priceGBP: "£205 GBP",
-    images: ["/images/ama5.jpeg"],
-    category: "the-manifested-set",
-    essences: ["sacred", "gatherings"],
-  },
-  // Ayọ̀mídé - 2 items with colors
-  {
-    id: "ayomide-blue",
-    name: "Ayọ̀mídé Blue",
-    subtitle: "A Quiet Ode to Joy",
-    materials: ["adire"],
-    description: "Joy woven into form. A dress that carries the lightness of being.",
-    priceAED: "780 AED",
-    priceGBP: "£168 GBP",
-    images: ["/images/ama6.jpeg"],
-    category: "ayomide",
-    essences: ["everyday", "sacred"],
-    colors: ["#3B82F6"], // Blue hex code only
-    selectedColor: "#3B82F6", // Default to blue
-  },
-  {
-    id: "ayomide-purple",
-    name: "Ayọ̀mídé Purple",
-    subtitle: "A Quiet Ode to Joy",
-    materials: ["adire"],
-    description: "Joy woven into form. A dress that carries the lightness of being.",
-    priceAED: "780 AED",
-    priceGBP: "£168 GBP",
-    images: ["/images/ama6.jpeg"],
-    category: "ayomide",
-    essences: ["everyday", "sacred"],
-    colors: ["#EC4899"], // Pink hex code only
-    selectedColor: "#EC4899", // Default to pink
-  },
-]
+
+ ]
 
 export default function ShopPage() {
   // ============= STATE MANAGEMENT =============
@@ -563,30 +568,6 @@ export default function ShopPage() {
                   All
                 </button>
 
-                {/* Ayaba Bùbù Button */}
-                <button
-                  onClick={() => handleCollectionFilter("ayaba-bubu")}
-                  className={`px-4 md:px-6 py-2 md:py-3 rounded-full text-xs md:text-sm transition-colors ${
-                    activeFilter === "ayaba-bubu"
-                      ? "bg-[#2c2824] text-white"
-                      : "bg-[#f4f0e8] text-[#2c2824] hover:bg-[#2c2824]/10"
-                  }`}
-                >
-                  Àyaba
-                </button>
-
-                {/* Candy Combat Button */}
-                <button
-                  onClick={() => handleCollectionFilter("candy-combat")}
-                  className={`px-4 md:px-6 py-2 md:py-3 rounded-full text-xs md:text-sm transition-colors ${
-                    activeFilter === "candy-combat"
-                      ? "bg-[#2c2824] text-white"
-                      : "bg-[#f4f0e8] text-[#2c2824] hover:bg-[#2c2824]/10"
-                  }`}
-                >
-                  Candy Combat
-                </button>
-
                 {/* The Manifested Set Button */}
                 <button
                   onClick={() => handleCollectionFilter("the-manifested-set")}
@@ -609,6 +590,30 @@ export default function ShopPage() {
                   }`}
                 >
                   Ayọ̀mídé
+                </button>
+
+                {/* Ayaba Bùbù Button */}
+                <button
+                  onClick={() => handleCollectionFilter("ayaba-bubu")}
+                  className={`px-4 md:px-6 py-2 md:py-3 rounded-full text-xs md:text-sm transition-colors ${
+                    activeFilter === "ayaba-bubu"
+                      ? "bg-[#2c2824] text-white"
+                      : "bg-[#f4f0e8] text-[#2c2824] hover:bg-[#2c2824]/10"
+                  }`}
+                >
+                  Àyaba
+                </button>
+
+                {/* Candy Combat Button */}
+                <button
+                  onClick={() => handleCollectionFilter("candy-combat")}
+                  className={`px-4 md:px-6 py-2 md:py-3 rounded-full text-xs md:text-sm transition-colors ${
+                    activeFilter === "candy-combat"
+                      ? "bg-[#2c2824] text-white"
+                      : "bg-[#f4f0e8] text-[#2c2824] hover:bg-[#2c2824]/10"
+                  }`}
+                >
+                  Candy Combat
                 </button>
               </div>
             </div>
