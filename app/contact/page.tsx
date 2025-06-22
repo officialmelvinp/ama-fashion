@@ -109,7 +109,7 @@ export default function ContactPage() {
                     <p className="text-[#2c2824] opacity-80 mb-3">Follow our journey and see our latest collections</p>
                     <div className="flex gap-4">
                       <a
-                        href="https://instagram.com/amafashion"
+                        href="https://www.instagram.com/amariahco?igsh=c2Q4bXF6bnByenA4&utm_source=qr"
                         className="text-[#2c2824] hover:opacity-70 transition-opacity"
                         target="_blank"
                         rel="noopener noreferrer"
