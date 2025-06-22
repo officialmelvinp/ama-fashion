@@ -5,16 +5,115 @@ export async function POST(request: NextRequest) {
   try {
     const { name, email, phone, subject, message, region } = await request.json()
 
-    // Create transporter using the email settings provided
-    const transporter = nodemailer.createTransport({
-      host: "amariahco.com",
-      port: 465,
-      secure: true, // Use SSL
-      auth: {
-        user: "support@amariahco.com",
-        pass: process.env.EMAIL_PASSWORD, // We'll need to add this to environment variables
+    // Use your existing environment variables
+    const emailUser = process.env.EMAIL_USER || "support@amariahco.com"
+    const emailPassword = process.env.EMAIL_PASSWORD
+    const businessEmail = process.env.BUSINESS_EMAIL || "support@amariahco.com"
+
+    if (!emailPassword) {
+      console.error("EMAIL_PASSWORD not found in environment variables")
+      return NextResponse.json(
+        { success: false, error: "Email configuration error. Please contact us via WhatsApp." },
+        { status: 500 },
+      )
+    }
+
+    // 🏠 LOCALHOST DETECTION - Skip email sending in development
+    const isLocalhost = process.env.NODE_ENV === "development" || process.env.VERCEL_ENV === undefined
+
+    if (isLocalhost) {
+      console.log("🏠 LOCALHOST DETECTED - Simulating email send")
+      console.log("📧 EMAIL CONTENT:")
+      console.log("=".repeat(60))
+      console.log(`From: ${email}`)
+      console.log(`To: ${businessEmail}`)
+      console.log(`Subject: AMA Contact Form: ${subject}`)
+      console.log(`Name: ${name}`)
+      console.log(`Phone: ${phone || "Not provided"}`)
+      console.log(`Region: ${region}`)
+      console.log(`Message: ${message}`)
+      console.log("=".repeat(60))
+      console.log("✅ Email would be sent in production!")
+
+      return NextResponse.json({
+        success: true,
+        message: "Message received! (Development mode - check console for email content)",
+      })
+    }
+
+    // 🌐 PRODUCTION - Actually send email
+    console.log("🌐 PRODUCTION MODE - Sending real email")
+    console.log("Using email user:", emailUser)
+    console.log("Sending to business email:", businessEmail)
+
+    // Try multiple email server configurations
+    const emailConfigs = [
+      {
+        name: "Config 1: Port 587 STARTTLS",
+        config: {
+          host: "amariahco.com",
+          port: 587,
+          secure: false,
+          auth: { user: emailUser, pass: emailPassword },
+          tls: { rejectUnauthorized: false },
+          connectionTimeout: 30000,
+          greetingTimeout: 15000,
+          socketTimeout: 30000,
+        },
       },
-    })
+      {
+        name: "Config 2: mail.amariahco.com Port 587",
+        config: {
+          host: "mail.amariahco.com",
+          port: 587,
+          secure: false,
+          auth: { user: emailUser, pass: emailPassword },
+          tls: { rejectUnauthorized: false },
+          connectionTimeout: 30000,
+          greetingTimeout: 15000,
+          socketTimeout: 30000,
+        },
+      },
+      {
+        name: "Config 3: Port 465 SSL",
+        config: {
+          host: "amariahco.com",
+          port: 465,
+          secure: true,
+          auth: { user: emailUser, pass: emailPassword },
+          tls: { rejectUnauthorized: false },
+          connectionTimeout: 30000,
+          greetingTimeout: 15000,
+          socketTimeout: 30000,
+        },
+      },
+    ]
+
+    let transporter = null
+    let workingConfig = null
+
+    // Try each configuration until one works
+    for (const { name, config } of emailConfigs) {
+      try {
+        console.log(`Trying ${name}...`)
+        const testTransporter = nodemailer.createTransport(config)
+        await testTransporter.verify()
+        transporter = testTransporter
+        workingConfig = name
+        console.log(`✅ ${name} - SUCCESS!`)
+        break
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Unknown error"
+        console.log(`❌ ${name} - Failed:`, errorMessage)
+        continue
+      }
+    }
+
+    if (!transporter) {
+      throw new Error("All email configurations failed. Please check your email server settings.")
+    }
+
+    console.log(`Using working configuration: ${workingConfig}`)
 
     // Email content
     const emailContent = `
@@ -35,10 +134,11 @@ Time: ${new Date().toLocaleString()}
     `
 
     // Send email
-    await transporter.sendMail({
-      from: "support@amariahco.com",
-      to: "support@amariahco.com",
-      replyTo: email, // This allows direct reply to the customer
+    console.log("Sending email...")
+    const info = await transporter.sendMail({
+      from: emailUser,
+      to: businessEmail,
+      replyTo: email,
       subject: `AMA Contact Form: ${subject}`,
       text: emailContent,
       html: `
@@ -71,12 +171,25 @@ Time: ${new Date().toLocaleString()}
       `,
     })
 
+    console.log("Email sent successfully:", info.messageId)
     return NextResponse.json({ success: true, message: "Email sent successfully!" })
   } catch (error) {
     console.error("Email sending error:", error)
-    return NextResponse.json(
-      { success: false, error: "Failed to send email. Please try again or contact us directly." },
-      { status: 500 },
-    )
+
+    let errorMessage = "Failed to send email. Please try again or contact us directly."
+
+    if (error instanceof Error) {
+      const errorCode = (error as any).code
+
+      if (errorCode === "ESOCKET" || errorCode === "ETIMEDOUT") {
+        errorMessage = "Email server connection timeout. Please contact us via WhatsApp or try again later."
+      } else if (errorCode === "EAUTH") {
+        errorMessage = "Email authentication failed. Please check credentials."
+      } else if (errorCode === "ECONNECTION") {
+        errorMessage = "Cannot connect to email server. Please try again later."
+      }
+    }
+
+    return NextResponse.json({ success: false, error: errorMessage }, { status: 500 })
   }
 }
