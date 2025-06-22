@@ -1,0 +1,21 @@
+{
+  "name": "Amariah Manifested Art - Conscious Luxury African Fashion",
+  "short_name": "AMA Fashion",
+  "description": "Conscious luxury African fashion brand crafting spiritually-rooted bubu dresses and contemporary printwear in Dubai and the UK.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#2c2824",
+  "theme_color": "#2c2824",
+  "icons": [
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

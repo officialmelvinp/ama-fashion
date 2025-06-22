@@ -91,7 +91,7 @@ export default function PaymentSuccessPage() {
       ? `Hello! I just completed my order for ${product.name} (Order: ${token}). Looking forward to delivery coordination. Thank you!`
       : "Hello! I just completed my AMA order and would like to coordinate delivery. Thank you!"
 
-  const whatsappUrl = `https://wa.me/971501234567?text=${encodeURIComponent(whatsappMessage)}`
+  const whatsappUrl = `https://wa.me/+447707783963?text=${encodeURIComponent(whatsappMessage)}`
 
   if (isCapturing) {
     return (
