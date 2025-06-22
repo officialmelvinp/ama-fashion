@@ -50,10 +50,8 @@ export default function WhyAMAPage() {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-8 md:mb-16">
             <h1 className="text-4xl md:text-5xl font-serif mb-8 text-[#2c2824]">Why AMA</h1>
-            <blockquote className="text-xl md:text-2xl italic opacity-80 text-[#2c2824]">
-              For women who know the quiet power of presence.
-              <br />
-              Every thread a prayer. Every silhouette, a sanctuary.
+            <blockquote className="text-2xl md:text-3xl font-bold italic text-[#2c2824]">
+              Because the sacred deserves to be worn.
             </blockquote>
           </div>
 

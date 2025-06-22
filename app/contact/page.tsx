@@ -109,7 +109,7 @@ export default function ContactPage() {
                     <p className="text-[#2c2824] opacity-80 mb-3">Follow our journey and see our latest collections</p>
                     <div className="flex gap-4">
                       <a
-                        href="https://www.instagram.com/amariahco?igsh=c2Q4bXF6bnByenA4&utm_source=qr"
+                        href="https://www.instagram.com/amariahco?igsh=MTlwd291Ym5uYXFxeg=="
                         className="text-[#2c2824] hover:opacity-70 transition-opacity"
                         target="_blank"
                         rel="noopener noreferrer"
@@ -181,7 +181,7 @@ export default function ContactPage() {
               <div className="bg-white p-6 rounded-lg shadow-sm">
                 <h3 className="font-serif text-lg text-[#2c2824] mb-3">Can I see pieces in person?</h3>
                 <p className="text-[#2c2824] opacity-80 text-sm">
-                  We offer private styling consultations in Dubai and select UK locations. WhatsApp us to arrange a
+                  We offer private styling consultations in Dubai and selected UK locations. WhatsApp us to arrange a
                   viewing.
                 </p>
               </div>

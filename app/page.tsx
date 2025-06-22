@@ -172,7 +172,7 @@ export default function Home() {
             <Link href="/why-ama" className="text-white hover:opacity-70 transition-opacity">
               Story
             </Link>
-            <Link href="/why-ama" className="text-white hover:opacity-70 transition-opacity">
+            <Link href="/contact" className="text-white hover:opacity-70 transition-opacity">
               FAQ
             </Link>
             <Link href="/contact" className="text-white hover:opacity-70 transition-opacity">
