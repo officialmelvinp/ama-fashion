@@ -46,45 +46,72 @@ export async function POST(request: NextRequest) {
     console.log("Using email user:", emailUser)
     console.log("Sending to business email:", businessEmail)
 
-    // Try multiple email server configurations
+    // Updated configurations based on your hosting provider settings
     const emailConfigs = [
       {
-        name: "Config 1: Port 587 STARTTLS",
+        name: "Config 1: SSL Port 465 (Recommended)",
         config: {
-          host: "amariahco.com",
-          port: 587,
-          secure: false,
+          host: "amariahco.com", // Outgoing Server from your settings
+          port: 465, // SMTP Port from your settings
+          secure: true, // SSL as recommended
           auth: { user: emailUser, pass: emailPassword },
-          tls: { rejectUnauthorized: false },
-          connectionTimeout: 30000,
-          greetingTimeout: 15000,
-          socketTimeout: 30000,
+          tls: {
+            rejectUnauthorized: false,
+            ciphers: "SSLv3",
+          },
+          connectionTimeout: 60000, // 60 seconds
+          greetingTimeout: 30000, // 30 seconds
+          socketTimeout: 60000, // 60 seconds
         },
       },
       {
-        name: "Config 2: mail.amariahco.com Port 587",
+        name: "Config 2: Non-SSL Port 587 (mail.amariahco.com)",
         config: {
-          host: "mail.amariahco.com",
-          port: 587,
-          secure: false,
+          host: "mail.amariahco.com", // From Non-SSL settings
+          port: 587, // SMTP Port from Non-SSL settings
+          secure: false, // STARTTLS
           auth: { user: emailUser, pass: emailPassword },
-          tls: { rejectUnauthorized: false },
-          connectionTimeout: 30000,
-          greetingTimeout: 15000,
-          socketTimeout: 30000,
+          tls: {
+            rejectUnauthorized: false,
+            ciphers: "SSLv3",
+          },
+          connectionTimeout: 60000,
+          greetingTimeout: 30000,
+          socketTimeout: 60000,
         },
       },
       {
-        name: "Config 3: Port 465 SSL",
+        name: "Config 3: SSL Port 465 with requireTLS",
         config: {
           host: "amariahco.com",
           port: 465,
           secure: true,
           auth: { user: emailUser, pass: emailPassword },
-          tls: { rejectUnauthorized: false },
-          connectionTimeout: 30000,
-          greetingTimeout: 15000,
-          socketTimeout: 30000,
+          requireTLS: true,
+          tls: {
+            rejectUnauthorized: false,
+            servername: "amariahco.com",
+          },
+          connectionTimeout: 60000,
+          greetingTimeout: 30000,
+          socketTimeout: 60000,
+        },
+      },
+      {
+        name: "Config 4: Port 587 with STARTTLS",
+        config: {
+          host: "amariahco.com",
+          port: 587,
+          secure: false,
+          auth: { user: emailUser, pass: emailPassword },
+          requireTLS: true,
+          tls: {
+            rejectUnauthorized: false,
+            servername: "amariahco.com",
+          },
+          connectionTimeout: 60000,
+          greetingTimeout: 30000,
+          socketTimeout: 60000,
         },
       },
     ]
@@ -97,7 +124,15 @@ export async function POST(request: NextRequest) {
       try {
         console.log(`Trying ${name}...`)
         const testTransporter = nodemailer.createTransport(config)
-        await testTransporter.verify()
+
+        // Set a timeout for the verify operation
+        const verifyPromise = testTransporter.verify()
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("Verification timeout")), 30000),
+        )
+
+        await Promise.race([verifyPromise, timeoutPromise])
+
         transporter = testTransporter
         workingConfig = name
         console.log(`✅ ${name} - SUCCESS!`)
@@ -110,7 +145,14 @@ export async function POST(request: NextRequest) {
     }
 
     if (!transporter) {
-      throw new Error("All email configurations failed. Please check your email server settings.")
+      console.error("All email configurations failed")
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Email server temporarily unavailable. Please contact us via WhatsApp: https://wa.me/+447707783963",
+        },
+        { status: 500 },
+      )
     }
 
     console.log(`Using working configuration: ${workingConfig}`)
@@ -133,9 +175,9 @@ Sent from AMA Fashion website contact form
 Time: ${new Date().toLocaleString()}
     `
 
-    // Send email
+    // Send email with timeout - Fixed TypeScript issue
     console.log("Sending email...")
-    const info = await transporter.sendMail({
+    const sendPromise = transporter.sendMail({
       from: emailUser,
       to: businessEmail,
       replyTo: email,
@@ -171,22 +213,32 @@ Time: ${new Date().toLocaleString()}
       `,
     })
 
-    console.log("Email sent successfully:", info.messageId)
-    return NextResponse.json({ success: true, message: "Email sent successfully!" })
+    const timeoutPromise = new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Send timeout")), 45000))
+
+    try {
+      const info = await Promise.race([sendPromise, timeoutPromise])
+      // Type assertion to safely access messageId
+      const messageId = (info as any)?.messageId || "unknown"
+      console.log("Email sent successfully:", messageId)
+
+      return NextResponse.json({ success: true, message: "Email sent successfully!" })
+    } catch (sendError) {
+      throw sendError // Re-throw to be caught by outer catch block
+    }
   } catch (error) {
     console.error("Email sending error:", error)
 
-    let errorMessage = "Failed to send email. Please try again or contact us directly."
+    let errorMessage = "Failed to send email. Please contact us via WhatsApp: https://wa.me/971501234567"
 
     if (error instanceof Error) {
       const errorCode = (error as any).code
 
       if (errorCode === "ESOCKET" || errorCode === "ETIMEDOUT") {
-        errorMessage = "Email server connection timeout. Please contact us via WhatsApp or try again later."
+        errorMessage = "Email server connection timeout. Please contact us via WhatsApp: https://wa.me/+447707783963"
       } else if (errorCode === "EAUTH") {
-        errorMessage = "Email authentication failed. Please check credentials."
+        errorMessage = "Email authentication failed. Please contact us via WhatsApp: https://wa.me/+447707783963"
       } else if (errorCode === "ECONNECTION") {
-        errorMessage = "Cannot connect to email server. Please try again later."
+        errorMessage = "Cannot connect to email server. Please contact us via WhatsApp: https://wa.me/+447707783963"
       }
     }
 
