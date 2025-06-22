@@ -34,40 +34,32 @@ export default function ContactForm() {
     setSubmitMessage("")
 
     try {
-      // Simulate form submission
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      // Create WhatsApp message
-      const whatsappMessage = `Hello AMA! 
-
-Name: ${formData.name}
-Email: ${formData.email}
-Phone: ${formData.phone}
-Region: ${formData.region}
-Subject: ${formData.subject}
-
-Message: ${formData.message}
-
-Sent via website contact form.`
-
-      const whatsappUrl = `https://wa.me/971501234567?text=${encodeURIComponent(whatsappMessage)}`
-
-      // Open WhatsApp
-      window.open(whatsappUrl, "_blank")
-
-      setSubmitMessage(
-        "Thank you! Your message has been prepared for WhatsApp. Please send it to complete your inquiry.",
-      )
-      setFormData({
-        name: "",
-        email: "",
-        phone: "",
-        subject: "",
-        message: "",
-        region: "UAE",
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
       })
+
+      const result = await response.json()
+
+      if (result.success) {
+        setSubmitMessage("Thank you! Your message has been sent successfully. We'll get back to you soon.")
+        setFormData({
+          name: "",
+          email: "",
+          phone: "",
+          subject: "",
+          message: "",
+          region: "UAE",
+        })
+      } else {
+        setSubmitMessage(result.error || "Something went wrong. Please try again or contact us directly.")
+      }
     } catch (error) {
-      setSubmitMessage("Something went wrong. Please try contacting us directly via WhatsApp.")
+      console.error("Form submission error:", error)
+      setSubmitMessage("Something went wrong. Please try again or contact us directly via email or WhatsApp.")
     } finally {
       setIsSubmitting(false)
     }
@@ -181,11 +173,11 @@ Sent via website contact form.`
         disabled={isSubmitting}
         className="w-full bg-[#2c2824] text-white hover:bg-[#2c2824]/90 py-3"
       >
-        {isSubmitting ? "Preparing Message..." : "Send Message via WhatsApp"}
+        {isSubmitting ? "Sending Message..." : "Send Message"}
       </Button>
 
       <p className="text-sm text-[#2c2824] opacity-60 text-center">
-        This form will prepare your message for WhatsApp, our preferred communication method for quick responses.
+        Your message will be sent directly to our email. We typically respond within 24 hours.
       </p>
     </form>
   )
