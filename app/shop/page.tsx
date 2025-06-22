@@ -12,69 +12,32 @@ type Product = {
   subtitle: string
   materials: string[]
   description: string
-  price: string
+  priceAED: string
+  priceGBP: string
   images: string[]
   category: string
   essences: string[]
   colors?: string[]
   materialLine?: string
   productCode?: string
-  selectedColor?: string // ✅ Added this line
+  selectedColor?: string
 }
 
 // ============= PRODUCT DATA =============
 const allProducts: Product[] = [
-
-  // The Manifested Set - 1 item (no product code)
-  {
-    id: "manifest-set-1",
-    name: "The Manifest Set",
-    subtitle: "What You Asked For, Woven",
-    materials: ["batik"],
-    description: "A pairing of ease and presence. One-size drape, bound by craft.",
-    price: "950 AED ($255 USD)",
-    images: ["/images/ama5.jpeg"],
-    category: "the-manifested-set",
-    essences: ["sacred", "gatherings"],
-  },
-  // Ayọ̀mídé - 2 items with individual colors
-  {
-    id: "ayomide-blue",
-    name: "Ayọ̀mídé",
-    subtitle: "A Quiet Ode to Joy",
-    materials: ["adire"],
-    description: "Joy woven into form. A dress that carries the lightness of being.",
-    price: "780 AED ($210 USD)",
-    images: ["/images/ama6.jpeg"],
-    category: "ayomide",
-    essences: ["everyday", "sacred"],
-    colors: ["#3B82F6"], // Blue hex code only
-    selectedColor: "#3B82F6", // Default to blue
-  },
-  {
-    id: "ayomide-pink",
-    name: "Ayọ̀mídé",
-    subtitle: "A Quiet Ode to Joy",
-    materials: ["adire"],
-    description: "Joy woven into form. A dress that carries the lightness of being.",
-    price: "780 AED ($210 USD)",
-    images: ["/images/ama6.jpeg"],
-    category: "ayomide",
-    essences: ["everyday", "sacred"],
-    colors: ["#EC4899"], // Pink hex code only
-    selectedColor: "#EC4899", // Default to pink
-  },
-  // Ayaba Bubu - 12 items (now with numbers in name)
+  // Ayaba Bubu - 12 items
   {
     id: "ayaba-bubu-1",
     name: "Àyaba 01",
     subtitle: "Royalty, Rendered in Thread",
     materials: ["batik", "ankara"],
     description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
-    price: "850 AED ($230 USD)",
+    priceAED: "850 AED",
+    priceGBP: "£183 GBP",
     images: ["/images/ama3.jpeg"],
     category: "ayaba-bubu",
     essences: ["everyday", "sacred"],
+    productCode: "01",
   },
   {
     id: "ayaba-bubu-2",
@@ -82,10 +45,12 @@ const allProducts: Product[] = [
     subtitle: "Royalty, Rendered in Thread",
     materials: ["batik", "ankara"],
     description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
-    price: "850 AED ($230 USD)",
+    priceAED: "850 AED",
+    priceGBP: "£183 GBP",
     images: ["/images/ama3.jpeg"],
     category: "ayaba-bubu",
     essences: ["everyday", "sacred"],
+    productCode: "02",
   },
   {
     id: "ayaba-bubu-3",
@@ -93,10 +58,12 @@ const allProducts: Product[] = [
     subtitle: "Royalty, Rendered in Thread",
     materials: ["batik", "ankara"],
     description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
-    price: "850 AED ($230 USD)",
+    priceAED: "850 AED",
+    priceGBP: "£183 GBP",
     images: ["/images/ama3.jpeg"],
     category: "ayaba-bubu",
     essences: ["everyday", "sacred"],
+    productCode: "03",
   },
   {
     id: "ayaba-bubu-4",
@@ -104,10 +71,12 @@ const allProducts: Product[] = [
     subtitle: "Royalty, Rendered in Thread",
     materials: ["batik", "ankara"],
     description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
-    price: "850 AED ($230 USD)",
+    priceAED: "850 AED",
+    priceGBP: "£183 GBP",
     images: ["/images/ama3.jpeg"],
     category: "ayaba-bubu",
     essences: ["everyday", "sacred"],
+    productCode: "04",
   },
   {
     id: "ayaba-bubu-5",
@@ -115,10 +84,12 @@ const allProducts: Product[] = [
     subtitle: "Royalty, Rendered in Thread",
     materials: ["batik", "ankara"],
     description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
-    price: "850 AED ($230 USD)",
+    priceAED: "850 AED",
+    priceGBP: "£183 GBP",
     images: ["/images/ama3.jpeg"],
     category: "ayaba-bubu",
     essences: ["everyday", "sacred"],
+    productCode: "05",
   },
   {
     id: "ayaba-bubu-6",
@@ -126,10 +97,12 @@ const allProducts: Product[] = [
     subtitle: "Royalty, Rendered in Thread",
     materials: ["batik", "ankara"],
     description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
-    price: "850 AED ($230 USD)",
+    priceAED: "850 AED",
+    priceGBP: "£183 GBP",
     images: ["/images/ama3.jpeg"],
     category: "ayaba-bubu",
     essences: ["everyday", "sacred"],
+    productCode: "06",
   },
   {
     id: "ayaba-bubu-7",
@@ -137,10 +110,12 @@ const allProducts: Product[] = [
     subtitle: "Royalty, Rendered in Thread",
     materials: ["batik", "ankara"],
     description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
-    price: "850 AED ($230 USD)",
+    priceAED: "850 AED",
+    priceGBP: "£183 GBP",
     images: ["/images/ama3.jpeg"],
     category: "ayaba-bubu",
     essences: ["everyday", "sacred"],
+    productCode: "07",
   },
   {
     id: "ayaba-bubu-8",
@@ -148,10 +123,12 @@ const allProducts: Product[] = [
     subtitle: "Royalty, Rendered in Thread",
     materials: ["batik", "ankara"],
     description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
-    price: "850 AED ($230 USD)",
+    priceAED: "850 AED",
+    priceGBP: "£183 GBP",
     images: ["/images/ama3.jpeg"],
     category: "ayaba-bubu",
     essences: ["everyday", "sacred"],
+    productCode: "08",
   },
   {
     id: "ayaba-bubu-9",
@@ -159,10 +136,12 @@ const allProducts: Product[] = [
     subtitle: "Royalty, Rendered in Thread",
     materials: ["batik", "ankara"],
     description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
-    price: "850 AED ($230 USD)",
+    priceAED: "850 AED",
+    priceGBP: "£183 GBP",
     images: ["/images/ama3.jpeg"],
     category: "ayaba-bubu",
     essences: ["everyday", "sacred"],
+    productCode: "09",
   },
   {
     id: "ayaba-bubu-10",
@@ -170,10 +149,12 @@ const allProducts: Product[] = [
     subtitle: "Royalty, Rendered in Thread",
     materials: ["batik", "ankara"],
     description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
-    price: "850 AED ($230 USD)",
+    priceAED: "850 AED",
+    priceGBP: "£183 GBP",
     images: ["/images/ama3.jpeg"],
     category: "ayaba-bubu",
     essences: ["everyday", "sacred"],
+    productCode: "10",
   },
   {
     id: "ayaba-bubu-11",
@@ -181,10 +162,12 @@ const allProducts: Product[] = [
     subtitle: "Royalty, Rendered in Thread",
     materials: ["batik", "ankara"],
     description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
-    price: "850 AED ($230 USD)",
+    priceAED: "850 AED",
+    priceGBP: "£183 GBP",
     images: ["/images/ama3.jpeg"],
     category: "ayaba-bubu",
     essences: ["everyday", "sacred"],
+    productCode: "11",
   },
   {
     id: "ayaba-bubu-12",
@@ -192,22 +175,26 @@ const allProducts: Product[] = [
     subtitle: "Royalty, Rendered in Thread",
     materials: ["batik", "ankara"],
     description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
-    price: "850 AED ($230 USD)",
+    priceAED: "850 AED",
+    priceGBP: "£183 GBP",
     images: ["/images/ama3.jpeg"],
     category: "ayaba-bubu",
     essences: ["everyday", "sacred"],
+    productCode: "12",
   },
-  // Candy Combat - 12 items (now with numbers in name)
+  // Candy Combat - 12 items
   {
     id: "candy-combat-1",
     name: "Candy Combat 01",
     subtitle: "Softness, Armed",
     materials: ["batik", "ankara", "aso-oke"],
     description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
-    price: "650 AED ($175 USD)",
+    priceAED: "650 AED",
+    priceGBP: "£140 GBP",
     images: ["/images/ama4.jpeg"],
     category: "candy-combat",
     essences: ["everyday", "gatherings"],
+    productCode: "01",
   },
   {
     id: "candy-combat-2",
@@ -215,10 +202,12 @@ const allProducts: Product[] = [
     subtitle: "Softness, Armed",
     materials: ["batik", "ankara", "aso-oke"],
     description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
-    price: "650 AED ($175 USD)",
+    priceAED: "650 AED",
+    priceGBP: "£140 GBP",
     images: ["/images/ama4.jpeg"],
     category: "candy-combat",
     essences: ["everyday", "gatherings"],
+    productCode: "02",
   },
   {
     id: "candy-combat-3",
@@ -226,10 +215,12 @@ const allProducts: Product[] = [
     subtitle: "Softness, Armed",
     materials: ["batik", "ankara", "aso-oke"],
     description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
-    price: "650 AED ($175 USD)",
+    priceAED: "650 AED",
+    priceGBP: "£140 GBP",
     images: ["/images/ama4.jpeg"],
     category: "candy-combat",
     essences: ["everyday", "gatherings"],
+    productCode: "03",
   },
   {
     id: "candy-combat-4",
@@ -237,10 +228,12 @@ const allProducts: Product[] = [
     subtitle: "Softness, Armed",
     materials: ["batik", "ankara", "aso-oke"],
     description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
-    price: "650 AED ($175 USD)",
+    priceAED: "650 AED",
+    priceGBP: "£140 GBP",
     images: ["/images/ama4.jpeg"],
     category: "candy-combat",
     essences: ["everyday", "gatherings"],
+    productCode: "04",
   },
   {
     id: "candy-combat-5",
@@ -248,10 +241,12 @@ const allProducts: Product[] = [
     subtitle: "Softness, Armed",
     materials: ["batik", "ankara", "aso-oke"],
     description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
-    price: "650 AED ($175 USD)",
+    priceAED: "650 AED",
+    priceGBP: "£140 GBP",
     images: ["/images/ama4.jpeg"],
     category: "candy-combat",
     essences: ["everyday", "gatherings"],
+    productCode: "05",
   },
   {
     id: "candy-combat-6",
@@ -259,10 +254,12 @@ const allProducts: Product[] = [
     subtitle: "Softness, Armed",
     materials: ["batik", "ankara", "aso-oke"],
     description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
-    price: "650 AED ($175 USD)",
+    priceAED: "650 AED",
+    priceGBP: "£140 GBP",
     images: ["/images/ama4.jpeg"],
     category: "candy-combat",
     essences: ["everyday", "gatherings"],
+    productCode: "06",
   },
   {
     id: "candy-combat-7",
@@ -270,10 +267,12 @@ const allProducts: Product[] = [
     subtitle: "Softness, Armed",
     materials: ["batik", "ankara", "aso-oke"],
     description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
-    price: "650 AED ($175 USD)",
+    priceAED: "650 AED",
+    priceGBP: "£140 GBP",
     images: ["/images/ama4.jpeg"],
     category: "candy-combat",
     essences: ["everyday", "gatherings"],
+    productCode: "07",
   },
   {
     id: "candy-combat-8",
@@ -281,10 +280,12 @@ const allProducts: Product[] = [
     subtitle: "Softness, Armed",
     materials: ["batik", "ankara", "aso-oke"],
     description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
-    price: "650 AED ($175 USD)",
+    priceAED: "650 AED",
+    priceGBP: "£140 GBP",
     images: ["/images/ama4.jpeg"],
     category: "candy-combat",
     essences: ["everyday", "gatherings"],
+    productCode: "08",
   },
   {
     id: "candy-combat-9",
@@ -292,10 +293,12 @@ const allProducts: Product[] = [
     subtitle: "Softness, Armed",
     materials: ["batik", "ankara", "aso-oke"],
     description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
-    price: "650 AED ($175 USD)",
+    priceAED: "650 AED",
+    priceGBP: "£140 GBP",
     images: ["/images/ama4.jpeg"],
     category: "candy-combat",
     essences: ["everyday", "gatherings"],
+    productCode: "09",
   },
   {
     id: "candy-combat-10",
@@ -303,10 +306,12 @@ const allProducts: Product[] = [
     subtitle: "Softness, Armed",
     materials: ["batik", "ankara", "aso-oke"],
     description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
-    price: "650 AED ($175 USD)",
+    priceAED: "650 AED",
+    priceGBP: "£140 GBP",
     images: ["/images/ama4.jpeg"],
     category: "candy-combat",
     essences: ["everyday", "gatherings"],
+    productCode: "10",
   },
   {
     id: "candy-combat-11",
@@ -314,10 +319,12 @@ const allProducts: Product[] = [
     subtitle: "Softness, Armed",
     materials: ["batik", "ankara", "aso-oke"],
     description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
-    price: "650 AED ($175 USD)",
+    priceAED: "650 AED",
+    priceGBP: "£140 GBP",
     images: ["/images/ama4.jpeg"],
     category: "candy-combat",
     essences: ["everyday", "gatherings"],
+    productCode: "11",
   },
   {
     id: "candy-combat-12",
@@ -325,18 +332,61 @@ const allProducts: Product[] = [
     subtitle: "Softness, Armed",
     materials: ["batik", "ankara", "aso-oke"],
     description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
-    price: "650 AED ($175 USD)",
+    priceAED: "650 AED",
+    priceGBP: "£140 GBP",
     images: ["/images/ama4.jpeg"],
     category: "candy-combat",
     essences: ["everyday", "gatherings"],
+    productCode: "12",
   },
-
-  
+  // The Manifested Set - 1 item
+  {
+    id: "manifest-set-1",
+    name: "The Manifest Set",
+    subtitle: "What You Asked For, Woven",
+    materials: ["batik"],
+    description: "A pairing of ease and presence. One-size drape, bound by craft.",
+    priceAED: "950 AED",
+    priceGBP: "£205 GBP",
+    images: ["/images/ama5.jpeg"],
+    category: "the-manifested-set",
+    essences: ["sacred", "gatherings"],
+  },
+  // Ayọ̀mídé - 2 items with colors
+  {
+    id: "ayomide-blue",
+    name: "Ayọ̀mídé Blue",
+    subtitle: "A Quiet Ode to Joy",
+    materials: ["adire"],
+    description: "Joy woven into form. A dress that carries the lightness of being.",
+    priceAED: "780 AED",
+    priceGBP: "£168 GBP",
+    images: ["/images/ama6.jpeg"],
+    category: "ayomide",
+    essences: ["everyday", "sacred"],
+    colors: ["#3B82F6"], // Blue hex code only
+    selectedColor: "#3B82F6", // Default to blue
+  },
+  {
+    id: "ayomide-purple",
+    name: "Ayọ̀mídé Purple",
+    subtitle: "A Quiet Ode to Joy",
+    materials: ["adire"],
+    description: "Joy woven into form. A dress that carries the lightness of being.",
+    priceAED: "780 AED",
+    priceGBP: "£168 GBP",
+    images: ["/images/ama6.jpeg"],
+    category: "ayomide",
+    essences: ["everyday", "sacred"],
+    colors: ["#EC4899"], // Pink hex code only
+    selectedColor: "#EC4899", // Default to pink
+  },
 ]
 
 export default function ShopPage() {
   // ============= STATE MANAGEMENT =============
   const [activeFilter, setActiveFilter] = useState<string>("all")
+  const [selectedRegion, setSelectedRegion] = useState<"UAE" | "UK">("UAE")
 
   // ============= HANDLE URL HASH FROM HOMEPAGE =============
   useEffect(() => {
@@ -422,8 +472,16 @@ export default function ShopPage() {
   }
 
   const handleBuyNow = (product: Product) => {
+    // Add region info to product before storing
+    const productWithRegion = {
+      ...product,
+      selectedRegion,
+      selectedPrice: selectedRegion === "UAE" ? product.priceAED : product.priceGBP,
+    }
+
     // Store product in localStorage for checkout
-    localStorage.setItem("selectedProduct", JSON.stringify(product))
+    localStorage.setItem("selectedProduct", JSON.stringify(productWithRegion))
+    localStorage.setItem("selectedRegion", selectedRegion)
     window.location.href = "/checkout"
   }
 
@@ -447,7 +505,6 @@ export default function ShopPage() {
     <div className="min-h-screen">
       {/* Navigation Header */}
       <Header bgColor="bg-white/90 backdrop-blur-sm" textColor="text-[#2c2824]" />
-
       <div className="container mx-auto py-24 px-4">
         {/* Top mood line */}
         <div className="max-w-4xl mx-auto mb-16 text-center">
@@ -455,6 +512,37 @@ export default function ShopPage() {
           <p className="text-lg md:text-xl lg:text-2xl font-serif text-[#2c2824] italic">
             Garments that manifest lineage.
           </p>
+        </div>
+
+        {/* ============= REGION SELECTOR ============= */}
+        <div className="mb-8">
+          <div className="flex justify-center">
+            <div className="text-center">
+              <h3 className="text-sm mb-4 opacity-70 font-medium">Select Your Region</h3>
+              <div className="flex gap-3 justify-center">
+                <button
+                  onClick={() => setSelectedRegion("UAE")}
+                  className={`px-6 py-3 rounded-full text-sm transition-colors ${
+                    selectedRegion === "UAE"
+                      ? "bg-[#2c2824] text-white"
+                      : "bg-[#f4f0e8] text-[#2c2824] hover:bg-[#2c2824]/10"
+                  }`}
+                >
+                  🇦🇪 UAE (AED)
+                </button>
+                <button
+                  onClick={() => setSelectedRegion("UK")}
+                  className={`px-6 py-3 rounded-full text-sm transition-colors ${
+                    selectedRegion === "UK"
+                      ? "bg-[#2c2824] text-white"
+                      : "bg-[#f4f0e8] text-[#2c2824] hover:bg-[#2c2824]/10"
+                  }`}
+                >
+                  🇬🇧 UK (GBP)
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* ============= COLLECTION FILTER BUTTONS ============= */}
@@ -473,33 +561,6 @@ export default function ShopPage() {
                   }`}
                 >
                   All
-                </button>
-
-                {/* The Manifested Set Button */}
-                <button
-                  onClick={() => handleCollectionFilter("the-manifested-set")}
-                  className={`px-4 md:px-6 py-2 md:py-3 rounded-full text-xs md:text-sm transition-colors ${
-                    activeFilter === "the-manifested-set"
-                      ? "bg-[#2c2824] text-white"
-                      : "bg-[#f4f0e8] text-[#2c2824] hover:bg-[#2c2824]/10"
-                  }`}
-                >
-                  The Manifested Set
-                </button>
-
-                
-                
-
-                {/* Ayọ̀mídé Button */}
-                <button
-                  onClick={() => handleCollectionFilter("ayomide")}
-                  className={`px-4 md:px-6 py-2 md:py-3 rounded-full text-xs md:text-sm transition-colors ${
-                    activeFilter === "ayomide"
-                      ? "bg-[#2c2824] text-white"
-                      : "bg-[#f4f0e8] text-[#2c2824] hover:bg-[#2c2824]/10"
-                  }`}
-                >
-                  Ayọ̀mídé
                 </button>
 
                 {/* Ayaba Bùbù Button */}
@@ -526,6 +587,29 @@ export default function ShopPage() {
                   Candy Combat
                 </button>
 
+                {/* The Manifested Set Button */}
+                <button
+                  onClick={() => handleCollectionFilter("the-manifested-set")}
+                  className={`px-4 md:px-6 py-2 md:py-3 rounded-full text-xs md:text-sm transition-colors ${
+                    activeFilter === "the-manifested-set"
+                      ? "bg-[#2c2824] text-white"
+                      : "bg-[#f4f0e8] text-[#2c2824] hover:bg-[#2c2824]/10"
+                  }`}
+                >
+                  The Manifested Set
+                </button>
+
+                {/* Ayọ̀mídé Button */}
+                <button
+                  onClick={() => handleCollectionFilter("ayomide")}
+                  className={`px-4 md:px-6 py-2 md:py-3 rounded-full text-xs md:text-sm transition-colors ${
+                    activeFilter === "ayomide"
+                      ? "bg-[#2c2824] text-white"
+                      : "bg-[#f4f0e8] text-[#2c2824] hover:bg-[#2c2824]/10"
+                  }`}
+                >
+                  Ayọ̀mídé
+                </button>
               </div>
             </div>
           </div>
@@ -535,6 +619,7 @@ export default function ShopPage() {
         <div className={getGridClasses()}>
           {filteredProducts.map((product) => {
             const descriptionParts = getDescriptionParts(product.description)
+            const displayPrice = selectedRegion === "UAE" ? product.priceAED : product.priceGBP
 
             return (
               <div key={product.id} className="flex flex-col max-w-md mx-auto" id={product.category}>
@@ -571,7 +656,7 @@ export default function ShopPage() {
                   )}
                   {/* First part of description (Freedom in form.) */}
                   <p className="text-sm italic text-[#2c2824] leading-relaxed">{descriptionParts.firstPart}</p>
-                  <p className="font-medium text-base md:text-lg text-[#2c2824] pt-1">{product.price}</p>
+                  <p className="font-medium text-base md:text-lg text-[#2c2824] pt-1">{displayPrice}</p>
 
                   {/* Buy Now Button - Centered below price */}
                   <div className="pt-2">

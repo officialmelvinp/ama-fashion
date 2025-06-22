@@ -18,12 +18,15 @@ type Product = {
   subtitle: string
   materials: string[]
   description: string
-  price: string
+  priceAED: string
+  priceGBP: string
   images: string[]
   category: string
   essences: string[]
-  materialLine: string
+  materialLine?: string
   colors?: string[]
+  selectedRegion?: "UAE" | "UK"
+  selectedPrice?: string
 }
 
 type CheckoutForm = {
@@ -53,7 +56,8 @@ export default function CheckoutPage() {
   })
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string>("")
-  const [paymentMethod, setPaymentMethod] = useState<"paypal" | "stripe">("paypal")
+  const [paymentMethod, setPaymentMethod] = useState<"paypal" | "stripe">("stripe")
+  const [selectedRegion, setSelectedRegion] = useState<"UAE" | "UK">("UAE") // Default to UAE
 
   useEffect(() => {
     // Get selected product from localStorage
@@ -72,9 +76,19 @@ export default function CheckoutPage() {
   }
 
   const extractPrice = (priceString: string) => {
-    // Extract AED price from string like "850 AED ($230 USD)"
+    if (!priceString) return 0
+
+    // Handle both old format "850 AED ($230 USD)" and new format "850 AED"
     const aedMatch = priceString.match(/(\d+)\s*AED/)
-    return aedMatch ? Number.parseInt(aedMatch[1]) : 0
+    const gbpMatch = priceString.match(/£(\d+)\s*GBP/)
+
+    if (aedMatch) {
+      return Number.parseInt(aedMatch[1])
+    } else if (gbpMatch) {
+      return Number.parseInt(gbpMatch[1])
+    }
+
+    return 0
   }
 
   const getUSDPrice = (aedPrice: number) => {
@@ -91,7 +105,8 @@ export default function CheckoutPage() {
     try {
       console.log("🚀 Starting PayPal checkout process...")
 
-      const price = extractPrice(product.price)
+      // PayPal only works with AED pricing (converts to USD)
+      const price = extractPrice(product.priceAED)
       localStorage.setItem("customerInfo", JSON.stringify(form))
 
       const order = await createPayPalOrder(product.id, price)
@@ -122,7 +137,12 @@ export default function CheckoutPage() {
     try {
       console.log("🚀 Starting Stripe checkout process...")
 
-      const price = extractPrice(product.price)
+      // Determine which price to use based on region
+      const region = product.selectedRegion || "UAE"
+      const priceString = region === "UAE" ? product.priceAED : product.priceGBP
+      const currency = region === "UAE" ? "aed" : "gbp"
+      const price = extractPrice(priceString)
+
       localStorage.setItem("customerInfo", JSON.stringify(form))
 
       // Create Stripe checkout session
@@ -134,6 +154,8 @@ export default function CheckoutPage() {
         body: JSON.stringify({
           productId: product.id,
           amount: price,
+          currency: currency,
+          region: region,
           customerInfo: form,
         }),
       })
@@ -210,14 +232,14 @@ export default function CheckoutPage() {
 
               <div className="border-t pt-4">
                 <div className="flex justify-between items-center text-lg font-medium text-[#2c2824] mb-2">
-                  <span>Total (AED):</span>
-                  <span>{product.price}</span>
+                  <span>Total:</span>
+                  <span>{product.selectedPrice || product.priceAED}</span>
                 </div>
                 {paymentMethod === "paypal" && (
                   <>
                     <div className="flex justify-between items-center text-sm text-[#2c2824]/70">
                       <span>PayPal will charge (USD):</span>
-                      <span>${getUSDPrice(extractPrice(product.price)).toFixed(2)} USD</span>
+                      <span>${getUSDPrice(extractPrice(product.priceAED)).toFixed(2)} USD</span>
                     </div>
                     <p className="text-xs text-[#2c2824]/60 mt-2">
                       * PayPal processes in USD. Exchange rate: 1 AED = $0.27 USD
@@ -234,30 +256,45 @@ export default function CheckoutPage() {
               {/* Payment Method Selection */}
               <div className="mb-6">
                 <Label className="text-base font-medium mb-3 block">Choose Payment Method</Label>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod("paypal")}
-                    className={`p-4 border-2 rounded-lg text-center transition-colors ${
-                      paymentMethod === "paypal"
-                        ? "border-[#2c2824] bg-[#2c2824]/5"
-                        : "border-gray-200 hover:border-gray-300"
-                    }`}
-                  >
-                    <div className="font-medium text-[#2c2824]">PayPal</div>
-                    <div className="text-xs text-[#2c2824]/60 mt-1">PayPal account or card</div>
-                  </button>
+                <div className="grid grid-cols-1 gap-3">
                   <button
                     type="button"
                     onClick={() => setPaymentMethod("stripe")}
-                    className={`p-4 border-2 rounded-lg text-center transition-colors ${
+                    className={`p-4 border-2 rounded-lg text-left transition-colors ${
                       paymentMethod === "stripe"
                         ? "border-[#2c2824] bg-[#2c2824]/5"
                         : "border-gray-200 hover:border-gray-300"
                     }`}
                   >
-                    <div className="font-medium text-[#2c2824]">Credit/Debit Card</div>
-                    <div className="text-xs text-[#2c2824]/60 mt-1">Direct card payment (Stripe)</div>
+                    <div className="font-medium text-[#2c2824] mb-1">💳 Credit/Debit Card (Recommended)</div>
+                    <div className="text-xs text-[#2c2824]/60">
+                      {selectedRegion === "UAE"
+                        ? "🇦🇪 UAE cards • Emirates NBD, ADCB, FAB, etc. • Pay in AED"
+                        : "🇬🇧 UK cards • Barclays, HSBC, Lloyds, etc. • Pay in GBP"}
+                    </div>
+                    <div className="text-xs text-[#2c2824]/60 mt-1">
+                      ✅ Visa, Mastercard • Apple Pay, Google Pay • 3D Secure protected
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod("paypal")}
+                    className={`p-4 border-2 rounded-lg text-left transition-colors ${
+                      paymentMethod === "paypal"
+                        ? "border-[#2c2824] bg-[#2c2824]/5"
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    <div className="font-medium text-[#2c2824] mb-1">🅿️ PayPal</div>
+                    <div className="text-xs text-[#2c2824]/60">
+                      PayPal account or card • Processes in USD • International support
+                    </div>
+                    <div className="text-xs text-[#2c2824]/60 mt-1">
+                      {selectedRegion === "UAE"
+                        ? "💱 Converts from AED to USD automatically"
+                        : "💱 Converts from GBP to USD automatically"}
+                    </div>
                   </button>
                 </div>
               </div>
@@ -419,7 +456,15 @@ export default function CheckoutPage() {
                   <p>🔒 Secure payment powered by {paymentMethod === "paypal" ? "PayPal" : "Stripe"}</p>
                   <p>📱 You&apos;ll receive WhatsApp contact after payment for delivery coordination</p>
                   {paymentMethod === "stripe" && (
-                    <p className="text-xs mt-1">💳 Direct card payment • No account required • AED supported</p>
+                    <div className="text-xs mt-2 space-y-1">
+                      <p>💳 {selectedRegion === "UAE" ? "UAE" : "UK"} cards supported • No account required</p>
+                      <p>🌍 International cards welcome • 3D Secure protected</p>
+                    </div>
+                  )}
+                  {paymentMethod === "paypal" && (
+                    <div className="text-xs mt-2">
+                      <p>🌍 Works with cards from any country • PayPal handles currency conversion</p>
+                    </div>
                   )}
                 </div>
               </form>
