@@ -5,7 +5,6 @@ export async function POST(request: NextRequest) {
   try {
     const { name, email, phone, subject, message, region } = await request.json()
 
-    // Use your existing environment variables
     const emailUser = process.env.EMAIL_USER || "support@amariahco.com"
     const emailPassword = process.env.EMAIL_PASSWORD
     const businessEmail = process.env.BUSINESS_EMAIL || "support@amariahco.com"
@@ -18,7 +17,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 🏠 LOCALHOST DETECTION - Skip email sending in development
     const isLocalhost = process.env.NODE_ENV === "development" || process.env.VERCEL_ENV === undefined
 
     if (isLocalhost) {
@@ -41,77 +39,39 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // 🌐 PRODUCTION - Actually send email
     console.log("🌐 PRODUCTION MODE - Sending real email")
     console.log("Using email user:", emailUser)
     console.log("Sending to business email:", businessEmail)
 
-    // Updated configurations based on your hosting provider settings
     const emailConfigs = [
       {
-        name: "Config 1: SSL Port 465 (Recommended)",
+        name: "Namecheap SSL (Recommended)",
         config: {
-          host: "amariahco.com", // Outgoing Server from your settings
-          port: 465, // SMTP Port from your settings
+          host: "amariahco.com", // Exact match from Namecheap
+          port: 465, // Exact match from Namecheap
           secure: true, // SSL as recommended
           auth: { user: emailUser, pass: emailPassword },
           tls: {
             rejectUnauthorized: false,
-            ciphers: "SSLv3",
           },
-          connectionTimeout: 60000, // 60 seconds
-          greetingTimeout: 30000, // 30 seconds
-          socketTimeout: 60000, // 60 seconds
+          connectionTimeout: 10000,
+          greetingTimeout: 5000,
+          socketTimeout: 10000,
         },
       },
       {
-        name: "Config 2: Non-SSL Port 587 (mail.amariahco.com)",
+        name: "Namecheap Non-SSL",
         config: {
-          host: "mail.amariahco.com", // From Non-SSL settings
-          port: 587, // SMTP Port from Non-SSL settings
-          secure: false, // STARTTLS
-          auth: { user: emailUser, pass: emailPassword },
-          tls: {
-            rejectUnauthorized: false,
-            ciphers: "SSLv3",
-          },
-          connectionTimeout: 60000,
-          greetingTimeout: 30000,
-          socketTimeout: 60000,
-        },
-      },
-      {
-        name: "Config 3: SSL Port 465 with requireTLS",
-        config: {
-          host: "amariahco.com",
-          port: 465,
-          secure: true,
-          auth: { user: emailUser, pass: emailPassword },
-          requireTLS: true,
-          tls: {
-            rejectUnauthorized: false,
-            servername: "amariahco.com",
-          },
-          connectionTimeout: 60000,
-          greetingTimeout: 30000,
-          socketTimeout: 60000,
-        },
-      },
-      {
-        name: "Config 4: Port 587 with STARTTLS",
-        config: {
-          host: "amariahco.com",
-          port: 587,
+          host: "mail.amariahco.com", // Exact match from Namecheap Non-SSL
+          port: 587, // Exact match from Namecheap Non-SSL
           secure: false,
           auth: { user: emailUser, pass: emailPassword },
-          requireTLS: true,
           tls: {
             rejectUnauthorized: false,
-            servername: "amariahco.com",
           },
-          connectionTimeout: 60000,
-          greetingTimeout: 30000,
-          socketTimeout: 60000,
+          connectionTimeout: 10000,
+          greetingTimeout: 5000,
+          socketTimeout: 10000,
         },
       },
     ]
@@ -119,16 +79,14 @@ export async function POST(request: NextRequest) {
     let transporter = null
     let workingConfig = null
 
-    // Try each configuration until one works
     for (const { name, config } of emailConfigs) {
       try {
         console.log(`Trying ${name}...`)
         const testTransporter = nodemailer.createTransport(config)
 
-        // Set a timeout for the verify operation
         const verifyPromise = testTransporter.verify()
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error("Verification timeout")), 30000),
+        const timeoutPromise = new Promise(
+          (_, reject) => setTimeout(() => reject(new Error("Verification timeout")), 8000), // Reduced from 30000 to 8000
         )
 
         await Promise.race([verifyPromise, timeoutPromise])
@@ -156,7 +114,6 @@ export async function POST(request: NextRequest) {
     }
     console.log(`Using working configuration: ${workingConfig}`)
 
-    // Email content
     const emailContent = `
 New Contact Form Submission from AMA Website
 
@@ -174,7 +131,6 @@ Sent from AMA Fashion website contact form
 Time: ${new Date().toLocaleString()}
     `
 
-    // Send email with timeout - Fixed TypeScript issue
     console.log("Sending email...")
     const sendPromise = transporter.sendMail({
       from: emailUser,
@@ -212,17 +168,18 @@ Time: ${new Date().toLocaleString()}
       `,
     })
 
-    const timeoutPromise = new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Send timeout")), 45000))
+    const timeoutPromise = new Promise<never>(
+      (_, reject) => setTimeout(() => reject(new Error("Send timeout")), 15000), // Reduced from 45000 to 15000
+    )
 
     try {
       const info = await Promise.race([sendPromise, timeoutPromise])
-      // Type assertion to safely access messageId
       const messageId = (info as any)?.messageId || "unknown"
       console.log("Email sent successfully:", messageId)
 
       return NextResponse.json({ success: true, message: "Email sent successfully!" })
     } catch (sendError) {
-      throw sendError // Re-throw to be caught by outer catch block
+      throw sendError
     }
   } catch (error) {
     console.error("Email sending error:", error)

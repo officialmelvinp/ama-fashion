@@ -46,35 +46,33 @@ export async function POST(request: NextRequest) {
     // Use the same improved email configurations as contact form
     const emailConfigs = [
       {
-        name: "Config 1: SSL Port 465",
+        name: "Namecheap SSL (Recommended)",
         config: {
-          host: "amariahco.com",
-          port: 465,
-          secure: true,
+          host: "amariahco.com", // Exact match from Namecheap
+          port: 465, // Exact match from Namecheap
+          secure: true, // SSL as recommended
           auth: { user: emailUser, pass: emailPassword },
           tls: {
             rejectUnauthorized: false,
-            ciphers: "SSLv3",
           },
-          connectionTimeout: 30000, // Shorter timeout for newsletter
-          greetingTimeout: 15000,
-          socketTimeout: 30000,
+          connectionTimeout: 15000, // Shorter for newsletter
+          greetingTimeout: 10000,
+          socketTimeout: 15000,
         },
       },
       {
-        name: "Config 2: Port 587 STARTTLS",
+        name: "Namecheap Non-SSL",
         config: {
-          host: "mail.amariahco.com",
-          port: 587,
+          host: "mail.amariahco.com", // Exact match from Namecheap Non-SSL
+          port: 587, // Exact match from Namecheap Non-SSL
           secure: false,
           auth: { user: emailUser, pass: emailPassword },
           tls: {
             rejectUnauthorized: false,
-            ciphers: "SSLv3",
           },
-          connectionTimeout: 30000,
-          greetingTimeout: 15000,
-          socketTimeout: 30000,
+          connectionTimeout: 15000,
+          greetingTimeout: 10000,
+          socketTimeout: 15000,
         },
       },
     ]
