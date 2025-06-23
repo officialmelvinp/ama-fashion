@@ -2,19 +2,6 @@ import { type NextRequest, NextResponse } from "next/server"
 import nodemailer from "nodemailer"
 import { addSubscriber } from "@/lib/database"
 
-// Email configuration
-const emailConfig = {
-  host: "elmelvinp.com",
-  port: 465,
-  secure: true,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD,
-  },
-}
-
-const transporter = nodemailer.createTransport(emailConfig)
-
 export async function POST(request: NextRequest) {
   try {
     console.log("API route hit: /api/newsletter")
@@ -38,7 +25,40 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: result.message }, { status: 200 })
     }
 
-    // Send welcome email to new subscriber
+    // 🏠 LOCALHOST DETECTION - Skip email sending in development
+    const isLocalhost = process.env.NODE_ENV === "development" || process.env.VERCEL_ENV === undefined
+
+    if (isLocalhost) {
+      console.log("🏠 LOCALHOST - Skipping welcome email send")
+      return NextResponse.json({ message: result.message }, { status: 200 })
+    }
+
+    // 🌐 PRODUCTION - Send emails using your AMA configuration
+    const emailUser = process.env.EMAIL_USER || "support@amariahco.com"
+    const emailPassword = process.env.EMAIL_PASSWORD
+    const businessEmail = process.env.BUSINESS_EMAIL || "support@amariahco.com"
+
+    if (!emailPassword) {
+      console.log("No email password - skipping email send")
+      return NextResponse.json({ message: result.message }, { status: 200 })
+    }
+
+    // Use the same email configuration as contact form
+    const transporter = nodemailer.createTransport({
+      host: "amariahco.com",
+      port: 465,
+      secure: true,
+      auth: { user: emailUser, pass: emailPassword },
+      tls: {
+        rejectUnauthorized: false,
+        servername: "amariahco.com",
+      },
+      connectionTimeout: 60000,
+      greetingTimeout: 30000,
+      socketTimeout: 60000,
+    })
+
+    // Updated welcome email with correct contact info
     const welcomeEmailHtml = `
       <!DOCTYPE html>
       <html>
@@ -87,7 +107,7 @@ export async function POST(request: NextRequest) {
             
             <div class="footer">
               <p>AMA Fashion | Dubai, UAE</p>
-              <p>contact@elmelvinp.com | +971 50 123 4567</p>
+              <p>support@amariahco.com | +971 50 123 4567</p>
               <p><em>Fabric is our first memory. The skin before skin.</em></p>
             </div>
           </div>
@@ -99,7 +119,7 @@ export async function POST(request: NextRequest) {
       // Send welcome email
       console.log("Sending welcome email to:", email)
       await transporter.sendMail({
-        from: `"AMA Fashion" <${process.env.EMAIL_USER}>`,
+        from: `"AMA Fashion" <${emailUser}>`,
         to: email,
         subject: "Welcome to AMA - Your Journey Begins",
         html: welcomeEmailHtml,
@@ -108,8 +128,8 @@ export async function POST(request: NextRequest) {
       // Send notification email
       console.log("Sending notification email")
       await transporter.sendMail({
-        from: `"AMA Newsletter" <${process.env.EMAIL_USER}>`,
-        to: process.env.EMAIL_USER,
+        from: `"AMA Newsletter" <${emailUser}>`,
+        to: businessEmail,
         subject: "New Newsletter Subscription - AMA Fashion",
         html: `
           <h3>New Newsletter Subscription</h3>

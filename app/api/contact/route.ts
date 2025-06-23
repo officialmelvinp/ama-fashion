@@ -154,7 +154,6 @@ export async function POST(request: NextRequest) {
         { status: 500 },
       )
     }
-
     console.log(`Using working configuration: ${workingConfig}`)
 
     // Email content
@@ -228,7 +227,7 @@ Time: ${new Date().toLocaleString()}
   } catch (error) {
     console.error("Email sending error:", error)
 
-    let errorMessage = "Failed to send email. Please contact us via WhatsApp: https://wa.me/971501234567"
+    let errorMessage = "Failed to send email. Please contact us via WhatsApp: https://wa.me/+447707783963"
 
     if (error instanceof Error) {
       const errorCode = (error as any).code
