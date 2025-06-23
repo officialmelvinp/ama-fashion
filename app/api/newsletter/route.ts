@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: result.message }, { status: 200 })
     }
 
-    // 🌐 PRODUCTION - Send emails using your AMA configuration
+    // 🌐 PRODUCTION - Send emails using improved configuration
     const emailUser = process.env.EMAIL_USER || "support@amariahco.com"
     const emailPassword = process.env.EMAIL_PASSWORD
     const businessEmail = process.env.BUSINESS_EMAIL || "support@amariahco.com"
@@ -43,20 +43,73 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: result.message }, { status: 200 })
     }
 
-    // Use the same email configuration as contact form
-    const transporter = nodemailer.createTransport({
-      host: "amariahco.com",
-      port: 465,
-      secure: true,
-      auth: { user: emailUser, pass: emailPassword },
-      tls: {
-        rejectUnauthorized: false,
-        servername: "amariahco.com",
+    // Use the same improved email configurations as contact form
+    const emailConfigs = [
+      {
+        name: "Config 1: SSL Port 465",
+        config: {
+          host: "amariahco.com",
+          port: 465,
+          secure: true,
+          auth: { user: emailUser, pass: emailPassword },
+          tls: {
+            rejectUnauthorized: false,
+            ciphers: "SSLv3",
+          },
+          connectionTimeout: 30000, // Shorter timeout for newsletter
+          greetingTimeout: 15000,
+          socketTimeout: 30000,
+        },
       },
-      connectionTimeout: 60000,
-      greetingTimeout: 30000,
-      socketTimeout: 60000,
-    })
+      {
+        name: "Config 2: Port 587 STARTTLS",
+        config: {
+          host: "mail.amariahco.com",
+          port: 587,
+          secure: false,
+          auth: { user: emailUser, pass: emailPassword },
+          tls: {
+            rejectUnauthorized: false,
+            ciphers: "SSLv3",
+          },
+          connectionTimeout: 30000,
+          greetingTimeout: 15000,
+          socketTimeout: 30000,
+        },
+      },
+    ]
+
+    let transporter = null
+
+    // Try each configuration until one works
+    for (const { name, config } of emailConfigs) {
+      try {
+        console.log(`Newsletter: Trying ${name}...`)
+        const testTransporter = nodemailer.createTransport(config)
+
+        // Quick verification with timeout
+        const verifyPromise = testTransporter.verify()
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("Verification timeout")), 15000),
+        )
+
+        await Promise.race([verifyPromise, timeoutPromise])
+
+        transporter = testTransporter
+        console.log(`Newsletter: ✅ ${name} - SUCCESS!`)
+        break
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Unknown error"
+        console.log(`Newsletter: ❌ ${name} - Failed:`, errorMessage)
+        continue
+      }
+    }
+
+    // If no email config works, still return success (newsletter subscription worked)
+    if (!transporter) {
+      console.log("Newsletter: All email configs failed - subscription saved but no welcome email sent")
+      return NextResponse.json({ message: result.message }, { status: 200 })
+    }
 
     // Updated welcome email with correct contact info
     const welcomeEmailHtml = `
@@ -107,7 +160,7 @@ export async function POST(request: NextRequest) {
             
             <div class="footer">
               <p>AMA Fashion | Dubai, UAE</p>
-              <p>support@amariahco.com | +971 50 123 4567</p>
+              <p>support@amariahco.com | +447707783963</p>
               <p><em>Fabric is our first memory. The skin before skin.</em></p>
             </div>
           </div>
