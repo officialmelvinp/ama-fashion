@@ -32,7 +32,7 @@ export async function addSubscriber(email: string): Promise<{ success: boolean; 
 
     return {
       success: true,
-      message: "Successfully subscribed to newsletter!",
+      message: "Thank you for subscribing! Welcome to the AMA community.",
       isNew: true,
     }
   } catch (error) {
@@ -50,6 +50,7 @@ export async function getSubscribers(): Promise<Subscriber[]> {
     const result = await sql`
       SELECT id, email, created_at, status 
       FROM subscribers 
+      WHERE status = 'active'
       ORDER BY created_at DESC
     `
     return result as Subscriber[]
@@ -62,7 +63,9 @@ export async function getSubscribers(): Promise<Subscriber[]> {
 export async function removeSubscriber(email: string): Promise<boolean> {
   try {
     await sql`
-      DELETE FROM subscribers WHERE email = ${email}
+      UPDATE subscribers 
+      SET status = 'unsubscribed' 
+      WHERE email = ${email}
     `
     return true
   } catch (error) {
