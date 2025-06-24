@@ -449,12 +449,12 @@ export default function ShopPageClient() {
     }
 
     if (activeFilter === "ayomide") {
-      // Two items - mobile: 1 column, desktop: 2 columns with NO gap
-      return "grid grid-cols-1 lg:grid-cols-2 gap-0 max-w-full mx-auto"
+      // Two items - mobile: 1 column, desktop: 2 columns with small gap
+      return "grid grid-cols-1 lg:grid-cols-2 gap-4 max-w-full mx-auto"
     }
 
-    // All other collections - mobile: 1 column, desktop: 3 columns with NO gap
-    return "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0 max-w-full mx-auto"
+    // All other collections - mobile: 1 column, desktop: 3 columns with small gap
+    return "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-full mx-auto"
   }
 
   // ============= GET CONTAINER CLASSES FOR INDIVIDUAL PRODUCTS =============
@@ -476,16 +476,16 @@ export default function ShopPageClient() {
   // ============= GET IMAGE ASPECT RATIO =============
   const getImageAspectRatio = () => {
     if (activeFilter === "the-manifested-set") {
-      // Single item - ABSOLUTELY MASSIVE on both mobile and desktop
+      // Single item - Taller images
       return "aspect-[3/4] h-[85vh] lg:h-[95vh]"
     }
 
     if (activeFilter === "ayomide") {
-      // Two items - ABSOLUTELY MASSIVE on both mobile and desktop
+      // Two items - Taller images
       return "aspect-[3/4] h-[80vh] lg:h-[90vh]"
     }
 
-    // All other collections - ABSOLUTELY MASSIVE on both mobile and desktop
+    // All other collections - Taller images
     return "aspect-[3/4] h-[75vh] lg:h-[85vh]"
   }
 
