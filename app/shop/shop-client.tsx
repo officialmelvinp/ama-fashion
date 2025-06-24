@@ -29,7 +29,7 @@ const allProducts: Product[] = [
   // Ayọ̀mídé - 2 items with colors
   {
     id: "ayomide-blue",
-    name: "Ayọ̀mídé Blue",
+    name: "Ayọ̀mídé",
     subtitle: "A Quiet Ode to Joy",
     materials: ["adire"],
     description: "Joy woven into form. A dress that carries the lightness of being.",
@@ -58,7 +58,7 @@ const allProducts: Product[] = [
 
   {
     id: "ayomide-purple",
-    name: "Ayọ̀mídé Purple",
+    name: "Ayọ̀mídé",
     subtitle: "A Quiet Ode to Joy",
     materials: ["adire"],
     description: "Joy woven into form. A dress that carries the lightness of being.",
@@ -441,17 +441,52 @@ export default function ShopPageClient() {
 
   const filteredProducts = getFilteredProducts()
 
-  // ============= DYNAMIC GRID LAYOUT LOGIC =============
+  // ============= DYNAMIC GRID LAYOUT LOGIC - UPDATED FOR BIGGER IMAGES =============
   const getGridClasses = () => {
     if (activeFilter === "the-manifested-set") {
+      // Single item - ABSOLUTELY MASSIVE
       return "flex justify-center"
     }
 
     if (activeFilter === "ayomide") {
-      return "grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 max-w-4xl mx-auto"
+      // Two items - ENORMOUS side by side, tiny gap
+      return "grid grid-cols-1 lg:grid-cols-2 gap-2 lg:gap-4 max-w-full mx-auto"
     }
 
-    return "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-16 max-w-7xl mx-auto"
+    // All other collections - HUGE 3-column grid, full width
+    return "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 lg:gap-4 max-w-full mx-auto"
+  }
+
+  // ============= GET CONTAINER CLASSES FOR INDIVIDUAL PRODUCTS =============
+  const getProductContainerClasses = () => {
+    if (activeFilter === "the-manifested-set") {
+      // Single item - ULTRA WIDE container
+      return "flex flex-col max-w-7xl mx-auto"
+    }
+
+    if (activeFilter === "ayomide") {
+      // Two items - SUPER WIDE containers
+      return "flex flex-col max-w-5xl mx-auto"
+    }
+
+    // All other collections - MUCH WIDER containers
+    return "flex flex-col max-w-3xl mx-auto"
+  }
+
+  // ============= GET IMAGE ASPECT RATIO =============
+  const getImageAspectRatio = () => {
+    if (activeFilter === "the-manifested-set") {
+      // Single item - ULTRA WIDE and tall
+      return "aspect-[5/6]"
+    }
+
+    if (activeFilter === "ayomide") {
+      // Two items - SUPER WIDE and tall
+      return "aspect-[4/5]"
+    }
+
+    // All other collections - MUCH WIDER and tall
+    return "aspect-[4/5]"
   }
 
   // ============= EVENT HANDLERS =============
@@ -510,9 +545,9 @@ export default function ShopPageClient() {
 
       {/* Navigation Header */}
       <Header bgColor="bg-white/90 backdrop-blur-sm" textColor="text-[#2c2824]" />
-      <div className="container mx-auto py-24 px-4">
+      <div className="container mx-auto py-8 px-1">
         {/* Top mood line */}
-        <div className="max-w-4xl mx-auto mb-16 text-center">
+        <div className="max-w-4xl mx-auto mb-6 text-center">
           <h1 className="text-lg md:text-xl lg:text-2xl font-serif text-[#2c2824] italic mb-2">
             Fabrics that remember.
           </h1>
@@ -522,7 +557,7 @@ export default function ShopPageClient() {
         </div>
 
         {/* ============= REGION SELECTOR ============= */}
-        <div className="mb-8">
+        <div className="mb-4">
           <div className="flex justify-center">
             <div className="text-center">
               <h2 className="text-sm mb-4 opacity-70 font-medium">Select Your Region</h2>
@@ -555,7 +590,7 @@ export default function ShopPageClient() {
         </div>
 
         {/* ============= COLLECTION FILTER BUTTONS ============= */}
-        <div className="mb-16">
+        <div className="mb-6">
           <div className="flex justify-center">
             <div className="text-center">
               <h2 className="text-sm mb-4 opacity-70 font-medium">Filter by Collection</h2>
@@ -624,49 +659,103 @@ export default function ShopPageClient() {
           </div>
         </div>
 
-        {/* ============= PRODUCT DISPLAY ============= */}
+        {/* ============= PRODUCT DISPLAY - UPDATED WITH BIGGER IMAGES ============= */}
         <div className={getGridClasses()}>
           {filteredProducts.map((product) => {
             const descriptionParts = getDescriptionParts(product.description)
             const displayPrice = selectedRegion === "UAE" ? product.priceAED : product.priceGBP
 
             return (
-              <article key={product.id} className="flex flex-col max-w-md mx-auto" id={product.category}>
-                <div className="relative aspect-[3/4] overflow-hidden mb-4 group">
+              <article key={product.id} className={getProductContainerClasses()} id={product.category}>
+                <div className={`relative ${getImageAspectRatio()} overflow-hidden mb-2 group`}>
                   <Image
                     src={product.images[0] || "/placeholder.svg"}
                     alt={`${product.name} - ${product.subtitle} - African fashion by AMA featuring ${product.materials.join(", ")} materials`}
                     fill
                     className="object-cover transition-transform duration-700 group-hover:scale-110"
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    sizes={
+                      activeFilter === "the-manifested-set"
+                        ? "(max-width: 768px) 100vw, 50vw"
+                        : activeFilter === "ayomide"
+                          ? "(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 40vw"
+                          : "(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    }
                   />
                 </div>
 
-                <div className="text-center space-y-1">
+                <div className="text-center space-y-2">
                   <div className="flex items-center justify-center gap-2">
-                    <h3 className="font-serif text-xl md:text-2xl text-[#2c2824]">{product.name}</h3>
+                    <h3
+                      className={`font-serif text-[#2c2824] ${
+                        activeFilter === "the-manifested-set"
+                          ? "text-2xl md:text-3xl"
+                          : activeFilter === "ayomide"
+                            ? "text-xl md:text-2xl"
+                            : "text-xl md:text-2xl"
+                      }`}
+                    >
+                      {product.name}
+                    </h3>
                     {product.colors && product.category === "ayomide" && (
                       <div
-                        className="w-5 h-5 rounded-full border-2 border-gray-300"
+                        className="w-6 h-6 rounded-full border-2 border-gray-300"
                         style={{ backgroundColor: product.colors[0] }}
                         title={product.colors[0] === "#3B82F6" ? "Blue" : "Pink"}
-                        aria-label={`Available in ${product.colors[0] === "#3B82F6" ? "blue" : "pink"}`}
+                        aria-label={`${product.colors[0] === "#3B82F6" ? "blue" : "pink"}`}
                       />
                     )}
                   </div>
 
-                  <h4 className="font-serif text-base md:text-lg text-[#2c2824]/80">{product.subtitle}</h4>
+                  <h4
+                    className={`font-serif text-[#2c2824]/80 ${
+                      activeFilter === "the-manifested-set"
+                        ? "text-lg md:text-xl"
+                        : activeFilter === "ayomide"
+                          ? "text-base md:text-lg"
+                          : "text-base md:text-lg"
+                    }`}
+                  >
+                    {product.subtitle}
+                  </h4>
 
                   {descriptionParts.secondPart && (
-                    <p className="text-sm italic text-[#2c2824] leading-relaxed">{descriptionParts.secondPart}</p>
+                    <p
+                      className={`italic text-[#2c2824] leading-relaxed ${
+                        activeFilter === "the-manifested-set" ? "text-base md:text-lg" : "text-sm md:text-base"
+                      }`}
+                    >
+                      {descriptionParts.secondPart}
+                    </p>
                   )}
-                  <p className="text-sm italic text-[#2c2824] leading-relaxed">{descriptionParts.firstPart}</p>
-                  <p className="font-medium text-base md:text-lg text-[#2c2824] pt-1">{displayPrice}</p>
+                  <p
+                    className={`italic text-[#2c2824] leading-relaxed ${
+                      activeFilter === "the-manifested-set" ? "text-base md:text-lg" : "text-sm md:text-base"
+                    }`}
+                  >
+                    {descriptionParts.firstPart}
+                  </p>
+                  <p
+                    className={`font-medium text-[#2c2824] pt-2 ${
+                      activeFilter === "the-manifested-set"
+                        ? "text-xl md:text-2xl"
+                        : activeFilter === "ayomide"
+                          ? "text-lg md:text-xl"
+                          : "text-base md:text-lg"
+                    }`}
+                  >
+                    {displayPrice}
+                  </p>
 
-                  <div className="pt-2">
+                  <div className="pt-4">
                     <Button
                       onClick={() => handleBuyNow(product)}
-                      className="bg-[#2c2824] text-white hover:bg-[#2c2824]/90 px-8 py-2 text-sm md:text-base"
+                      className={`bg-[#2c2824] text-white hover:bg-[#2c2824]/90 ${
+                        activeFilter === "the-manifested-set"
+                          ? "px-12 py-4 text-lg md:text-xl"
+                          : activeFilter === "ayomide"
+                            ? "px-10 py-3 text-base md:text-lg"
+                            : "px-8 py-2 text-sm md:text-base"
+                      }`}
                       aria-label={`Buy ${product.name} for ${displayPrice}`}
                     >
                       Buy Now
