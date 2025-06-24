@@ -45,7 +45,9 @@ export default function ContactForm() {
       const result = await response.json()
 
       if (result.success) {
-        setSubmitMessage("Thank you! Your message has been sent successfully. We'll get back to you soon.")
+        setSubmitMessage(
+          result.message || "Thank you! Your message has been sent successfully. We'll get back to you soon.",
+        )
         setFormData({
           name: "",
           email: "",

@@ -3,73 +3,73 @@
 import type React from "react"
 
 import { useState } from "react"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
 
 export default function NewsletterForm() {
   const [email, setEmail] = useState("")
-  const [status, setStatus] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
+  const [message, setMessage] = useState("")
+  const [error, setError] = useState("")
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setMessage("")
+    setError("")
 
-    if (!email) {
-      setStatus("Please enter an email address!")
+    // Basic email validation
+    if (!email || !email.includes("@")) {
+      setError("Please enter a valid email address.")
       return
     }
-
-    setIsLoading(true)
-    setStatus("Subscribing...")
 
     try {
       const response = await fetch("/api/newsletter", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ email }),
       })
 
-      const data = await response.json()
+      const result = await response.json()
 
-      if (response.ok) {
-        setStatus("Success! Check your email for a welcome message.")
-        setEmail("")
+      if (result.success) {
+        setMessage(result.message)
+        setEmail("") // Clear the input
+        setError("") // Clear any previous errors
       } else {
-        setStatus(`Error: ${data.error}`)
+        setError(result.error || "Something went wrong. Please try again.")
+        setMessage("") // Clear any previous success messages
       }
-    } catch (error) {
-      console.error("Newsletter error:", error)
-      setStatus("Network error. Please try again.")
-    } finally {
-      setIsLoading(false)
+    } catch (err: any) {
+      setError("Something went wrong. Please try again.")
+      setMessage("") // Clear any previous success messages
     }
   }
 
   return (
-    <div className="w-full max-w-md mx-auto">
-      <h3 className="text-2xl font-serif mb-2 text-center text-white">Stay Rooted. Sign Up.</h3>
-      <p className="text-sm mb-6 text-center opacity-80 text-white">Receive stories stitched in spirit, not spam.</p>
-
-      <form onSubmit={handleSubmit}>
-        <div className="flex flex-col gap-3">
-          <input
-            id="newsletter-email"
-            name="email"
+    <div className="max-w-md mx-auto">
+      <h2 className="font-serif text-3xl mb-4">Join Our Manifestation</h2>
+      <p className="mb-6 opacity-80">
+        Be the first to know about new collections, exclusive offers, and spiritually-rooted content.
+      </p>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <Input
             type="email"
-            placeholder="Your email address"
+            placeholder="Enter your email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="px-4 py-3 rounded-md border border-white/30 bg-white/10 text-white placeholder:text-white/70 focus:outline-none focus:ring-2 focus:ring-white/50"
+            required
+            className="w-full bg-white/10 border-white/20 text-white placeholder-white/60"
           />
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="px-6 py-3 bg-white text-[#2c2824] rounded-md hover:bg-white/90 font-medium disabled:opacity-50"
-          >
-            {isLoading ? "Subscribing..." : "Subscribe"}
-          </button>
         </div>
+        <Button className="w-full" type="submit">
+          Subscribe
+        </Button>
+        {error && <p className="text-red-400 text-sm">{error}</p>}
+        {message && <p className="text-green-400 text-sm">{message}</p>}
       </form>
-
-      {status && <div className="mt-4 p-3 rounded-md bg-white/10 text-white text-sm text-center">{status}</div>}
     </div>
   )
 }
