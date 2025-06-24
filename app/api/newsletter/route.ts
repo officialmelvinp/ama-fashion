@@ -8,12 +8,12 @@ if (!emailUser || !emailPassword) {
   console.error("EMAIL_USER and EMAIL_PASSWORD must be defined in the environment variables.")
 }
 
-// Use the same cPanel email configurations as contact form
+// Use the same Namecheap cPanel email configurations as contact form
 const emailConfigs = [
   {
-    name: "cPanel SSL (Recommended)", // Changed from "Namecheap SSL"
+    name: "Namecheap cPanel SSL (Recommended)",
     config: {
-      host: "amariahco.com",
+      host: "premium169.web-hosting.com", // Your actual cPanel server
       port: 465,
       secure: true,
       auth: { user: emailUser, pass: emailPassword },
@@ -26,9 +26,9 @@ const emailConfigs = [
     },
   },
   {
-    name: "cPanel Non-SSL", // Changed from "Namecheap Non-SSL"
+    name: "Namecheap cPanel Non-SSL",
     config: {
-      host: "mail.amariahco.com",
+      host: "premium169.web-hosting.com",
       port: 587,
       secure: false,
       auth: { user: emailUser, pass: emailPassword },
@@ -41,7 +41,7 @@ const emailConfigs = [
     },
   },
   {
-    name: "cPanel Alternative SSL", // New fallback option
+    name: "Namecheap Alternative (mail.amariahco.com)",
     config: {
       host: "mail.amariahco.com",
       port: 465,

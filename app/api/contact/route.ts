@@ -22,12 +22,12 @@ export async function POST(request: Request) {
       )
     }
 
-    // Use your actual cPanel email server settings
+    // Updated Namecheap cPanel email configurations
     const emailConfigs = [
       {
-        name: "cPanel SSL (Recommended)",
+        name: "Namecheap cPanel SSL (Recommended)",
         config: {
-          host: "amariahco.com", // Your actual email server
+          host: "premium169.web-hosting.com", // Your actual cPanel server
           port: 465,
           secure: true,
           auth: { user: emailUser, pass: emailPassword },
@@ -40,9 +40,9 @@ export async function POST(request: Request) {
         },
       },
       {
-        name: "cPanel Non-SSL",
+        name: "Namecheap cPanel Non-SSL",
         config: {
-          host: "mail.amariahco.com",
+          host: "premium169.web-hosting.com",
           port: 587,
           secure: false,
           auth: { user: emailUser, pass: emailPassword },
@@ -55,7 +55,7 @@ export async function POST(request: Request) {
         },
       },
       {
-        name: "cPanel Alternative SSL", // New fallback option
+        name: "Namecheap Alternative (mail.amariahco.com)",
         config: {
           host: "mail.amariahco.com",
           port: 465,

@@ -24,12 +24,12 @@ export async function GET() {
       )
     }
 
-    // Updated cPanel configurations to match your contact/newsletter routes
+    // Updated Namecheap cPanel configurations
     const testConfigs = [
       {
-        name: "cPanel SSL (Port 465) - Primary",
+        name: "Namecheap cPanel SSL (Port 465) - Primary",
         config: {
-          host: "amariahco.com", // Your actual cPanel server
+          host: "premium169.web-hosting.com", // Your actual cPanel server
           port: 465,
           secure: true,
           auth: { user: emailUser, pass: emailPassword },
@@ -42,9 +42,9 @@ export async function GET() {
         },
       },
       {
-        name: "cPanel Non-SSL (Port 587) - Secondary",
+        name: "Namecheap cPanel Non-SSL (Port 587) - Secondary",
         config: {
-          host: "mail.amariahco.com", // Alternative cPanel server
+          host: "premium169.web-hosting.com",
           port: 587,
           secure: false,
           auth: { user: emailUser, pass: emailPassword },
@@ -57,7 +57,7 @@ export async function GET() {
         },
       },
       {
-        name: "cPanel Alternative SSL (Port 465) - Fallback",
+        name: "Namecheap Alternative (mail.amariahco.com:465)",
         config: {
           host: "mail.amariahco.com",
           port: 465,
@@ -72,10 +72,10 @@ export async function GET() {
         },
       },
       {
-        name: "cPanel Port 25 (Basic SMTP)",
+        name: "Namecheap Alternative (mail.amariahco.com:587)",
         config: {
-          host: "amariahco.com",
-          port: 25,
+          host: "mail.amariahco.com",
+          port: 587,
           secure: false,
           auth: { user: emailUser, pass: emailPassword },
           tls: {
