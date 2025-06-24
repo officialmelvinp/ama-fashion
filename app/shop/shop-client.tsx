@@ -33,8 +33,8 @@ const allProducts: Product[] = [
     subtitle: "A Quiet Ode to Joy",
     materials: ["adire"],
     description: "Joy woven into form. A dress that carries the lightness of being.",
-    priceAED: "50 AED",
-    priceGBP: "£20 GBP",
+    priceAED: "20 AED",
+    priceGBP: "£5 GBP",
     images: ["/images/ama6.jpeg"],
     category: "ayomide",
     essences: ["everyday", "sacred"],
@@ -49,8 +49,8 @@ const allProducts: Product[] = [
     subtitle: "What You Asked For, Woven",
     materials: ["batik"],
     description: "A pairing of ease and presence. One-size drape, bound by craft.",
-    priceAED: "20 AED",
-    priceGBP: "£5 GBP",
+    priceAED: "950 AED",
+    priceGBP: "£205 GBP",
     images: ["/images/ama5.jpeg"],
     category: "the-manifested-set",
     essences: ["sacred", "gatherings"],
@@ -444,49 +444,49 @@ export default function ShopPageClient() {
   // ============= DYNAMIC GRID LAYOUT LOGIC - UPDATED FOR BIGGER IMAGES =============
   const getGridClasses = () => {
     if (activeFilter === "the-manifested-set") {
-      // Single item - ABSOLUTELY MASSIVE
-      return "flex justify-center"
+      // Single item - centered with full width
+      return "flex justify-center w-full"
     }
 
     if (activeFilter === "ayomide") {
-      // Two items - ENORMOUS side by side, tiny gap
-      return "grid grid-cols-1 lg:grid-cols-2 gap-2 lg:gap-4 max-w-full mx-auto"
+      // Two items - mobile: 1 column, desktop: 2 columns with NO gap
+      return "grid grid-cols-1 lg:grid-cols-2 gap-0 max-w-full mx-auto"
     }
 
-    // All other collections - HUGE 3-column grid, full width
-    return "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 lg:gap-4 max-w-full mx-auto"
+    // All other collections - mobile: 1 column, desktop: 3 columns with NO gap
+    return "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0 max-w-full mx-auto"
   }
 
   // ============= GET CONTAINER CLASSES FOR INDIVIDUAL PRODUCTS =============
   const getProductContainerClasses = () => {
     if (activeFilter === "the-manifested-set") {
-      // Single item - ULTRA WIDE container
-      return "flex flex-col max-w-7xl mx-auto"
+      // Single item - ABSOLUTELY MASSIVE on both mobile and desktop
+      return "flex flex-col w-full max-w-full mx-auto"
     }
 
     if (activeFilter === "ayomide") {
-      // Two items - SUPER WIDE containers
-      return "flex flex-col max-w-5xl mx-auto"
+      // Two items - ABSOLUTELY MASSIVE on both mobile and desktop
+      return "flex flex-col w-full max-w-full mx-auto"
     }
 
-    // All other collections - MUCH WIDER containers
-    return "flex flex-col max-w-3xl mx-auto"
+    // All other collections - ABSOLUTELY MASSIVE on both mobile and desktop
+    return "flex flex-col w-full max-w-full mx-auto"
   }
 
   // ============= GET IMAGE ASPECT RATIO =============
   const getImageAspectRatio = () => {
     if (activeFilter === "the-manifested-set") {
-      // Single item - ULTRA WIDE and tall
-      return "aspect-[5/6]"
+      // Single item - ABSOLUTELY MASSIVE on both mobile and desktop
+      return "aspect-[3/4] h-[85vh] lg:h-[95vh]"
     }
 
     if (activeFilter === "ayomide") {
-      // Two items - SUPER WIDE and tall
-      return "aspect-[4/5]"
+      // Two items - ABSOLUTELY MASSIVE on both mobile and desktop
+      return "aspect-[3/4] h-[80vh] lg:h-[90vh]"
     }
 
-    // All other collections - MUCH WIDER and tall
-    return "aspect-[4/5]"
+    // All other collections - ABSOLUTELY MASSIVE on both mobile and desktop
+    return "aspect-[3/4] h-[75vh] lg:h-[85vh]"
   }
 
   // ============= EVENT HANDLERS =============
