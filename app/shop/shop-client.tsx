@@ -545,7 +545,7 @@ export default function ShopPageClient() {
 
       {/* Navigation Header */}
       <Header bgColor="bg-white/90 backdrop-blur-sm" textColor="text-[#2c2824]" />
-      <div className="container mx-auto py-8 px-1">
+      <div className="container mx-auto pt-24 pb-8 px-1">
         {/* Top mood line */}
         <div className="max-w-4xl mx-auto mb-6 text-center">
           <h1 className="text-lg md:text-xl lg:text-2xl font-serif text-[#2c2824] italic mb-2">
