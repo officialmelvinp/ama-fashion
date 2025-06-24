@@ -61,7 +61,7 @@ export default function HostingDetective() {
                     <h3 className="font-semibold mb-2">Domain: {hostingResults.results.domain}</h3>
                   </div>
 
-                  {hostingResults.results.investigations.map((investigation: any, index: number) => (
+                  {hostingResults?.results?.investigations?.map((investigation: any, index: number) => (
                     <div key={index} className="border p-3 rounded">
                       <div className="flex justify-between items-center mb-2">
                         <span className="font-medium">{investigation.test}</span>
@@ -76,14 +76,14 @@ export default function HostingDetective() {
                       )}
                       {investigation.error && <p className="text-sm text-red-600">{investigation.error}</p>}
                     </div>
-                  ))}
+                  )) || <p>No investigation data available</p>}
 
                   <div className="bg-blue-50 p-4 rounded">
                     <h3 className="font-semibold mb-2">Recommendations:</h3>
                     <ul className="text-sm space-y-1">
-                      {hostingResults.results.recommendations.map((rec: string, index: number) => (
+                      {hostingResults?.results?.recommendations?.map((rec: string, index: number) => (
                         <li key={index}>{rec}</li>
-                      ))}
+                      )) || <li>No recommendations available</li>}
                     </ul>
                   </div>
                 </div>
@@ -110,23 +110,23 @@ export default function HostingDetective() {
                     <p>Failed: {emailResults.summary.failed}</p>
                   </div>
 
-                  {emailResults.workingConfigs.length > 0 && (
+                  {emailResults?.workingConfigs?.length > 0 && (
                     <div className="bg-green-50 border border-green-200 p-4 rounded">
                       <h3 className="font-semibold text-green-800 mb-2">✅ Working Email Servers Found!</h3>
-                      {emailResults.workingConfigs.map((config: any, index: number) => (
+                      {emailResults?.workingConfigs?.map((config: any, index: number) => (
                         <div key={index} className="bg-white p-3 rounded mb-2">
                           <p className="font-medium">{config.name}</p>
                           <p className="text-sm text-gray-600">
                             {config.host}:{config.port} ({config.duration})
                           </p>
                         </div>
-                      ))}
+                      )) || <p>No working configurations found</p>}
                     </div>
                   )}
 
                   <div className="space-y-2">
                     <h3 className="font-semibold">All Test Results:</h3>
-                    {emailResults.results.map((result: any, index: number) => (
+                    {emailResults?.results?.map((result: any, index: number) => (
                       <div key={index} className="border p-3 rounded">
                         <div className="flex justify-between items-center">
                           <span className="font-medium">{result.name}</span>
@@ -139,15 +139,15 @@ export default function HostingDetective() {
                         </p>
                         {result.error && <p className="text-sm text-red-600 mt-1">{result.error}</p>}
                       </div>
-                    ))}
+                    )) || <p>No email test data available</p>}
                   </div>
 
                   <div className="bg-blue-50 p-4 rounded">
                     <h3 className="font-semibold mb-2">Next Steps:</h3>
                     <ul className="text-sm space-y-1">
-                      {emailResults.nextSteps.map((step: string, index: number) => (
-                        <li key={index}>{step}</li>
-                      ))}
+                      {emailResults?.nextSteps?.map((step: string, index: number) => <li key={index}>{step}</li>) || (
+                        <li>No next steps available</li>
+                      )}
                     </ul>
                   </div>
                 </div>
