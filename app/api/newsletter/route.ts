@@ -99,7 +99,7 @@ export async function POST(request: Request) {
               
               <div style="text-align: center; margin-top: 20px; color: #2c2824;">
                 <p>Follow our journey:</p>
-                <p>📱 WhatsApp: <a href="https://wa.me/971501234567">+971 50 123 4567</a></p>
+                <p>📱 WhatsApp: <a href="https://wa.me/447707783963">+44 7707 123 783963</a></p>
                 <p>📧 Email: support@amariahco.com</p>
               </div>
             </div>
