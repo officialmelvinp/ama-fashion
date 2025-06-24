@@ -235,17 +235,6 @@ export default function CheckoutPage() {
                   <span>Total:</span>
                   <span>{product.selectedPrice || product.priceAED}</span>
                 </div>
-                {paymentMethod === "paypal" && (
-                  <>
-                    <div className="flex justify-between items-center text-sm text-[#2c2824]/70">
-                      <span>PayPal will charge (USD):</span>
-                      <span>${getUSDPrice(extractPrice(product.priceAED)).toFixed(2)} USD</span>
-                    </div>
-                    <p className="text-xs text-[#2c2824]/60 mt-2">
-                      * PayPal processes in USD. Exchange rate: 1 AED = $0.27 USD
-                    </p>
-                  </>
-                )}
               </div>
             </div>
 
