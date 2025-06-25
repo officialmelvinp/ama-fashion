@@ -22,6 +22,7 @@ type Product = {
   materialLine?: string
   productCode?: string
   selectedColor?: string
+  available?: boolean // 👈 NEW: Add this field to control visibility
 }
 
 // ============= PRODUCT DATA =============
@@ -40,20 +41,7 @@ const allProducts: Product[] = [
     essences: ["everyday", "sacred"],
     colors: ["#3B82F6"],
     selectedColor: "#3B82F6",
-  },
-
-  // The Manifested Set - 1 item
-  {
-    id: "manifest-set-1",
-    name: "The Manifest Set",
-    subtitle: "What You Asked For, Woven",
-    materials: ["batik"],
-    description: "A pairing of ease and presence. One-size drape, bound by craft.",
-    priceAED: "950 AED",
-    priceGBP: "£205 GBP",
-    images: ["/images/ama5.jpeg"],
-    category: "the-manifested-set",
-    essences: ["sacred", "gatherings"],
+    available: false, // 👈 EXAMPLE: This item is SOLD OUT (won't show)
   },
 
   {
@@ -69,6 +57,22 @@ const allProducts: Product[] = [
     essences: ["everyday", "sacred"],
     colors: ["#EC4899"],
     selectedColor: "#EC4899",
+    // 👈 No "available" field = defaults to available (will show)
+  },
+
+  // The Manifested Set - 1 item
+  {
+    id: "manifest-set-1",
+    name: "The Manifest Set",
+    subtitle: "What You Asked For, Woven",
+    materials: ["batik"],
+    description: "A pairing of ease and presence. One-size drape, bound by craft.",
+    priceAED: "950 AED",
+    priceGBP: "£205 GBP",
+    images: ["/images/ama5.jpeg"],
+    category: "the-manifested-set",
+    essences: ["sacred", "gatherings"],
+    available: true, // 👈 EXAMPLE: This item is AVAILABLE (will show)
   },
 
   // Ayaba Bubu - 12 items
@@ -97,6 +101,7 @@ const allProducts: Product[] = [
     category: "ayaba-bubu",
     essences: ["everyday", "sacred"],
     productCode: "02",
+    available: false, // 👈 EXAMPLE: This one is SOLD OUT too
   },
   {
     id: "ayaba-bubu-3",
@@ -332,6 +337,7 @@ const allProducts: Product[] = [
     category: "candy-combat",
     essences: ["everyday", "gatherings"],
     productCode: "08",
+    available: false, // 👈 EXAMPLE: This one is SOLD OUT too
   },
   {
     id: "candy-combat-9",
@@ -420,23 +426,26 @@ export default function ShopPageClient() {
     }
   }, [])
 
-  // ============= FILTER LOGIC =============
+  // ============= FILTER LOGIC - UPDATED TO HIDE UNAVAILABLE ITEMS =============
   const getFilteredProducts = () => {
+    // 👈 FIRST: Filter out unavailable items (available: false)
+    const availableProducts = allProducts.filter((product) => product.available !== false)
+
     if (activeFilter === "all") {
-      return allProducts
+      return availableProducts
     }
 
     if (["ayaba-bubu", "candy-combat", "the-manifested-set", "ayomide"].includes(activeFilter)) {
-      return allProducts.filter((product) => product.category === activeFilter)
+      return availableProducts.filter((product) => product.category === activeFilter)
     }
 
     if (["batik", "adire", "linen"].includes(activeFilter)) {
-      return allProducts.filter((product) =>
+      return availableProducts.filter((product) =>
         product.materials.some((material) => material.toLowerCase().includes(activeFilter)),
       )
     }
 
-    return allProducts
+    return availableProducts
   }
 
   const filteredProducts = getFilteredProducts()
@@ -456,7 +465,6 @@ export default function ShopPageClient() {
     // All other collections - mobile: 1 column, desktop: 3 columns with small gap
     return "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-full mx-auto"
   }
-
   // ============= GET CONTAINER CLASSES FOR INDIVIDUAL PRODUCTS =============
   const getProductContainerClasses = () => {
     if (activeFilter === "the-manifested-set") {
@@ -606,7 +614,6 @@ export default function ShopPageClient() {
                 >
                   All
                 </button>
-
                 <button
                   onClick={() => handleCollectionFilter("the-manifested-set")}
                   className={`px-4 md:px-6 py-2 md:py-3 rounded-full text-xs md:text-sm transition-colors ${
@@ -766,7 +773,6 @@ export default function ShopPageClient() {
             )
           })}
         </div>
-
         {filteredProducts.length === 0 && (
           <div className="text-center py-16">
             <p className="text-lg md:text-xl text-[#2c2824]/60 font-serif italic">
