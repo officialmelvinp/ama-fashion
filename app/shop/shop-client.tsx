@@ -5,6 +5,7 @@ import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import Header from "@/components/header"
 import { generateProductSchema } from "@/lib/seo"
+import { QuantitySelector } from "@/components/quantity-selector"
 
 // ============= TYPE DEFINITIONS =============
 type Product = {
@@ -22,7 +23,16 @@ type Product = {
   materialLine?: string
   productCode?: string
   selectedColor?: string
-  available?: boolean // 👈 NEW: Add this field to control visibility
+  stockLevel?: number
+  isAvailable?: boolean
+  selectedQuantity?: number
+}
+
+type ProductStock = {
+  stockLevel: number
+  isAvailable: boolean
+  priceAED?: number
+  priceGBP?: number
 }
 
 // ============= PRODUCT DATA =============
@@ -34,14 +44,13 @@ const allProducts: Product[] = [
     subtitle: "A Quiet Ode to Joy",
     materials: ["adire"],
     description: "Joy woven into form. A dress that carries the lightness of being.",
-    priceAED: "5 AED",
-    priceGBP: "£5 GBP",
+    priceAED: "780 AED",
+    priceGBP: "£168 GBP",
     images: ["/images/ama6.jpeg"],
     category: "ayomide",
     essences: ["everyday", "sacred"],
     colors: ["#3B82F6"],
     selectedColor: "#3B82F6",
-    available: true, // 👈 EXAMPLE: This item is SOLD OUT (won't show)
   },
 
   {
@@ -57,7 +66,6 @@ const allProducts: Product[] = [
     essences: ["everyday", "sacred"],
     colors: ["#EC4899"],
     selectedColor: "#EC4899",
-    // 👈 No "available" field = defaults to available (will show)
   },
 
   // The Manifested Set - 1 item
@@ -72,7 +80,6 @@ const allProducts: Product[] = [
     images: ["/images/ama5.jpeg"],
     category: "the-manifested-set",
     essences: ["sacred", "gatherings"],
-    available: true, // 👈 EXAMPLE: This item is AVAILABLE (will show)
   },
 
   // Ayaba Bubu - 12 items
@@ -101,7 +108,6 @@ const allProducts: Product[] = [
     category: "ayaba-bubu",
     essences: ["everyday", "sacred"],
     productCode: "02",
-    available: false, // 👈 EXAMPLE: This one is SOLD OUT too
   },
   {
     id: "ayaba-bubu-3",
@@ -337,7 +343,6 @@ const allProducts: Product[] = [
     category: "candy-combat",
     essences: ["everyday", "gatherings"],
     productCode: "08",
-    available: false, // 👈 EXAMPLE: This one is SOLD OUT too
   },
   {
     id: "candy-combat-9",
@@ -397,6 +402,38 @@ export default function ShopPageClient() {
   // ============= STATE MANAGEMENT =============
   const [activeFilter, setActiveFilter] = useState<string>("all")
   const [selectedRegion, setSelectedRegion] = useState<"UAE" | "UK">("UAE")
+  const [productsStock, setProductsStock] = useState<Record<string, ProductStock>>({})
+  const [loading, setLoading] = useState(true)
+  const [productQuantities, setProductQuantities] = useState<Record<string, number>>({})
+
+  // ============= FETCH PRODUCTS WITH STOCK LEVELS =============
+  useEffect(() => {
+    const fetchProductsWithStock = async () => {
+      try {
+        const response = await fetch("/api/inventory/available")
+        const data = await response.json()
+
+        if (data.success) {
+          setProductsStock(data.productsWithStock || {})
+        }
+      } catch (error) {
+        console.error("Error fetching products with stock:", error)
+        // Fallback: assume all products are available with stock level 1
+        const fallbackStock = allProducts.reduce(
+          (acc, product) => {
+            acc[product.id] = { stockLevel: 1, isAvailable: true }
+            return acc
+          },
+          {} as Record<string, ProductStock>,
+        )
+        setProductsStock(fallbackStock)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchProductsWithStock()
+  }, [])
 
   // ============= HANDLE URL HASH FROM HOMEPAGE =============
   useEffect(() => {
@@ -426,74 +463,71 @@ export default function ShopPageClient() {
     }
   }, [])
 
-  // ============= FILTER LOGIC - UPDATED TO HIDE UNAVAILABLE ITEMS =============
+  // ============= FILTER LOGIC - SHOW ALL PRODUCTS WITH STOCK INFO =============
   const getFilteredProducts = () => {
-    // 👈 FIRST: Filter out unavailable items (available: false)
-    const availableProducts = allProducts.filter((product) => product.available !== false)
+    // Show ALL products, but with stock information AND DYNAMIC PRICES
+    const productsWithStock = allProducts.map((product) => {
+      const stockInfo = productsStock[product.id]
+
+      // Use database prices if available, otherwise fall back to hardcoded prices
+      const dynamicPriceAED = stockInfo?.priceAED ? `${stockInfo.priceAED} AED` : product.priceAED
+      const dynamicPriceGBP = stockInfo?.priceGBP ? `£${stockInfo.priceGBP} GBP` : product.priceGBP
+
+      return {
+        ...product,
+        priceAED: dynamicPriceAED,
+        priceGBP: dynamicPriceGBP,
+        stockLevel: stockInfo?.stockLevel || 0,
+        isAvailable: stockInfo?.isAvailable || false,
+        selectedQuantity: productQuantities[product.id] || 1,
+      }
+    })
 
     if (activeFilter === "all") {
-      return availableProducts
+      return productsWithStock
     }
 
     if (["ayaba-bubu", "candy-combat", "the-manifested-set", "ayomide"].includes(activeFilter)) {
-      return availableProducts.filter((product) => product.category === activeFilter)
+      return productsWithStock.filter((product) => product.category === activeFilter)
     }
 
     if (["batik", "adire", "linen"].includes(activeFilter)) {
-      return availableProducts.filter((product) =>
+      return productsWithStock.filter((product) =>
         product.materials.some((material) => material.toLowerCase().includes(activeFilter)),
       )
     }
 
-    return availableProducts
+    return productsWithStock
   }
 
   const filteredProducts = getFilteredProducts()
 
-  // ============= DYNAMIC GRID LAYOUT LOGIC - UPDATED FOR BIGGER IMAGES =============
+  // ============= DYNAMIC GRID LAYOUT LOGIC =============
   const getGridClasses = () => {
     if (activeFilter === "the-manifested-set") {
-      // Single item - centered with full width
       return "flex justify-center w-full"
     }
 
     if (activeFilter === "ayomide") {
-      // Two items - mobile: 1 column, desktop: 2 columns with small gap
       return "grid grid-cols-1 lg:grid-cols-2 gap-4 max-w-full mx-auto"
     }
 
-    // All other collections - mobile: 1 column, desktop: 3 columns with small gap
     return "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-full mx-auto"
   }
-  // ============= GET CONTAINER CLASSES FOR INDIVIDUAL PRODUCTS =============
+
   const getProductContainerClasses = () => {
-    if (activeFilter === "the-manifested-set") {
-      // Single item - ABSOLUTELY MASSIVE on both mobile and desktop
-      return "flex flex-col w-full max-w-full mx-auto"
-    }
-
-    if (activeFilter === "ayomide") {
-      // Two items - ABSOLUTELY MASSIVE on both mobile and desktop
-      return "flex flex-col w-full max-w-full mx-auto"
-    }
-
-    // All other collections - ABSOLUTELY MASSIVE on both mobile and desktop
     return "flex flex-col w-full max-w-full mx-auto"
   }
 
-  // ============= GET IMAGE ASPECT RATIO =============
   const getImageAspectRatio = () => {
     if (activeFilter === "the-manifested-set") {
-      // Single item - Taller images
       return "aspect-[3/4] h-[85vh] lg:h-[95vh]"
     }
 
     if (activeFilter === "ayomide") {
-      // Two items - Taller images
       return "aspect-[3/4] h-[80vh] lg:h-[90vh]"
     }
 
-    // All other collections - Taller images
     return "aspect-[3/4] h-[75vh] lg:h-[85vh]"
   }
 
@@ -507,19 +541,29 @@ export default function ShopPageClient() {
     }
   }
 
+  const handleQuantityChange = (productId: string, quantity: number) => {
+    setProductQuantities((prev) => ({
+      ...prev,
+      [productId]: quantity,
+    }))
+  }
+
   const handleBuyNow = (product: Product) => {
-    const productWithRegion = {
+    const quantity = productQuantities[product.id] || 1
+    const productWithDetails = {
       ...product,
       selectedRegion,
       selectedPrice: selectedRegion === "UAE" ? product.priceAED : product.priceGBP,
+      selectedQuantity: quantity,
+      stockLevel: product.stockLevel || 0,
     }
 
-    localStorage.setItem("selectedProduct", JSON.stringify(productWithRegion))
+    localStorage.setItem("selectedProduct", JSON.stringify(productWithDetails))
     localStorage.setItem("selectedRegion", selectedRegion)
     window.location.href = "/checkout"
   }
 
-  // ============= HELPER FUNCTION TO SPLIT DESCRIPTION =============
+  // ============= HELPER FUNCTIONS =============
   const getDescriptionParts = (description: string) => {
     const parts = description.split(". ")
     if (parts.length >= 2) {
@@ -534,8 +578,47 @@ export default function ShopPageClient() {
     }
   }
 
+  const getButtonText = (product: Product) => {
+    const quantity = productQuantities[product.id] || 1
+    const stockLevel = product.stockLevel || 0
+
+    if (stockLevel === 0) {
+      return "Pre-Order Now"
+    } else if (quantity <= stockLevel) {
+      return "Buy Now"
+    } else {
+      return "Buy Now + Pre-Order"
+    }
+  }
+
+  const getStockDisplay = (stockLevel: number) => {
+    if (stockLevel === 0) {
+      return "Pre-order available"
+    } else if (stockLevel <= 3) {
+      return `Only ${stockLevel} left`
+    } else if (stockLevel <= 10) {
+      return `${stockLevel} available`
+    } else {
+      return "In stock"
+    }
+  }
+
   // Generate structured data for all visible products
   const productSchemas = filteredProducts.map((product) => generateProductSchema(product))
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen">
+        <Header bgColor="bg-white/90 backdrop-blur-sm" textColor="text-[#2c2824]" />
+        <div className="container mx-auto pt-24 pb-8 px-1">
+          <div className="text-center py-16">
+            <p className="text-lg md:text-xl text-[#2c2824]/60 font-serif italic">Loading available pieces...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   // ============= RENDER UI =============
   return (
@@ -612,7 +695,7 @@ export default function ShopPageClient() {
                   }`}
                   aria-label="Show all African fashion collections"
                 >
-                  All
+                  All ({allProducts.length})
                 </button>
                 <button
                   onClick={() => handleCollectionFilter("the-manifested-set")}
@@ -666,11 +749,12 @@ export default function ShopPageClient() {
           </div>
         </div>
 
-        {/* ============= PRODUCT DISPLAY - UPDATED WITH BIGGER IMAGES ============= */}
+        {/* ============= PRODUCT DISPLAY ============= */}
         <div className={getGridClasses()}>
           {filteredProducts.map((product) => {
             const descriptionParts = getDescriptionParts(product.description)
             const displayPrice = selectedRegion === "UAE" ? product.priceAED : product.priceGBP
+            const stockLevel = product.stockLevel || 0
 
             return (
               <article key={product.id} className={getProductContainerClasses()} id={product.category}>
@@ -688,9 +772,24 @@ export default function ShopPageClient() {
                           : "(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                     }
                   />
+
+                  {/* Stock indicator overlay */}
+                  <div className="absolute top-2 right-2">
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        stockLevel === 0
+                          ? "bg-orange-100 text-orange-800"
+                          : stockLevel <= 3
+                            ? "bg-red-100 text-red-800"
+                            : "bg-green-100 text-green-800"
+                      }`}
+                    >
+                      {getStockDisplay(stockLevel)}
+                    </span>
+                  </div>
                 </div>
 
-                <div className="text-center space-y-2">
+                <div className="text-center space-y-3">
                   <div className="flex items-center justify-center gap-2">
                     <h3
                       className={`font-serif text-[#2c2824] ${
@@ -741,6 +840,7 @@ export default function ShopPageClient() {
                   >
                     {descriptionParts.firstPart}
                   </p>
+
                   <p
                     className={`font-medium text-[#2c2824] pt-2 ${
                       activeFilter === "the-manifested-set"
@@ -753,19 +853,30 @@ export default function ShopPageClient() {
                     {displayPrice}
                   </p>
 
+                  {/* Quantity Selector */}
+                  <div className="pt-2">
+                    <QuantitySelector
+                      stockLevel={stockLevel}
+                      onQuantityChange={(quantity) => handleQuantityChange(product.id, quantity)}
+                      initialQuantity={1}
+                    />
+                  </div>
+
                   <div className="pt-4">
                     <Button
                       onClick={() => handleBuyNow(product)}
-                      className={`bg-[#2c2824] text-white hover:bg-[#2c2824]/90 ${
+                      className={`${
+                        stockLevel === 0 ? "bg-orange-600 hover:bg-orange-700" : "bg-[#2c2824] hover:bg-[#2c2824]/90"
+                      } text-white ${
                         activeFilter === "the-manifested-set"
                           ? "px-12 py-4 text-lg md:text-xl"
                           : activeFilter === "ayomide"
                             ? "px-10 py-3 text-base md:text-lg"
                             : "px-8 py-2 text-sm md:text-base"
                       }`}
-                      aria-label={`Buy ${product.name} for ${displayPrice}`}
+                      aria-label={`${getButtonText(product)} ${product.name} for ${displayPrice}`}
                     >
-                      Buy Now
+                      {getButtonText(product)}
                     </Button>
                   </div>
                 </div>
@@ -773,10 +884,11 @@ export default function ShopPageClient() {
             )
           })}
         </div>
+
         {filteredProducts.length === 0 && (
           <div className="text-center py-16">
             <p className="text-lg md:text-xl text-[#2c2824]/60 font-serif italic">
-              No products found for this selection.
+              {loading ? "Loading available pieces..." : "No pieces currently available in this collection."}
             </p>
           </div>
         )}

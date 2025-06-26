@@ -27,6 +27,9 @@ type Product = {
   colors?: string[]
   selectedRegion?: "UAE" | "UK"
   selectedPrice?: string
+  selectedQuantity?: number
+  stockLevel?: number
+  preOrderDate?: string
 }
 
 type CheckoutForm = {
@@ -57,15 +60,31 @@ export default function CheckoutPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string>("")
   const [paymentMethod, setPaymentMethod] = useState<"paypal" | "stripe">("stripe")
-  const [selectedRegion, setSelectedRegion] = useState<"UAE" | "UK">("UAE") // Default to UAE
+  const [preOrderDate, setPreOrderDate] = useState<string | null>(null)
 
   useEffect(() => {
     // Get selected product from localStorage
     const selectedProduct = localStorage.getItem("selectedProduct")
     if (selectedProduct) {
-      setProduct(JSON.parse(selectedProduct))
+      const product = JSON.parse(selectedProduct)
+      setProduct(product)
+
+      // Fetch pre-order date for this product
+      fetchPreOrderDate(product.id)
     }
   }, [])
+
+  const fetchPreOrderDate = async (productId: string) => {
+    try {
+      const response = await fetch(`/api/inventory/product/${productId}`)
+      const data = await response.json()
+      if (data.success && data.product?.preorder_ready_date) {
+        setPreOrderDate(data.product.preorder_ready_date)
+      }
+    } catch (error) {
+      console.error("Error fetching pre-order date:", error)
+    }
+  }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -78,22 +97,46 @@ export default function CheckoutPage() {
   const extractPrice = (priceString: string) => {
     if (!priceString) return 0
 
-    // Handle both old format "850 AED ($230 USD)" and new format "850 AED"
-    const aedMatch = priceString.match(/(\d+)\s*AED/)
-    const gbpMatch = priceString.match(/£(\d+)\s*GBP/)
+    console.log("Extracting price from:", priceString) // Debug log
+
+    // Handle decimal numbers - updated regex to capture decimals
+    const aedMatch = priceString.match(/([\d.]+)\s*AED/)
+    const gbpMatch = priceString.match(/£([\d.]+)\s*GBP/)
 
     if (aedMatch) {
-      return Number.parseInt(aedMatch[1])
+      const price = Number.parseFloat(aedMatch[1]) // Use parseFloat instead of parseInt
+      console.log("Extracted AED price:", price) // Debug log
+      return price
     } else if (gbpMatch) {
-      return Number.parseInt(gbpMatch[1])
+      const price = Number.parseFloat(gbpMatch[1]) // Use parseFloat instead of parseInt
+      console.log("Extracted GBP price:", price) // Debug log
+      return price
     }
 
+    console.log("No price match found, returning 0") // Debug log
     return 0
   }
 
-  const getUSDPrice = (aedPrice: number) => {
-    const AED_TO_USD_RATE = 0.27
-    return Math.round(aedPrice * AED_TO_USD_RATE * 100) / 100
+  const calculateTotalPrice = () => {
+    if (!product) return 0
+    const unitPrice = extractPrice(product.selectedPrice || product.priceAED)
+    const quantity = product.selectedQuantity || 1
+    const total = unitPrice * quantity
+
+    console.log("Price calculation:", { unitPrice, quantity, total }) // Debug log
+    return total
+  }
+
+  const getOrderBreakdown = () => {
+    if (!product) return { inStock: 0, preOrder: 0 }
+
+    const quantity = product.selectedQuantity || 1
+    const stockLevel = product.stockLevel || 0
+
+    const inStock = Math.min(quantity, stockLevel)
+    const preOrder = Math.max(0, quantity - stockLevel)
+
+    return { inStock, preOrder }
   }
 
   const handlePayPalCheckout = async () => {
@@ -105,11 +148,16 @@ export default function CheckoutPage() {
     try {
       console.log("🚀 Starting PayPal checkout process...")
 
-      // PayPal only works with AED pricing (converts to USD)
-      const price = extractPrice(product.priceAED)
-      localStorage.setItem("customerInfo", JSON.stringify(form))
+      const totalPrice = calculateTotalPrice()
+      const customerData = {
+        ...form,
+        quantity: product.selectedQuantity || 1,
+        orderBreakdown: getOrderBreakdown(),
+      }
 
-      const order = await createPayPalOrder(product.id, price)
+      localStorage.setItem("customerInfo", JSON.stringify(customerData))
+
+      const order = await createPayPalOrder(product.id, totalPrice)
       console.log("✅ PayPal order created:", order)
 
       const approveLink = order.links?.find((link: { rel: string }) => link.rel === "approve")
@@ -137,13 +185,17 @@ export default function CheckoutPage() {
     try {
       console.log("🚀 Starting Stripe checkout process...")
 
-      // Determine which price to use based on region
       const region = product.selectedRegion || "UAE"
-      const priceString = region === "UAE" ? product.priceAED : product.priceGBP
       const currency = region === "UAE" ? "aed" : "gbp"
-      const price = extractPrice(priceString)
+      const totalPrice = calculateTotalPrice()
 
-      localStorage.setItem("customerInfo", JSON.stringify(form))
+      const customerData = {
+        ...form,
+        quantity: product.selectedQuantity || 1,
+        orderBreakdown: getOrderBreakdown(),
+      }
+
+      localStorage.setItem("customerInfo", JSON.stringify(customerData))
 
       // Create Stripe checkout session
       const response = await fetch("/api/stripe/create-checkout", {
@@ -153,10 +205,11 @@ export default function CheckoutPage() {
         },
         body: JSON.stringify({
           productId: product.id,
-          amount: price,
+          amount: totalPrice,
           currency: currency,
           region: region,
-          customerInfo: form,
+          quantity: product.selectedQuantity || 1,
+          customerInfo: customerData,
         }),
       })
 
@@ -195,6 +248,12 @@ export default function CheckoutPage() {
     )
   }
 
+  const quantity = product.selectedQuantity || 1
+  const unitPrice = extractPrice(product.selectedPrice || product.priceAED)
+  const totalPrice = calculateTotalPrice()
+  const { inStock, preOrder } = getOrderBreakdown()
+  const selectedRegion = product.selectedRegion || "UAE"
+
   return (
     <div className="min-h-screen bg-[#f8f3ea]">
       {/* Navigation Header */}
@@ -230,10 +289,58 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              <div className="border-t pt-4">
-                <div className="flex justify-between items-center text-lg font-medium text-[#2c2824] mb-2">
+              {/* Quantity and Price Breakdown */}
+              <div className="border-t pt-4 space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-[#2c2824]">Unit Price:</span>
+                  <span className="text-[#2c2824]">{product.selectedPrice || product.priceAED}</span>
+                </div>
+
+                <div className="flex justify-between items-center">
+                  <span className="text-[#2c2824]">Quantity:</span>
+                  <span className="text-[#2c2824]">
+                    {quantity} piece{quantity > 1 ? "s" : ""}
+                  </span>
+                </div>
+
+                {/* Order Type Breakdown */}
+                {preOrder > 0 && (
+                  <div className="bg-orange-50 p-3 rounded-lg text-sm">
+                    <div className="flex justify-between mb-1">
+                      <span className="text-orange-800">In Stock:</span>
+                      <span className="text-orange-800">
+                        {inStock} piece{inStock !== 1 ? "s" : ""}
+                      </span>
+                    </div>
+                    <div className="flex justify-between mb-2">
+                      <span className="text-orange-800">Pre-Order:</span>
+                      <span className="text-orange-800">
+                        {preOrder} piece{preOrder !== 1 ? "s" : ""}
+                      </span>
+                    </div>
+                    {preOrderDate && (
+                      <div className="flex justify-between">
+                        <span className="text-orange-800 font-medium">Expected Ready:</span>
+                        <span className="text-orange-800 font-medium">
+                          {new Date(preOrderDate).toLocaleDateString("en-US", {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                          })}
+                        </span>
+                      </div>
+                    )}
+                    {!preOrderDate && (
+                      <div className="text-orange-700 text-xs mt-1">
+                        Pre-order timeline will be confirmed via WhatsApp
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className="flex justify-between items-center text-lg font-medium text-[#2c2824] pt-2 border-t">
                   <span>Total:</span>
-                  <span>{product.selectedPrice || product.priceAED}</span>
+                  <span>{selectedRegion === "UAE" ? `${totalPrice} AED` : `£${totalPrice} GBP`}</span>
                 </div>
               </div>
             </div>
@@ -444,6 +551,30 @@ export default function CheckoutPage() {
                 <div className="text-center text-sm text-[#2c2824]/60 mt-4">
                   <p>🔒 Secure payment powered by {paymentMethod === "paypal" ? "PayPal" : "Stripe"}</p>
                   <p>📱 You&apos;ll receive WhatsApp contact after payment for delivery coordination</p>
+
+                  {/* Order Type Information */}
+                  {preOrder > 0 && (
+                    <div className="bg-orange-50 p-3 rounded-lg mt-3 text-xs">
+                      <p className="text-orange-800 font-medium">📦 Mixed Order Information:</p>
+                      <p className="text-orange-700">
+                        {inStock} piece{inStock !== 1 ? "s" : ""} will ship immediately • {preOrder} piece
+                        {preOrder !== 1 ? "s" : ""} will be pre-ordered
+                      </p>
+                      {preOrderDate ? (
+                        <p className="text-orange-700">
+                          Pre-order items expected ready by{" "}
+                          {new Date(preOrderDate).toLocaleDateString("en-US", {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                          })}
+                        </p>
+                      ) : (
+                        <p className="text-orange-700">You&apos;ll be contacted via WhatsApp for pre-order timeline</p>
+                      )}
+                    </div>
+                  )}
+
                   {paymentMethod === "stripe" && (
                     <div className="text-xs mt-2 space-y-1">
                       <p>💳 {selectedRegion === "UAE" ? "UAE" : "UK"} cards supported • No account required</p>
