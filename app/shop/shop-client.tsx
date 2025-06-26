@@ -41,7 +41,7 @@ const allProducts: Product[] = [
     essences: ["everyday", "sacred"],
     colors: ["#3B82F6"],
     selectedColor: "#3B82F6",
-    available: false, // 👈 EXAMPLE: This item is SOLD OUT (won't show)
+    available: true, // 👈 EXAMPLE: This item is SOLD OUT (won't show)
   },
 
   {
