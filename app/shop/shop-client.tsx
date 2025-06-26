@@ -34,7 +34,7 @@ const allProducts: Product[] = [
     subtitle: "A Quiet Ode to Joy",
     materials: ["adire"],
     description: "Joy woven into form. A dress that carries the lightness of being.",
-    priceAED: "20 AED",
+    priceAED: "5 AED",
     priceGBP: "£5 GBP",
     images: ["/images/ama6.jpeg"],
     category: "ayomide",
