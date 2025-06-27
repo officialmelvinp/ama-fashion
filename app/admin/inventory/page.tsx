@@ -1,6 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -26,6 +28,7 @@ export default function AdminInventoryPage() {
   const [editingPreOrder, setEditingPreOrder] = useState<string | null>(null)
   const [priceInputs, setPriceInputs] = useState<{ [key: string]: { aed: string; gbp: string } }>({})
   const [preOrderInputs, setPreOrderInputs] = useState<{ [key: string]: string }>({})
+  const router = useRouter()
 
   useEffect(() => {
     fetchInventory()
@@ -34,6 +37,10 @@ export default function AdminInventoryPage() {
   const fetchInventory = async () => {
     try {
       const response = await fetch("/api/admin/inventory")
+      if (response.status === 401) {
+        router.push("/admin/login")
+        return
+      }
       const data = await response.json()
       setInventory(data.inventory || [])
     } catch (error) {
@@ -207,9 +214,19 @@ export default function AdminInventoryPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-8">
-        <div className="max-w-6xl mx-auto">
-          <p className="text-center">Loading inventory...</p>
+      <div className="min-h-screen bg-[#f8f3ea]">
+        <div className="bg-white shadow-sm border-b mb-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center py-4">
+              <h1 className="text-2xl font-serif text-[#2c2824]">Inventory Management</h1>
+            </div>
+          </div>
+        </div>
+        <div className="max-w-6xl mx-auto p-8">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2c2824] mx-auto mb-4"></div>
+            <p className="text-[#2c2824]">Loading inventory...</p>
+          </div>
         </div>
       </div>
     )
@@ -220,25 +237,58 @@ export default function AdminInventoryPage() {
   const totalValue = inventory.reduce((sum, item) => sum + (item.price_aed || 0) * item.quantity_available, 0)
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">AMA Inventory Management</h1>
+    <div className="min-h-screen bg-[#f8f3ea]">
+      {/* Navigation */}
+      <div className="bg-white shadow-sm border-b mb-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-4">
+            <div className="flex items-center space-x-8">
+              <Link href="/admin" className="text-[#2c2824] hover:text-[#2c2824]/80 font-medium">
+                ← Back to Dashboard
+              </Link>
+              <h1 className="text-2xl font-serif text-[#2c2824]">Inventory Management</h1>
+            </div>
+            <div className="flex items-center space-x-4">
+              <Link href="/admin/orders">
+                <Button variant="outline" className="text-[#2c2824] border-[#2c2824] bg-transparent">
+                  View Orders
+                </Button>
+              </Link>
+              <Button
+                onClick={async () => {
+                  try {
+                    await fetch("/api/admin/logout", { method: "POST" })
+                  } catch (error) {
+                    console.error("Logout error:", error)
+                  }
+                  window.location.href = "/admin/login"
+                }}
+                variant="outline"
+                className="text-[#2c2824] border-[#2c2824]"
+              >
+                Logout
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
 
+      <div className="max-w-7xl mx-auto p-8">
+        <div className="mb-8">
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">Total Products</CardTitle>
+                <CardTitle className="text-sm font-medium text-[#2c2824]/70">Total Products</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{inventory.length}</div>
+                <div className="text-2xl font-bold text-[#2c2824]">{inventory.length}</div>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">In Stock</CardTitle>
+                <CardTitle className="text-sm font-medium text-[#2c2824]/70">In Stock</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-green-600">{inStockCount}</div>
@@ -247,7 +297,7 @@ export default function AdminInventoryPage() {
 
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">Sold Out</CardTitle>
+                <CardTitle className="text-sm font-medium text-[#2c2824]/70">Sold Out</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-red-600">{soldOutCount}</div>
@@ -256,7 +306,7 @@ export default function AdminInventoryPage() {
 
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">Total Value (AED)</CardTitle>
+                <CardTitle className="text-sm font-medium text-[#2c2824]/70">Total Value (AED)</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-blue-600">{totalValue.toFixed(0)}</div>
@@ -268,7 +318,7 @@ export default function AdminInventoryPage() {
         {/* Inventory Table */}
         <Card>
           <CardHeader>
-            <CardTitle>Product Inventory & Pricing</CardTitle>
+            <CardTitle className="text-[#2c2824]">Product Inventory & Pricing</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
@@ -450,7 +500,7 @@ export default function AdminInventoryPage() {
         </Card>
 
         <div className="mt-8 text-center">
-          <Button onClick={fetchInventory} variant="outline">
+          <Button onClick={fetchInventory} variant="outline" className="text-[#2c2824] border-[#2c2824] bg-transparent">
             Refresh Inventory
           </Button>
         </div>
