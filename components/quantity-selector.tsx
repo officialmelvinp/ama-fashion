@@ -46,8 +46,8 @@ export function QuantitySelector({
   }
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center gap-3">
+    <div className="space-y-3 flex flex-col items-center">
+      <div className="flex items-center justify-center gap-3">
         <Button
           type="button"
           variant="outline"
@@ -80,7 +80,7 @@ export function QuantitySelector({
         </Button>
       </div>
 
-      <div className="text-sm text-gray-600">
+      <div className="text-sm text-gray-600 text-center">
         <p className="font-medium">{getOrderTypeText()}</p>
         {stockLevel > 0 && (
           <p className="text-xs mt-1">
