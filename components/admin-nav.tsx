@@ -4,14 +4,22 @@ import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Menu, X, Package, ShoppingCart, BarChart3, LogOut } from "lucide-react"
+import { Menu, X, Package, ShoppingCart, BarChart3, LogOut, ArrowLeft } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface AdminNavProps {
   onLogout: () => void
+  showBackButton?: boolean
+  backHref?: string
+  backLabel?: string
 }
 
-export default function AdminNav({ onLogout }: AdminNavProps) {
+export default function AdminNav({
+  onLogout,
+  showBackButton = false,
+  backHref = "/admin",
+  backLabel = "Back to Dashboard",
+}: AdminNavProps) {
   const [isOpen, setIsOpen] = useState(false)
   const pathname = usePathname()
 
@@ -37,6 +45,17 @@ export default function AdminNav({ onLogout }: AdminNavProps) {
     <>
       {/* Desktop Navigation */}
       <div className="hidden md:flex items-center space-x-4">
+        {showBackButton && (
+          <Link href={backHref}>
+            <Button
+              variant="outline"
+              className="text-[#2c2824] border-[#2c2824] bg-transparent hover:bg-[#2c2824] hover:text-white"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              {backLabel}
+            </Button>
+          </Link>
+        )}
         {navigation.map((item) => {
           const Icon = item.icon
           return (
@@ -65,7 +84,16 @@ export default function AdminNav({ onLogout }: AdminNavProps) {
       </div>
 
       {/* Mobile Navigation */}
-      <div className="md:hidden">
+      <div className="md:hidden flex items-center space-x-3">
+        {showBackButton && (
+          <Link href={backHref}>
+            <Button variant="outline" size="sm" className="text-[#2c2824] border-[#2c2824] bg-transparent">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              {backLabel}
+            </Button>
+          </Link>
+        )}
+
         {/* Mobile menu button */}
         <Button
           variant="outline"

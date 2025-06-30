@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Package, CreditCard, Calendar, Search, Truck, CheckCircle } from "lucide-react"
+import AdminNav from "@/components/admin-nav"
 
 interface Order {
   id: number
@@ -150,6 +150,15 @@ export default function AdminOrdersPage() {
     }
   }
 
+  const logout = async () => {
+    try {
+      await fetch("/api/admin/logout", { method: "POST" })
+    } catch (error) {
+      console.error("Logout error:", error)
+    }
+    window.location.href = "/admin/login"
+  }
+
   const stats = getOrderStats()
 
   if (loading) {
@@ -158,7 +167,11 @@ export default function AdminOrdersPage() {
         <div className="bg-white shadow-sm border-b mb-8">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center py-4">
-              <h1 className="text-2xl font-serif text-[#2c2824]">Orders & Shipping</h1>
+              <div>
+                <h1 className="text-xl md:text-2xl font-serif text-[#2c2824]">Orders & Shipping</h1>
+                <p className="text-sm text-[#2c2824]/60">Manage your business</p>
+              </div>
+              <AdminNav onLogout={logout} showBackButton={true} />
             </div>
           </div>
         </div>
@@ -178,33 +191,11 @@ export default function AdminOrdersPage() {
       <div className="bg-white shadow-sm border-b mb-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
-            <div className="flex items-center space-x-8">
-              <Link href="/admin" className="text-[#2c2824] hover:text-[#2c2824]/80 font-medium">
-                ← Back to Dashboard
-              </Link>
-              <h1 className="text-2xl font-serif text-[#2c2824]">Orders & Shipping</h1>
+            <div>
+              <h1 className="text-xl md:text-2xl font-serif text-[#2c2824]">Orders & Shipping</h1>
+              <p className="text-sm text-[#2c2824]/60">Manage your business</p>
             </div>
-            <div className="flex items-center space-x-4">
-              <Link href="/admin/inventory">
-                <Button variant="outline" className="text-[#2c2824] border-[#2c2824] bg-transparent">
-                  Manage Inventory
-                </Button>
-              </Link>
-              <Button
-                onClick={async () => {
-                  try {
-                    await fetch("/api/admin/logout", { method: "POST" })
-                  } catch (error) {
-                    console.error("Logout error:", error)
-                  }
-                  window.location.href = "/admin/login"
-                }}
-                variant="outline"
-                className="text-[#2c2824] border-[#2c2824]"
-              >
-                Logout
-              </Button>
-            </div>
+            <AdminNav onLogout={logout} showBackButton={true} />
           </div>
         </div>
       </div>
