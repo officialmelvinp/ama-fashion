@@ -2,151 +2,119 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Menu, X, Package, ShoppingCart, BarChart3, LogOut, ArrowLeft } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { Menu, X, Package, ShoppingCart, Users, LogOut, Home } from "lucide-react"
 
 interface AdminNavProps {
   onLogout: () => void
   showBackButton?: boolean
-  backHref?: string
-  backLabel?: string
 }
 
-export default function AdminNav({
-  onLogout,
-  showBackButton = false,
-  backHref = "/admin",
-  backLabel = "Back to Dashboard",
-}: AdminNavProps) {
-  const [isOpen, setIsOpen] = useState(false)
-  const pathname = usePathname()
+export default function AdminNav({ onLogout, showBackButton = false }: AdminNavProps) {
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
 
-  const navigation = [
-    {
-      name: "Dashboard",
-      href: "/admin",
-      icon: BarChart3,
-    },
-    {
-      name: "Inventory Management",
-      href: "/admin/inventory",
-      icon: Package,
-    },
-    {
-      name: "Orders & Payments",
-      href: "/admin/orders",
-      icon: ShoppingCart,
-    },
-  ]
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen)
+  }
+
+  const closeMenu = () => {
+    setIsMenuOpen(false)
+  }
 
   return (
     <>
       {/* Desktop Navigation */}
       <div className="hidden md:flex items-center space-x-4">
         {showBackButton && (
-          <Link href={backHref}>
-            <Button
-              variant="outline"
-              className="text-[#2c2824] border-[#2c2824] bg-transparent hover:bg-[#2c2824] hover:text-white"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              {backLabel}
-            </Button>
+          <Link href="/admin" className="text-[#2c2824] hover:text-[#2c2824]/80 font-medium">
+            ← Back to Dashboard
           </Link>
         )}
-        {navigation.map((item) => {
-          const Icon = item.icon
-          return (
-            <Link key={item.name} href={item.href}>
-              <Button
-                variant="outline"
-                className={cn(
-                  "text-[#2c2824] border-[#2c2824] bg-transparent hover:bg-[#2c2824] hover:text-white",
-                  pathname === item.href && "bg-[#2c2824] text-white",
-                )}
-              >
-                <Icon className="h-4 w-4 mr-2" />
-                {item.name}
-              </Button>
-            </Link>
-          )
-        })}
-        <Button
-          onClick={onLogout}
-          variant="outline"
-          className="text-red-600 border-red-600 bg-transparent hover:bg-red-600 hover:text-white"
-        >
-          <LogOut className="h-4 w-4 mr-2" />
+        <Link href="/admin/inventory">
+          <Button variant="outline" className="text-[#2c2824] border-[#2c2824] bg-transparent">
+            Manage Inventory
+          </Button>
+        </Link>
+        <Link href="/admin/orders">
+          <Button variant="outline" className="text-[#2c2824] border-[#2c2824] bg-transparent">
+            View Orders
+          </Button>
+        </Link>
+        <Button onClick={onLogout} variant="outline" className="text-[#2c2824] border-[#2c2824] bg-transparent">
           Logout
         </Button>
       </div>
 
       {/* Mobile Navigation */}
-      <div className="md:hidden flex items-center space-x-3">
-        {showBackButton && (
-          <Link href={backHref}>
-            <Button variant="outline" size="sm" className="text-[#2c2824] border-[#2c2824] bg-transparent">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              {backLabel}
-            </Button>
-          </Link>
-        )}
-
-        {/* Mobile menu button */}
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setIsOpen(!isOpen)}
-          className="text-[#2c2824] border-[#2c2824] bg-transparent"
-        >
-          {isOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
-          <span className="ml-2">Menu</span>
+      <div className="md:hidden">
+        <Button onClick={toggleMenu} variant="ghost" size="sm" className="text-[#2c2824] hover:bg-[#2c2824]/10">
+          {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </Button>
 
-        {/* Mobile menu overlay */}
-        {isOpen && (
-          <div className="fixed inset-0 z-50 md:hidden">
-            <div className="fixed inset-0 bg-black bg-opacity-25" onClick={() => setIsOpen(false)} />
-            <div className="fixed top-0 right-0 bottom-0 w-full max-w-sm bg-white shadow-xl">
-              <div className="flex items-center justify-between p-4 border-b">
-                <div className="text-lg font-serif text-[#2c2824]">Admin Menu</div>
-                <Button variant="ghost" size="sm" onClick={() => setIsOpen(false)} className="text-[#2c2824]">
-                  <X className="h-5 w-5" />
-                </Button>
+        {/* Mobile Menu Overlay */}
+        {isMenuOpen && (
+          <>
+            <div className="fixed inset-0 bg-black/20 z-40" onClick={closeMenu} />
+            <div className="fixed top-0 right-0 h-full w-80 bg-white shadow-xl z-50 transform transition-transform duration-300">
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-8">
+                  <h2 className="text-xl font-serif text-[#2c2824]">Admin Menu</h2>
+                  <Button onClick={closeMenu} variant="ghost" size="sm" className="text-[#2c2824]">
+                    <X className="h-5 w-5" />
+                  </Button>
+                </div>
+
+                <nav className="space-y-4">
+                  <Link
+                    href="/admin"
+                    onClick={closeMenu}
+                    className="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#f8f3ea] transition-colors"
+                  >
+                    <Home className="h-5 w-5 text-[#2c2824]" />
+                    <span className="text-[#2c2824] font-medium">Dashboard</span>
+                  </Link>
+
+                  <Link
+                    href="/admin/inventory"
+                    onClick={closeMenu}
+                    className="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#f8f3ea] transition-colors"
+                  >
+                    <Package className="h-5 w-5 text-[#2c2824]" />
+                    <span className="text-[#2c2824] font-medium">Manage Inventory</span>
+                  </Link>
+
+                  <Link
+                    href="/admin/orders"
+                    onClick={closeMenu}
+                    className="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#f8f3ea] transition-colors"
+                  >
+                    <ShoppingCart className="h-5 w-5 text-[#2c2824]" />
+                    <span className="text-[#2c2824] font-medium">View Orders</span>
+                  </Link>
+
+                  <Link
+                    href="/admin/dashboard"
+                    onClick={closeMenu}
+                    className="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#f8f3ea] transition-colors"
+                  >
+                    <Users className="h-5 w-5 text-[#2c2824]" />
+                    <span className="text-[#2c2824] font-medium">Subscribers</span>
+                  </Link>
+
+                  <button
+                    onClick={() => {
+                      closeMenu()
+                      onLogout()
+                    }}
+                    className="flex items-center space-x-3 p-3 rounded-lg hover:bg-red-50 transition-colors w-full text-left"
+                  >
+                    <LogOut className="h-5 w-5 text-red-600" />
+                    <span className="text-red-600 font-medium">Logout</span>
+                  </button>
+                </nav>
               </div>
-              <nav className="px-4 py-6 space-y-3">
-                {navigation.map((item) => {
-                  const Icon = item.icon
-                  return (
-                    <Link
-                      key={item.name}
-                      href={item.href}
-                      className={cn(
-                        "flex items-center px-4 py-3 text-base font-medium rounded-lg transition-colors",
-                        pathname === item.href ? "bg-[#2c2824] text-white" : "text-[#2c2824] hover:bg-[#2c2824]/10",
-                      )}
-                      onClick={() => setIsOpen(false)}
-                    >
-                      <Icon className="h-5 w-5 mr-3" />
-                      {item.name}
-                    </Link>
-                  )
-                })}
-                <button
-                  onClick={() => {
-                    setIsOpen(false)
-                    onLogout()
-                  }}
-                  className="flex items-center w-full px-4 py-3 text-base font-medium rounded-lg transition-colors text-red-600 hover:bg-red-50"
-                >
-                  <LogOut className="h-5 w-5 mr-3" />
-                  Logout
-                </button>
-              </nav>
             </div>
-          </div>
+          </>
         )}
       </div>
     </>

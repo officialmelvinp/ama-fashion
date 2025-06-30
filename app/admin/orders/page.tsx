@@ -171,7 +171,7 @@ export default function AdminOrdersPage() {
                 <h1 className="text-xl md:text-2xl font-serif text-[#2c2824]">Orders & Shipping</h1>
                 <p className="text-sm text-[#2c2824]/60">Manage your business</p>
               </div>
-              <AdminNav onLogout={logout} showBackButton={true} />
+              <AdminNav onLogout={logout} showBackButton={false} />
             </div>
           </div>
         </div>
@@ -195,7 +195,7 @@ export default function AdminOrdersPage() {
               <h1 className="text-xl md:text-2xl font-serif text-[#2c2824]">Orders & Shipping</h1>
               <p className="text-sm text-[#2c2824]/60">Manage your business</p>
             </div>
-            <AdminNav onLogout={logout} showBackButton={true} />
+            <AdminNav onLogout={logout} showBackButton={false} />
           </div>
         </div>
       </div>
