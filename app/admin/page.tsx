@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Download, Users, Mail, Calendar, Search, Trash2, Package, ShoppingCart } from "lucide-react"
+import { Download, Users, Mail, Calendar, Search, Trash2 } from "lucide-react"
+import AdminNav from "@/components/admin-nav"
 
 type Subscriber = {
   id: number
@@ -122,26 +122,10 @@ export default function AdminDashboard() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div>
-              <h1 className="text-2xl font-serif text-[#2c2824]">AMA Admin Dashboard</h1>
+              <h1 className="text-xl md:text-2xl font-serif text-[#2c2824]">AMA Admin Dashboard</h1>
               <p className="text-sm text-[#2c2824]/60">Manage your business</p>
             </div>
-            <div className="flex items-center space-x-4">
-              <Link href="/admin/inventory">
-                <Button variant="outline" className="text-[#2c2824] border-[#2c2824] bg-transparent">
-                  <Package className="h-4 w-4 mr-2" />
-                  Inventory Management
-                </Button>
-              </Link>
-              <Link href="/admin/orders">
-                <Button variant="outline" className="text-[#2c2824] border-[#2c2824] bg-transparent">
-                  <ShoppingCart className="h-4 w-4 mr-2" />
-                  Orders & Payments
-                </Button>
-              </Link>
-              <Button onClick={logout} variant="outline" className="text-[#2c2824] border-[#2c2824] bg-transparent">
-                Logout
-              </Button>
-            </div>
+            <AdminNav onLogout={logout} />
           </div>
         </div>
       </div>
