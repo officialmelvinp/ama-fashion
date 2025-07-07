@@ -22,6 +22,8 @@ const transporter = nodemailer.createTransport({
 async function getPayPalAccessToken() {
   const auth = Buffer.from(`${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`).toString("base64")
 
+  console.log("🔑 Getting PayPal access token from:", PAYPAL_BASE_URL)
+
   const response = await fetch(`${PAYPAL_BASE_URL}/v1/oauth2/token`, {
     method: "POST",
     headers: {
@@ -32,15 +34,30 @@ async function getPayPalAccessToken() {
   })
 
   if (!response.ok) {
-    throw new Error(`PayPal auth failed: ${response.status}`)
+    const errorText = await response.text()
+    console.error("❌ PayPal auth failed:", response.status, errorText)
+    throw new Error(`PayPal auth failed: ${response.status} - ${errorText}`)
   }
 
   const data = await response.json()
+  console.log("✅ PayPal access token obtained successfully")
   return data.access_token
 }
 
 async function recordOrder(orderData: any) {
   try {
+    console.log("💾 Recording order to database:", orderData.payment_id)
+
+    // Check if order already exists
+    const existingOrder = await sql`
+      SELECT id FROM orders WHERE payment_id = ${orderData.payment_id}
+    `
+
+    if (existingOrder.length > 0) {
+      console.log("⚠️ Order already exists, skipping database insert")
+      return existingOrder[0].id
+    }
+
     const result = await sql`
       INSERT INTO orders (
         product_id, customer_email, customer_name, quantity_ordered,
@@ -63,15 +80,18 @@ async function recordOrder(orderData: any) {
       WHERE product_id = ${orderData.product_id}
     `
 
+    console.log("✅ Order recorded successfully with ID:", result[0].id)
     return result[0].id
   } catch (error) {
-    console.error("Database error:", error)
+    console.error("❌ Database error:", error)
     throw error
   }
 }
 
 async function sendOrderEmails(orderData: any) {
   try {
+    console.log("📧 Sending order emails for:", orderData.payment_id)
+
     // Customer email
     const customerEmail = {
       from: '"AMA Fashion" <support@amariahco.com>',
@@ -133,6 +153,7 @@ async function sendOrderEmails(orderData: any) {
             <p><strong>Amount:</strong> ${orderData.amount_paid} ${orderData.currency}</p>
             <p><strong>Order Type:</strong> ${orderData.order_type}</p>
             <p><strong>Payment Method:</strong> PayPal</p>
+            <p><strong>PayPal Mode:</strong> ${process.env.PAYPAL_MODE || "sandbox"}</p>
           </div>
           
           <div style="background: #2c2824; color: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
@@ -159,21 +180,29 @@ async function sendOrderEmails(orderData: any) {
     console.log("✅ PayPal order emails sent successfully")
   } catch (error) {
     console.error("❌ Email sending failed:", error)
+    // Don't throw error here - we still want to return success even if email fails
   }
 }
 
 export async function POST(request: NextRequest) {
+  let requestBody: any = null
+
   try {
-    const { orderID, customerInfo } = await request.json()
+    requestBody = await request.json()
+    const { orderID, customerInfo } = requestBody
 
     if (!orderID) {
+      console.error("❌ No orderID provided")
       return NextResponse.json({ error: "Order ID is required" }, { status: 400 })
     }
 
-    console.log("🏦 Capturing PayPal order:", orderID)
+    console.log("🏦 Starting PayPal capture process for order:", orderID)
+    console.log("🌍 PayPal Mode:", process.env.PAYPAL_MODE || "sandbox")
+    console.log("🔗 PayPal Base URL:", PAYPAL_BASE_URL)
 
     const accessToken = await getPayPalAccessToken()
 
+    console.log("📡 Attempting to capture PayPal order...")
     const response = await fetch(`${PAYPAL_BASE_URL}/v2/checkout/orders/${orderID}/capture`, {
       method: "POST",
       headers: {
@@ -182,18 +211,33 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    console.log("📊 PayPal capture response status:", response.status)
+
     if (!response.ok) {
       const error = await response.json()
-      console.error("❌ PayPal capture failed:", error)
+      console.error("❌ PayPal capture failed:", {
+        status: response.status,
+        error: error,
+        orderID: orderID,
+        mode: process.env.PAYPAL_MODE,
+      })
       throw new Error(`Capture failed: ${JSON.stringify(error)}`)
     }
 
     const captureData = await response.json()
-    console.log("✅ PayPal order captured successfully")
+    console.log("✅ PayPal order captured successfully!")
+    console.log("📋 Capture data:", JSON.stringify(captureData, null, 2))
 
     // Extract order information
     const purchaseUnit = captureData.purchase_units[0]
     const capture = purchaseUnit.payments.captures[0]
+
+    console.log("💰 Payment details:", {
+      captureId: capture.id,
+      amount: capture.amount.value,
+      currency: capture.amount.currency_code,
+      status: capture.status,
+    })
 
     const orderData = {
       product_id: purchaseUnit.reference_id || "unknown-product",
@@ -208,7 +252,7 @@ export async function POST(request: NextRequest) {
       currency: capture.amount.currency_code,
       shipping_address: customerInfo?.address || "",
       phone_number: customerInfo?.phone || "",
-      notes: `PayPal payment captured. Order ID: ${orderID}`,
+      notes: `PayPal payment captured. Order ID: ${orderID}. Capture Status: ${capture.status}`,
       order_type: "purchase",
       order_status: "paid",
       total_amount: Number.parseFloat(capture.amount.value),
@@ -220,13 +264,26 @@ export async function POST(request: NextRequest) {
     // Send email notifications
     await sendOrderEmails(orderData)
 
+    console.log("🎉 PayPal order processing completed successfully!")
+
     return NextResponse.json({
       success: true,
       captureID: capture.id,
+      captureStatus: capture.status,
+      amount: capture.amount.value,
+      currency: capture.amount.currency_code,
+      paypalMode: process.env.PAYPAL_MODE || "sandbox",
       message: "PayPal order completed and notifications sent!",
     })
   } catch (error) {
     console.error("❌ PayPal capture error:", error)
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Capture failed" }, { status: 500 })
+    return NextResponse.json(
+      {
+        error: error instanceof Error ? error.message : "Capture failed",
+        paypalMode: process.env.PAYPAL_MODE || "sandbox",
+        orderID: requestBody?.orderID || "unknown",
+      },
+      { status: 500 },
+    )
   }
 }
