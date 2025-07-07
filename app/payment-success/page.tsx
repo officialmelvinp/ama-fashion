@@ -34,13 +34,20 @@ type CustomerInfo = {
 
 export default function PaymentSuccessPage() {
   const searchParams = useSearchParams()
+
   // PayPal redirects with 'token' (order ID) and 'PayerID'
-  const token = searchParams.get("token") // This is the PayPal order ID
+  const paypalToken = searchParams.get("token") // PayPal order ID
   const payerId = searchParams.get("PayerID")
+
+  // Stripe redirects with 'session_id'
+  const stripeSessionId = searchParams.get("session_id")
+
   const [product, setProduct] = useState<Product | null>(null)
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo | null>(null)
-  const [isCapturing, setIsCapturing] = useState(false)
-  const [captureComplete, setCaptureComplete] = useState(false)
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [processComplete, setProcessComplete] = useState(false)
+  const [orderId, setOrderId] = useState<string | null>(null)
+  const [paymentMethod, setPaymentMethod] = useState<"paypal" | "stripe" | null>(null)
 
   useEffect(() => {
     // Get stored data
@@ -50,55 +57,114 @@ export default function PaymentSuccessPage() {
     if (selectedProduct) {
       setProduct(JSON.parse(selectedProduct))
     }
+
     if (storedCustomerInfo) {
       setCustomerInfo(JSON.parse(storedCustomerInfo))
     }
 
-    // If we have token and payerId, capture the payment
-    if (token && payerId && !captureComplete) {
-      capturePayment(token)
+    // Determine payment method and process accordingly
+    if (paypalToken && payerId && !processComplete) {
+      setPaymentMethod("paypal")
+      setOrderId(paypalToken)
+      capturePayPalPayment(paypalToken)
+    } else if (stripeSessionId && !processComplete) {
+      setPaymentMethod("stripe")
+      verifyStripeSession(stripeSessionId)
     }
-  }, [token, payerId, captureComplete])
+  }, [paypalToken, payerId, stripeSessionId, processComplete])
 
-  const capturePayment = async (orderId: string) => {
-    setIsCapturing(true)
+  const capturePayPalPayment = async (token: string) => {
+    setIsProcessing(true)
     try {
       const response = await fetch("/api/paypal/capture-order", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ orderId }),
+        body: JSON.stringify({
+          orderID: token,
+          customerInfo: customerInfo
+            ? {
+                name: `${customerInfo.firstName} ${customerInfo.lastName}`,
+                email: customerInfo.email,
+                phone: customerInfo.phone,
+                address: `${customerInfo.address}, ${customerInfo.city}, ${customerInfo.country} ${customerInfo.postalCode}`,
+              }
+            : null,
+        }),
       })
 
       if (response.ok) {
-        setCaptureComplete(true)
+        const result = await response.json()
+        setProcessComplete(true)
+        setOrderId(result.captureID || token)
         // Clear localStorage after successful payment
         localStorage.removeItem("selectedProduct")
         localStorage.removeItem("customerInfo")
       } else {
-        console.error("Failed to capture payment")
+        console.error("Failed to capture PayPal payment")
       }
     } catch (error) {
-      console.error("Error capturing payment:", error)
+      console.error("Error capturing PayPal payment:", error)
     } finally {
-      setIsCapturing(false)
+      setIsProcessing(false)
+    }
+  }
+
+  const verifyStripeSession = async (sessionId: string) => {
+    setIsProcessing(true)
+    try {
+      const response = await fetch("/api/stripe/verify-session", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          sessionId,
+          customerInfo: customerInfo
+            ? {
+                name: `${customerInfo.firstName} ${customerInfo.lastName}`,
+                email: customerInfo.email,
+                phone: customerInfo.phone,
+                address: `${customerInfo.address}, ${customerInfo.city}, ${customerInfo.country} ${customerInfo.postalCode}`,
+              }
+            : null,
+          product: product,
+        }),
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        setProcessComplete(true)
+        setOrderId(result.orderId || sessionId)
+        // Clear localStorage after successful payment
+        localStorage.removeItem("selectedProduct")
+        localStorage.removeItem("customerInfo")
+      } else {
+        console.error("Failed to verify Stripe session")
+      }
+    } catch (error) {
+      console.error("Error verifying Stripe session:", error)
+    } finally {
+      setIsProcessing(false)
     }
   }
 
   const whatsappMessage =
-    customerInfo && product
-      ? `Hello! I just completed my order for ${product.name} (Order: ${token}). Looking forward to delivery coordination. Thank you!`
+    customerInfo && product && orderId
+      ? `Hello! I just completed my order for ${product.name} (Order: ${orderId}). Looking forward to delivery coordination. Thank you!`
       : "Hello! I just completed my AMA order and would like to coordinate delivery. Thank you!"
 
   const whatsappUrl = `https://wa.me/+447707783963?text=${encodeURIComponent(whatsappMessage)}`
 
-  if (isCapturing) {
+  if (isProcessing) {
     return (
       <div className="min-h-screen bg-[#f8f3ea] flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2c2824] mx-auto mb-4"></div>
-          <p className="text-lg text-[#2c2824]">Processing your payment...</p>
+          <p className="text-lg text-[#2c2824]">
+            Processing your {paymentMethod === "paypal" ? "PayPal" : "Stripe"} payment...
+          </p>
         </div>
       </div>
     )
@@ -119,17 +185,20 @@ export default function PaymentSuccessPage() {
           </div>
 
           <h1 className="text-3xl md:text-4xl font-serif text-[#2c2824] mb-4">Payment Successful!</h1>
-
           <p className="text-lg text-[#2c2824]/80 mb-8">
-            Thank you for your order. Your payment has been processed successfully.
+            Thank you for your order. Your {paymentMethod === "paypal" ? "PayPal" : "Stripe"} payment has been processed
+            successfully.
           </p>
 
-          {token && (
+          {orderId && (
             <div className="bg-white p-6 rounded-lg shadow-sm mb-8">
               <h2 className="font-serif text-xl text-[#2c2824] mb-4">Order Details</h2>
               <div className="text-left space-y-2">
                 <p>
-                  <strong>Order ID:</strong> {token}
+                  <strong>Order ID:</strong> {orderId}
+                </p>
+                <p>
+                  <strong>Payment Method:</strong> {paymentMethod === "paypal" ? "PayPal" : "Stripe"}
                 </p>
                 {payerId && (
                   <p>
@@ -170,7 +239,9 @@ export default function PaymentSuccessPage() {
                 <span className="text-2xl">📧</span>
                 <div>
                   <h3 className="font-medium mb-1">Email Confirmation</h3>
-                  <p className="text-sm opacity-90">You&apos;ll receive a PayPal receipt in your email shortly.</p>
+                  <p className="text-sm opacity-90">
+                    You'll receive a confirmation email with your order details shortly.
+                  </p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -186,9 +257,7 @@ export default function PaymentSuccessPage() {
                 <span className="text-2xl">🚚</span>
                 <div>
                   <h3 className="font-medium mb-1">Delivery</h3>
-                  <p className="text-sm opacity-90">
-                    We&apos;ll coordinate delivery details via WhatsApp within 24 hours.
-                  </p>
+                  <p className="text-sm opacity-90">We'll coordinate delivery details via WhatsApp within 24 hours.</p>
                 </div>
               </div>
             </div>
@@ -203,7 +272,7 @@ export default function PaymentSuccessPage() {
             </Button>
 
             <Link href="/shop">
-              <Button variant="outline" className="w-full py-3 text-lg">
+              <Button variant="outline" className="w-full py-3 text-lg bg-transparent">
                 Continue Shopping
               </Button>
             </Link>

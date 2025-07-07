@@ -2,10 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { neon } from "@neondatabase/serverless"
 import nodemailer from "nodemailer"
 
-const PAYPAL_CLIENT_ID = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID!
-const PAYPAL_CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET!
-const PAYPAL_BASE_URL = process.env.PAYPAL_MODE === "live" ? "https://api.paypal.com" : "https://api.sandbox.paypal.com"
-
+const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY!
 const sql = neon(process.env.DATABASE_URL!)
 
 // Email configuration
@@ -18,26 +15,6 @@ const transporter = nodemailer.createTransport({
     pass: process.env.EMAIL_PASS,
   },
 })
-
-async function getPayPalAccessToken() {
-  const auth = Buffer.from(`${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`).toString("base64")
-
-  const response = await fetch(`${PAYPAL_BASE_URL}/v1/oauth2/token`, {
-    method: "POST",
-    headers: {
-      Authorization: `Basic ${auth}`,
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: "grant_type=client_credentials",
-  })
-
-  if (!response.ok) {
-    throw new Error(`PayPal auth failed: ${response.status}`)
-  }
-
-  const data = await response.json()
-  return data.access_token
-}
 
 async function recordOrder(orderData: any) {
   try {
@@ -91,7 +68,7 @@ async function sendOrderEmails(orderData: any) {
               <p><strong>Quantity:</strong> ${orderData.quantity_ordered}</p>
               <p><strong>Amount Paid:</strong> ${orderData.amount_paid} ${orderData.currency}</p>
               <p><strong>Payment Status:</strong> ✅ Confirmed</p>
-              <p><strong>Payment Method:</strong> PayPal</p>
+              <p><strong>Payment Method:</strong> Stripe</p>
             </div>
             
             <div style="background: #2c2824; color: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
@@ -120,10 +97,10 @@ async function sendOrderEmails(orderData: any) {
     const vendorEmail = {
       from: '"AMA Orders" <support@amariahco.com>',
       to: "support@amariahco.com",
-      subject: `🎉 New PayPal Order: ${orderData.product_id} - ${orderData.amount_paid} ${orderData.currency}`,
+      subject: `🎉 New Stripe Order: ${orderData.product_id} - ${orderData.amount_paid} ${orderData.currency}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h1 style="color: #2c2824;">🎉 New PayPal Order Received!</h1>
+          <h1 style="color: #2c2824;">🎉 New Stripe Order Received!</h1>
           
           <div style="background: #f8f3ea; padding: 20px; border-radius: 8px; margin: 20px 0;">
             <h3>Order Information:</h3>
@@ -132,7 +109,7 @@ async function sendOrderEmails(orderData: any) {
             <p><strong>Quantity:</strong> ${orderData.quantity_ordered}</p>
             <p><strong>Amount:</strong> ${orderData.amount_paid} ${orderData.currency}</p>
             <p><strong>Order Type:</strong> ${orderData.order_type}</p>
-            <p><strong>Payment Method:</strong> PayPal</p>
+            <p><strong>Payment Method:</strong> Stripe</p>
           </div>
           
           <div style="background: #2c2824; color: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
@@ -156,7 +133,7 @@ async function sendOrderEmails(orderData: any) {
 
     await transporter.sendMail(customerEmail)
     await transporter.sendMail(vendorEmail)
-    console.log("✅ PayPal order emails sent successfully")
+    console.log("✅ Stripe order emails sent successfully")
   } catch (error) {
     console.error("❌ Email sending failed:", error)
   }
@@ -164,54 +141,50 @@ async function sendOrderEmails(orderData: any) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { orderID, customerInfo } = await request.json()
+    const { sessionId, customerInfo, product } = await request.json()
 
-    if (!orderID) {
-      return NextResponse.json({ error: "Order ID is required" }, { status: 400 })
+    if (!sessionId) {
+      return NextResponse.json({ error: "Session ID is required" }, { status: 400 })
     }
 
-    console.log("🏦 Capturing PayPal order:", orderID)
+    console.log("🔍 Verifying Stripe session:", sessionId)
 
-    const accessToken = await getPayPalAccessToken()
-
-    const response = await fetch(`${PAYPAL_BASE_URL}/v2/checkout/orders/${orderID}/capture`, {
-      method: "POST",
+    // Retrieve the session from Stripe
+    const response = await fetch(`https://api.stripe.com/v1/checkout/sessions/${sessionId}`, {
       headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
+        Authorization: `Bearer ${STRIPE_SECRET_KEY}`,
       },
     })
 
     if (!response.ok) {
       const error = await response.json()
-      console.error("❌ PayPal capture failed:", error)
-      throw new Error(`Capture failed: ${JSON.stringify(error)}`)
+      console.error("❌ Stripe session verification failed:", error)
+      throw new Error(`Stripe verification failed: ${JSON.stringify(error)}`)
     }
 
-    const captureData = await response.json()
-    console.log("✅ PayPal order captured successfully")
+    const session = await response.json()
+    console.log("✅ Stripe session verified successfully")
 
     // Extract order information
-    const purchaseUnit = captureData.purchase_units[0]
-    const capture = purchaseUnit.payments.captures[0]
-
     const orderData = {
-      product_id: purchaseUnit.reference_id || "unknown-product",
-      customer_email: customerInfo?.email || "",
-      customer_name: customerInfo?.name || "Customer",
+      product_id: product?.id || "unknown-product",
+      customer_email: session.customer_details?.email || customerInfo?.email || "",
+      customer_name: session.customer_details?.name || customerInfo?.name || "Customer",
       quantity_ordered: 1,
       quantity_in_stock: 1,
       quantity_preorder: 0,
       payment_status: "completed",
-      payment_id: capture.id,
-      amount_paid: Number.parseFloat(capture.amount.value),
-      currency: capture.amount.currency_code,
-      shipping_address: customerInfo?.address || "",
-      phone_number: customerInfo?.phone || "",
-      notes: `PayPal payment captured. Order ID: ${orderID}`,
+      payment_id: session.payment_intent || session.id,
+      amount_paid: session.amount_total / 100, // Convert from cents
+      currency: session.currency.toUpperCase(),
+      shipping_address: session.customer_details?.address
+        ? `${session.customer_details.address.line1}, ${session.customer_details.address.city}, ${session.customer_details.address.country}`
+        : customerInfo?.address || "",
+      phone_number: session.customer_details?.phone || customerInfo?.phone || "",
+      notes: `Stripe payment completed. Session ID: ${session.id}`,
       order_type: "purchase",
       order_status: "paid",
-      total_amount: Number.parseFloat(capture.amount.value),
+      total_amount: session.amount_total / 100,
     }
 
     // Record order in database
@@ -222,11 +195,14 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      captureID: capture.id,
-      message: "PayPal order completed and notifications sent!",
+      orderId: session.payment_intent || session.id,
+      message: "Stripe order processed and notifications sent!",
     })
   } catch (error) {
-    console.error("❌ PayPal capture error:", error)
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Capture failed" }, { status: 500 })
+    console.error("❌ Stripe session verification error:", error)
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Session verification failed" },
+      { status: 500 },
+    )
   }
 }
