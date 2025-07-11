@@ -5,14 +5,14 @@ import nodemailer from "nodemailer"
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY!
 const sql = neon(process.env.DATABASE_URL!)
 
-// Email configuration
+// Email configuration - Fixed to use EMAIL_PASSWORD
 const transporter = nodemailer.createTransport({
   host: "mail.amariahco.com",
   port: 465,
   secure: true,
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD, // Fixed: was EMAIL_PASS
+    pass: process.env.EMAIL_PASSWORD,
   },
 })
 
@@ -23,13 +23,14 @@ async function recordOrder(orderData: any) {
         product_id, customer_email, customer_name, quantity_ordered,
         quantity_in_stock, quantity_preorder, payment_status, payment_id,
         amount_paid, currency, shipping_address, phone_number, notes,
-        order_type, order_status, total_amount
+        order_type, order_status, total_amount, shipping_status
       ) VALUES (
         ${orderData.product_id}, ${orderData.customer_email}, ${orderData.customer_name},
         ${orderData.quantity_ordered}, ${orderData.quantity_in_stock}, ${orderData.quantity_preorder},
         ${orderData.payment_status}, ${orderData.payment_id}, ${orderData.amount_paid},
         ${orderData.currency}, ${orderData.shipping_address}, ${orderData.phone_number},
-        ${orderData.notes}, ${orderData.order_type}, ${orderData.order_status}, ${orderData.total_amount}
+        ${orderData.notes}, ${orderData.order_type}, ${orderData.order_status}, ${orderData.total_amount},
+        ${orderData.shipping_status}
       ) RETURNING id
     `
 
@@ -148,6 +149,8 @@ export async function POST(request: NextRequest) {
     }
 
     console.log("🔍 Verifying Stripe session:", sessionId)
+    console.log("📦 Product info received:", product)
+    console.log("👤 Customer info received:", customerInfo)
 
     // Retrieve the session from Stripe
     const response = await fetch(`https://api.stripe.com/v1/checkout/sessions/${sessionId}`, {
@@ -165,11 +168,23 @@ export async function POST(request: NextRequest) {
     const session = await response.json()
     console.log("✅ Stripe session verified successfully")
 
-    // Extract order information
+    // Extract order information with better product name handling
+    const productName = product?.name || product?.id || "AMA Fashion Item"
+    const customerName =
+      session.customer_details?.name ||
+      (customerInfo?.firstName && customerInfo?.lastName
+        ? `${customerInfo.firstName} ${customerInfo.lastName}`
+        : "Customer")
+
+    const customerPhone =
+      session.customer_details?.phone ||
+      customerInfo?.phone ||
+      (customerInfo?.firstName ? "Phone not provided during checkout" : "")
+
     const orderData = {
-      product_id: product?.id || "unknown-product",
+      product_id: productName,
       customer_email: session.customer_details?.email || customerInfo?.email || "",
-      customer_name: session.customer_details?.name || customerInfo?.name || "Customer",
+      customer_name: customerName,
       quantity_ordered: 1,
       quantity_in_stock: 1,
       quantity_preorder: 0,
@@ -179,13 +194,18 @@ export async function POST(request: NextRequest) {
       currency: session.currency.toUpperCase(),
       shipping_address: session.customer_details?.address
         ? `${session.customer_details.address.line1}, ${session.customer_details.address.city}, ${session.customer_details.address.country}`
-        : customerInfo?.address || "",
-      phone_number: session.customer_details?.phone || customerInfo?.phone || "",
-      notes: `Stripe payment completed. Session ID: ${session.id}`,
+        : customerInfo?.address
+          ? `${customerInfo.address}, ${customerInfo.city}, ${customerInfo.country}`
+          : "",
+      phone_number: customerPhone,
+      notes: `Stripe payment completed. Session ID: ${session.id}. Product: ${productName}`,
       order_type: "purchase",
       order_status: "paid",
+      shipping_status: "paid", // Start with "paid" status
       total_amount: session.amount_total / 100,
     }
+
+    console.log("💾 Recording order data:", orderData)
 
     // Record order in database
     await recordOrder(orderData)
@@ -196,9 +216,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       orderId: session.payment_intent || session.id,
-      amount: session.amount_total / 100, // Add amount to response
-      currency: session.currency.toUpperCase(),
-      product: orderData.product_id,
       message: "Stripe order processed and notifications sent!",
     })
   } catch (error) {
