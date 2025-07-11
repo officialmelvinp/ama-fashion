@@ -75,9 +75,13 @@ export default function AdminDashboard() {
       const paidOrders = orders.filter((order: any) => order.payment_status === "completed").length
       const pendingOrders = orders.filter((order: any) => order.payment_status === "pending").length
 
+      // Fixed: Add null checks and ensure numeric values
       const totalRevenue = orders
         .filter((order: any) => order.payment_status === "completed")
-        .reduce((sum: number, order: any) => sum + order.amount_paid, 0)
+        .reduce((sum: number, order: any) => {
+          const amount = Number.parseFloat(order.amount_paid) || 0 // Convert to number, default to 0
+          return sum + amount
+        }, 0)
 
       const recentOrders = orders
         .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
@@ -196,7 +200,8 @@ export default function AdminDashboard() {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats?.totalRevenue?.toFixed(0) || 0} AED</div>
+              {/* Fixed: Added null check and proper number formatting */}
+              <div className="text-2xl font-bold">{stats?.totalRevenue ? stats.totalRevenue.toFixed(0) : "0"} AED</div>
               <p className="text-xs text-muted-foreground">Total revenue from completed orders</p>
             </CardContent>
           </Card>

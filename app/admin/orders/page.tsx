@@ -130,9 +130,14 @@ export default function AdminOrdersPage() {
     const shippedOrders = orders.filter((o) => o.shipping_status === "shipped").length
     const deliveredOrders = orders.filter((o) => o.shipping_status === "delivered").length
     const preOrders = orders.filter((o) => o.quantity_preorder > 0).length
+
+    // Fixed: Add null checks for amount_paid
     const totalRevenue = orders
       .filter((o) => o.payment_status === "completed")
-      .reduce((sum, o) => sum + o.amount_paid, 0)
+      .reduce((sum, o) => {
+        const amount = Number.parseFloat(o.amount_paid?.toString()) || 0
+        return sum + amount
+      }, 0)
 
     return { totalOrders, paidOrders, shippedOrders, deliveredOrders, preOrders, totalRevenue }
   }

@@ -12,7 +12,7 @@ const transporter = nodemailer.createTransport({
   secure: true,
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
+    pass: process.env.EMAIL_PASSWORD, // Fixed: was EMAIL_PASS
   },
 })
 
@@ -196,6 +196,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       orderId: session.payment_intent || session.id,
+      amount: session.amount_total / 100, // Add amount to response
+      currency: session.currency.toUpperCase(),
+      product: orderData.product_id,
       message: "Stripe order processed and notifications sent!",
     })
   } catch (error) {
