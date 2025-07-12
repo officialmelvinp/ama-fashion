@@ -1,170 +1,295 @@
 "use client"
-
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import AdminNav from "@/components/admin-nav"
+import Link from "next/link"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Package, ShoppingCart, Users, TrendingUp, AlertCircle, CheckCircle } from "lucide-react"
 
-type Subscriber = {
-  email: string
-  created_at: string
-  status: string
+interface DashboardStats {
+  totalProducts: number
+  inStockProducts: number
+  soldOutProducts: number
+  totalOrders: number
+  paidOrders: number
+  pendingOrders: number
+  totalSubscribers: number
+  totalRevenue: number
+  recentOrders: Array<{
+    id: number
+    customer_name: string
+    product_id: string
+    amount_paid: number
+    currency: string
+    payment_status: string
+    created_at: string
+  }>
+  lowStockProducts: Array<{
+    product_id: string
+    quantity_available: number
+  }>
 }
 
 export default function AdminDashboard() {
-  const [subscribers, setSubscribers] = useState<Subscriber[]>([])
+  const [stats, setStats] = useState<DashboardStats | null>(null)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
 
   useEffect(() => {
-    fetchSubscribers()
+    fetchDashboardStats()
   }, [])
 
-  const fetchSubscribers = async () => {
+  const fetchDashboardStats = async () => {
     try {
-      const response = await fetch("/api/admin/subscribers")
-      if (response.status === 401) {
+      const [inventoryRes, ordersRes, subscribersRes] = await Promise.all([
+        fetch("/api/admin/inventory"),
+        fetch("/api/admin/orders"),
+        fetch("/api/admin/subscribers"),
+      ])
+
+      if (inventoryRes.status === 401 || ordersRes.status === 401 || subscribersRes.status === 401) {
         router.push("/admin/login")
         return
       }
-      const data = await response.json()
-      setSubscribers(data.subscribers || [])
+
+      const [inventoryData, ordersData, subscribersData] = await Promise.all([
+        inventoryRes.json(),
+        ordersRes.json(),
+        subscribersRes.json(),
+      ])
+
+      const inventory = inventoryData.inventory || []
+      const orders = ordersData.orders || []
+      const subscribers = subscribersData.subscribers || []
+
+      const totalProducts = inventory.length
+      const inStockProducts = inventory.filter((item: any) => item.quantity_available > 0).length
+      const soldOutProducts = inventory.filter((item: any) => item.quantity_available === 0).length
+      const lowStockProducts = inventory.filter(
+        (item: any) => item.quantity_available > 0 && item.quantity_available <= 2,
+      )
+
+      const totalOrders = orders.length
+      const paidOrders = orders.filter((order: any) => order.payment_status === "completed").length
+      const pendingOrders = orders.filter((order: any) => order.payment_status === "pending").length
+
+      const totalRevenue = orders
+        .filter((order: any) => order.payment_status === "completed")
+        .reduce((sum: number, order: any) => {
+          const amount = Number.parseFloat(order.amount_paid?.toString() || "0") || 0
+          return sum + amount
+        }, 0)
+
+      const recentOrders = orders
+        .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .slice(0, 5)
+
+      setStats({
+        totalProducts,
+        inStockProducts,
+        soldOutProducts,
+        totalOrders,
+        paidOrders,
+        pendingOrders,
+        totalSubscribers: subscribers.length,
+        totalRevenue,
+        recentOrders,
+        lowStockProducts,
+      })
     } catch (error) {
-      console.error("Failed to fetch subscribers:", error)
+      console.error("Error fetching dashboard stats:", error)
     } finally {
       setLoading(false)
     }
   }
 
-  const logout = async () => {
-    try {
-      await fetch("/api/admin/logout", { method: "POST" })
-    } catch (error) {
-      console.error("Logout error:", error)
-    }
-    window.location.href = "/admin/login"
-  }
-
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#f8f3ea]">
-        <div className="bg-white shadow-sm border-b mb-8">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center py-4">
-              <div>
-                <h1 className="text-xl md:text-2xl font-serif text-[#2c2824]">Newsletter Subscribers</h1>
-                <p className="text-sm text-[#2c2824]/60">Manage your business</p>
-              </div>
-              <AdminNav onLogout={logout} showBackButton={false} />
-            </div>
-          </div>
-        </div>
-        <div className="max-w-4xl mx-auto p-8">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2c2824] mx-auto mb-4"></div>
-            <p className="text-[#2c2824]">Loading subscribers...</p>
-          </div>
-        </div>
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2c2824] mx-auto mb-4"></div>
+        <p className="text-[#2c2824]">Loading dashboard...</p>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-[#f8f3ea]">
-      {/* Navigation */}
+    <>
       <div className="bg-white shadow-sm border-b mb-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div>
-              <h1 className="text-xl md:text-2xl font-serif text-[#2c2824]">Newsletter Subscribers</h1>
+              <h1 className="text-xl md:text-2xl font-serif text-[#2c2824]">AMA Admin Dashboard</h1>
               <p className="text-sm text-[#2c2824]/60">Manage your business</p>
             </div>
-            <AdminNav onLogout={logout} showBackButton={false} />
           </div>
         </div>
       </div>
-
-      <div className="max-w-4xl mx-auto p-8">
-        <div className="bg-white rounded-lg shadow p-6">
-          <h1 className="text-2xl font-bold mb-6 text-[#2c2824]">Newsletter Subscribers</h1>
-
-          <div className="mb-4">
-            <p className="text-[#2c2824]/70">Total active subscribers: {subscribers.length}</p>
-          </div>
-
-          {subscribers.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="text-6xl mb-4">📧</div>
-              <h3 className="text-xl font-semibold text-[#2c2824] mb-2">No Subscribers Yet</h3>
-              <p className="text-[#2c2824]/60 mb-6">
-                When visitors sign up for your newsletter, they will appear here.
-              </p>
-              <div className="text-sm text-[#2c2824]/50">
-                <p>You'll be able to:</p>
-                <ul className="mt-2 space-y-1">
-                  <li>• View all newsletter subscribers</li>
-                  <li>• Export subscriber lists</li>
-                  <li>• Track subscription dates</li>
-                  <li>• Manage subscriber status</li>
-                  <li>• Send targeted campaigns</li>
-                </ul>
+      {/* Stats Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Products</CardTitle>
+            <Package className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats?.totalProducts || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              {stats?.inStockProducts || 0} in stock, {stats?.soldOutProducts || 0} sold out
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
+            <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats?.totalOrders || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              {stats?.paidOrders || 0} paid, {stats?.pendingOrders || 0} pending
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Subscribers</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats?.totalSubscribers || 0}</div>
+            <p className="text-xs text-muted-foreground">Newsletter subscribers</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Revenue</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats?.totalRevenue?.toFixed(0) || 0} AED</div>
+            <p className="text-xs text-muted-foreground">Total revenue from completed orders</p>
+          </CardContent>
+        </Card>
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Recent Orders */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ShoppingCart className="h-5 w-5" />
+              Recent Orders
+            </CardTitle>
+            <CardDescription>Latest customer orders</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {stats?.recentOrders && stats.recentOrders.length > 0 ? (
+              <div className="space-y-4">
+                {stats.recentOrders.map((order) => (
+                  <div key={order.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div>
+                      <p className="font-medium text-sm">{order.customer_name}</p>
+                      <p className="text-xs text-gray-500">{order.product_id}</p>
+                      <p className="text-xs text-gray-400">{new Date(order.created_at).toLocaleDateString()}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium text-sm">
+                        {order.amount_paid} {order.currency}
+                      </p>
+                      <Badge
+                        variant={order.payment_status === "completed" ? "default" : "secondary"}
+                        className="text-xs"
+                      >
+                        {order.payment_status}
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+                <Link href="/admin/orders" className="block text-center text-sm text-[#2c2824] hover:underline mt-4">
+                  View all orders →
+                </Link>
               </div>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse border border-gray-300">
-                <thead>
-                  <tr className="bg-gray-50">
-                    <th className="border border-gray-300 px-4 py-2 text-left font-medium text-[#2c2824]">Email</th>
-                    <th className="border border-gray-300 px-4 py-2 text-left font-medium text-[#2c2824]">
-                      Subscribed Date
-                    </th>
-                    <th className="border border-gray-300 px-4 py-2 text-left font-medium text-[#2c2824]">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {subscribers.map((subscriber, index) => (
-                    <tr key={index} className="hover:bg-gray-50">
-                      <td className="border border-gray-300 px-4 py-2 text-[#2c2824]">{subscriber.email}</td>
-                      <td className="border border-gray-300 px-4 py-2 text-[#2c2824]">
-                        {new Date(subscriber.created_at).toLocaleDateString("en-US", {
-                          weekday: "short",
-                          year: "numeric",
-                          month: "short",
-                          day: "numeric",
-                        })}
-                      </td>
-                      <td className="border border-gray-300 px-4 py-2">
-                        <span
-                          className={`px-2 py-1 rounded text-xs font-medium ${
-                            subscriber.status === "active" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
-                          }`}
-                        >
-                          {subscriber.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-
-          <div className="mt-6 flex justify-between items-center">
-            <Button
-              onClick={fetchSubscribers}
-              variant="outline"
-              className="text-[#2c2824] border-[#2c2824] bg-transparent hover:bg-[#2c2824] hover:text-white"
-            >
-              Refresh
-            </Button>
-
-            {subscribers.length > 0 && (
-              <div className="text-sm text-[#2c2824]/60">Last updated: {new Date().toLocaleTimeString()}</div>
+            ) : (
+              <div className="text-center py-8">
+                <ShoppingCart className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500">No orders yet</p>
+              </div>
             )}
-          </div>
+          </CardContent>
+        </Card>
+        {/* Low Stock Alert */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-orange-500" />
+              Inventory Alerts
+            </CardTitle>
+            <CardDescription>Products running low on stock</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {stats?.lowStockProducts && stats.lowStockProducts.length > 0 ? (
+              <div className="space-y-4">
+                {stats.lowStockProducts.map((product) => (
+                  <div
+                    key={product.product_id}
+                    className="flex items-center justify-between p-3 bg-orange-50 rounded-lg"
+                  >
+                    <div>
+                      <p className="font-medium text-sm">{product.product_id}</p>
+                      <p className="text-xs text-orange-600">Low stock warning</p>
+                    </div>
+                    <div className="text-right">
+                      <Badge variant="outline" className="text-orange-600 border-orange-600">
+                        {product.quantity_available} left
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+                <Link href="/admin/inventory" className="block text-center text-sm text-[#2c2824] hover:underline mt-4">
+                  Manage inventory →
+                </Link>
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <CheckCircle className="h-12 w-12 text-green-300 mx-auto mb-4" />
+                <p className="text-gray-500">All products well stocked</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+      {/* Quick Actions */}
+      <div className="mt-8">
+        <h2 className="text-lg font-semibold text-[#2c2824] mb-4">Quick Actions</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Link href="/admin/inventory">
+            <Card className="hover:shadow-md transition-shadow cursor-pointer">
+              <CardContent className="p-6 text-center">
+                <Package className="h-8 w-8 text-[#2c2824] mx-auto mb-2" />
+                <h3 className="font-medium text-[#2c2824]">Manage Inventory</h3>
+                <p className="text-sm text-gray-500 mt-1">Update stock levels and pricing</p>
+              </CardContent>
+            </Card>
+          </Link>
+          <Link href="/admin/orders">
+            <Card className="hover:shadow-md transition-shadow cursor-pointer">
+              <CardContent className="p-6 text-center">
+                <ShoppingCart className="h-8 w-8 text-[#2c2824] mx-auto mb-2" />
+                <h3 className="font-medium text-[#2c2824]">View Orders</h3>
+                <p className="text-sm text-gray-500 mt-1">Process and ship customer orders</p>
+              </CardContent>
+            </Card>
+          </Link>
+          <Link href="/admin/subscribers">
+            <Card className="hover:shadow-md transition-shadow cursor-pointer">
+              <CardContent className="p-6 text-center">
+                <Users className="h-8 w-8 text-[#2c2824] mx-auto mb-2" />
+                <h3 className="font-medium text-[#2c2824]">View Subscribers</h3>
+                <p className="text-sm text-gray-500 mt-1">Manage newsletter subscribers</p>
+              </CardContent>
+            </Card>
+          </Link>
         </div>
       </div>
-    </div>
+    </>
   )
 }

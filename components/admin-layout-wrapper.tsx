@@ -1,5 +1,7 @@
 "use client"
 import Link from "next/link"
+import type React from "react"
+
 import { usePathname } from "next/navigation"
 import {
   Package2,
@@ -27,14 +29,11 @@ import {
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
 
-// Define the props interface for AdminNav
-interface AdminNavProps {
-  onLogout: () => void
-  showBackButton: boolean // Although not used in the provided snippet, it's passed.
+interface AdminLayoutWrapperProps {
+  children: React.ReactNode
 }
 
-export function AdminNav({ onLogout, showBackButton }: AdminNavProps) {
-  // Accept props here
+export function AdminLayoutWrapper({ children }: AdminLayoutWrapperProps) {
   const pathname = usePathname()
   const { toast } = useToast()
 
@@ -61,7 +60,8 @@ export function AdminNav({ onLogout, showBackButton }: AdminNavProps) {
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex min-h-screen w-full">
+      {/* Fixed Sidebar (Desktop) */}
       <aside className="fixed inset-y-0 left-0 z-10 hidden w-14 flex-col border-r bg-background sm:flex">
         <nav className="flex flex-col items-center gap-4 px-2 sm:py-5">
           <Link
@@ -80,7 +80,7 @@ export function AdminNav({ onLogout, showBackButton }: AdminNavProps) {
                     "flex h-9 w-9 items-center justify-center rounded-lg transition-colors hover:text-foreground md:h-8 md:w-8",
                     pathname === "/admin/dashboard" || pathname === "/admin"
                       ? "bg-accent text-accent-foreground"
-                      : "text-muted-foreground", // Adjusted active state
+                      : "text-muted-foreground",
                   )}
                 >
                   <Home className="h-5 w-5" />
@@ -189,7 +189,7 @@ export function AdminNav({ onLogout, showBackButton }: AdminNavProps) {
                   variant="ghost"
                   size="icon"
                   className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
-                  onClick={onLogout} // Use the prop here
+                  onClick={handleLogout}
                 >
                   <LogOut className="h-5 w-5" />
                   <span className="sr-only">Logout</span>
@@ -200,124 +200,141 @@ export function AdminNav({ onLogout, showBackButton }: AdminNavProps) {
           </TooltipProvider>
         </nav>
       </aside>
-      <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button size="icon" variant="outline" className="sm:hidden bg-transparent">
-              <Package2 className="h-5 w-5" />
-              <span className="sr-only">Toggle Navigation</span>
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="sm:max-w-xs">
-            <nav className="grid gap-6 text-lg font-medium">
-              <Link
-                href="#"
-                className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:h-8 md:w-8 md:text-base"
-              >
-                <Package2 className="h-5 w-5 transition-all group-hover:scale-110" />
-                <span className="sr-only">AMA Fashion</span>
-              </Link>
-              <Link
-                href="/admin/dashboard"
-                className={cn(
-                  "flex items-center gap-4 px-2.5",
-                  pathname === "/admin/dashboard" || pathname === "/admin"
-                    ? "text-foreground"
-                    : "text-muted-foreground hover:text-foreground", // Adjusted active state
-                )}
-              >
-                <Home className="h-5 w-5" />
-                Dashboard
-              </Link>
-              <Link
-                href="/admin/orders"
-                className={cn(
-                  "flex items-center gap-4 px-2.5",
-                  pathname === "/admin/orders" ? "text-foreground" : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                <ShoppingCart className="h-5 w-5" />
-                Orders
-              </Link>
-              <Link
-                href="/admin/inventory"
-                className={cn(
-                  "flex items-center gap-4 px-2.5",
-                  pathname === "/admin/inventory" ? "text-foreground" : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                <Package className="h-5 w-5" />
-                Inventory
-              </Link>
-              <Link
-                href="/admin/subscribers"
-                className={cn(
-                  "flex items-center gap-4 px-2.5",
-                  pathname === "/admin/subscribers" ? "text-foreground" : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                <Users className="h-5 w-5" />
-                Subscribers
-              </Link>
-              <Link
-                href="/admin/customers"
-                className={cn(
-                  "flex items-center gap-4 px-2.5",
-                  pathname === "/admin/customers" ? "text-foreground" : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                <Users2 className="h-5 w-5" />
-                Customers
-              </Link>
-              <Link
-                href="/admin/analytics"
-                className={cn(
-                  "flex items-center gap-4 px-2.5",
-                  pathname === "/admin/analytics" ? "text-foreground" : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                <LineChart className="h-5 w-5" />
-                Analytics
-              </Link>
-              <Link
-                href="/admin/settings"
-                className={cn(
-                  "flex items-center gap-4 px-2.5",
-                  pathname === "/admin/settings" ? "text-foreground" : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                <Settings className="h-5 w-5" />
-                Settings
-              </Link>
-              <Button
-                variant="ghost"
-                className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-                onClick={handleLogout}
-              >
-                <LogOut className="h-5 w-5" />
-                Logout
+
+      {/* Main Content Area */}
+      <div className="flex flex-col flex-1 sm:pl-14 bg-muted/40">
+        {" "}
+        {/* This div now handles the padding for the fixed sidebar */}
+        {/* Top Header (Mobile & Desktop) */}
+        <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button size="icon" variant="outline" className="sm:hidden bg-transparent">
+                <Package2 className="h-5 w-5" />
+                <span className="sr-only">Toggle Navigation</span>
               </Button>
-            </nav>
-          </SheetContent>
-        </Sheet>
-        <div className="relative ml-auto flex-1 md:grow-0">{/* Search functionality can go here if needed */}</div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="secondary" size="icon" className="rounded-full">
-              <CircleUser className="h-5 w-5" />
-              <span className="sr-only">Toggle user menu</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>My Account</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>Settings</DropdownMenuItem>
-            <DropdownMenuItem>Support</DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </header>
+            </SheetTrigger>
+            <SheetContent side="left" className="sm:max-w-xs">
+              <nav className="grid gap-6 text-lg font-medium">
+                <Link
+                  href="#"
+                  className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:h-8 md:w-8 md:text-base"
+                >
+                  <Package2 className="h-5 w-5 transition-all group-hover:scale-110" />
+                  <span className="sr-only">AMA Fashion</span>
+                </Link>
+                <Link
+                  href="/admin/dashboard"
+                  className={cn(
+                    "flex items-center gap-4 px-2.5",
+                    pathname === "/admin/dashboard" || pathname === "/admin"
+                      ? "text-foreground"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  <Home className="h-5 w-5" />
+                  Dashboard
+                </Link>
+                <Link
+                  href="/admin/orders"
+                  className={cn(
+                    "flex items-center gap-4 px-2.5",
+                    pathname === "/admin/orders" ? "text-foreground" : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  <ShoppingCart className="h-5 w-5" />
+                  Orders
+                </Link>
+                <Link
+                  href="/admin/inventory"
+                  className={cn(
+                    "flex items-center gap-4 px-2.5",
+                    pathname === "/admin/inventory" ? "text-foreground" : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  <Package className="h-5 w-5" />
+                  Inventory
+                </Link>
+                <Link
+                  href="/admin/subscribers"
+                  className={cn(
+                    "flex items-center gap-4 px-2.5",
+                    pathname === "/admin/subscribers"
+                      ? "text-foreground"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  <Users className="h-5 w-5" />
+                  Subscribers
+                </Link>
+                <Link
+                  href="/admin/customers"
+                  className={cn(
+                    "flex items-center gap-4 px-2.5",
+                    pathname === "/admin/customers" ? "text-foreground" : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  <Users2 className="h-5 w-5" />
+                  Customers
+                </Link>
+                <Link
+                  href="/admin/analytics"
+                  className={cn(
+                    "flex items-center gap-4 px-2.5",
+                    pathname === "/admin/analytics" ? "text-foreground" : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  <LineChart className="h-5 w-5" />
+                  Analytics
+                </Link>
+                <Link
+                  href="/admin/settings"
+                  className={cn(
+                    "flex items-center gap-4 px-2.5",
+                    pathname === "/admin/settings" ? "text-foreground" : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  <Settings className="h-5 w-5" />
+                  Settings
+                </Link>
+                <Button
+                  variant="ghost"
+                  className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
+                  onClick={handleLogout}
+                >
+                  <LogOut className="h-5 w-5" />
+                  Logout
+                </Button>
+              </nav>
+            </SheetContent>
+          </Sheet>
+          <div className="relative ml-auto flex-1 md:grow-0">{/* Search functionality can go here if needed */}</div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="secondary" size="icon" className="rounded-full">
+                <CircleUser className="h-5 w-5" />
+                <span className="sr-only">Toggle user menu</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>Settings</DropdownMenuItem>
+              <DropdownMenuItem>Support</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </header>
+        {/* Page Content */}
+        <main className="flex-1 p-4 sm:px-6 sm:py-0 md:gap-8">
+          <div className="max-w-7xl mx-auto">
+            {" "}
+            {/* This div will center the content within the main area */}
+            {children}
+          </div>
+        </main>
+      </div>
     </div>
   )
 }

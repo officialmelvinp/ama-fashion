@@ -1,12 +1,12 @@
 "use client"
-
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Package, ShoppingCart, Users, TrendingUp, AlertCircle, CheckCircle } from "lucide-react"
-import AdminNav from "@/components/admin-nav"
+import { AdminNav } from "@/components/admin-nav" // Corrected: Named import
+import { redirect } from "next/navigation"
 
 interface DashboardStats {
   totalProducts: number
@@ -75,7 +75,6 @@ export default function AdminDashboard() {
       const paidOrders = orders.filter((order: any) => order.payment_status === "completed").length
       const pendingOrders = orders.filter((order: any) => order.payment_status === "pending").length
 
-      // Fixed: Add proper null checks and number conversion for totalRevenue
       const totalRevenue = orders
         .filter((order: any) => order.payment_status === "completed")
         .reduce((sum: number, order: any) => {
@@ -153,7 +152,6 @@ export default function AdminDashboard() {
           </div>
         </div>
       </div>
-
       <div className="max-w-7xl mx-auto p-8">
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -169,7 +167,6 @@ export default function AdminDashboard() {
               </p>
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
@@ -182,7 +179,6 @@ export default function AdminDashboard() {
               </p>
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Subscribers</CardTitle>
@@ -193,7 +189,6 @@ export default function AdminDashboard() {
               <p className="text-xs text-muted-foreground">Newsletter subscribers</p>
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Revenue</CardTitle>
@@ -205,7 +200,6 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
         </div>
-
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Recent Orders */}
           <Card>
@@ -251,7 +245,6 @@ export default function AdminDashboard() {
               )}
             </CardContent>
           </Card>
-
           {/* Low Stock Alert */}
           <Card>
             <CardHeader>
@@ -296,7 +289,6 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
         </div>
-
         {/* Quick Actions */}
         <div className="mt-8">
           <h2 className="text-lg font-semibold text-[#2c2824] mb-4">Quick Actions</h2>
@@ -310,7 +302,6 @@ export default function AdminDashboard() {
                 </CardContent>
               </Card>
             </Link>
-
             <Link href="/admin/orders">
               <Card className="hover:shadow-md transition-shadow cursor-pointer">
                 <CardContent className="p-6 text-center">
@@ -320,7 +311,6 @@ export default function AdminDashboard() {
                 </CardContent>
               </Card>
             </Link>
-
             <Link href="/admin/dashboard">
               <Card className="hover:shadow-md transition-shadow cursor-pointer">
                 <CardContent className="p-6 text-center">
@@ -335,4 +325,9 @@ export default function AdminDashboard() {
       </div>
     </div>
   )
+}
+
+export function AdminRootPage() {
+  // Redirect to the dashboard page
+  redirect("/admin/dashboard")
 }

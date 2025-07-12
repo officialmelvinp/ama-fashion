@@ -1,0 +1,143 @@
+"use server"
+
+import { neon } from "@neondatabase/serverless"
+import { getOrderById } from "@/lib/inventory" // This now includes getOrderById
+import { sendOrderShippedEmail, sendOrderDeliveredEmail } from "@/lib/email" // This is the new email utility file
+
+const sql = neon(process.env.DATABASE_URL!)
+
+export async function handleShipOrder(
+  orderId: number,
+  trackingNumber: string,
+  shippingCarrier: string,
+  estimatedDeliveryDate: string,
+) {
+  try {
+    // Update order status in the database
+    await sql`
+      UPDATE orders
+      SET
+        shipping_status = 'shipped',
+        tracking_number = ${trackingNumber},
+        shipping_carrier = ${shippingCarrier},
+        shipped_date = CURRENT_TIMESTAMP,
+        estimated_delivery_date = ${estimatedDeliveryDate || null},
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = ${orderId}
+    `
+
+    // Fetch updated order details to send email
+    const updatedOrder = await getOrderById(orderId)
+
+    if (updatedOrder) {
+      await sendOrderShippedEmail({
+        customer_email: updatedOrder.customer_email,
+        customer_name: updatedOrder.customer_name,
+        order_id: updatedOrder.id.toString(),
+        product_name: updatedOrder.product_id, // Assuming product_id is sufficient for email, or fetch product name
+        quantity_ordered: updatedOrder.quantity_ordered,
+        amount_paid: updatedOrder.amount_paid,
+        currency: updatedOrder.currency,
+        payment_status: updatedOrder.payment_status,
+        shipping_status: "shipped",
+        tracking_number: updatedOrder.tracking_number,
+        shipping_carrier: updatedOrder.shipping_carrier,
+        estimated_delivery_date: updatedOrder.estimated_delivery_date,
+      })
+    }
+
+    return { success: true, message: `Order #${orderId} marked as shipped.` }
+  } catch (error: any) {
+    console.error("Error shipping order:", error)
+    return { success: false, error: `Failed to ship order: ${error.message}` }
+  }
+}
+
+export async function handleDeliverOrder(orderId: number) {
+  try {
+    // Update order status in the database
+    await sql`
+      UPDATE orders
+      SET
+        shipping_status = 'delivered',
+        delivered_date = CURRENT_TIMESTAMP,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = ${orderId}
+    `
+
+    // Fetch updated order details to send email
+    const updatedOrder = await getOrderById(orderId)
+
+    if (updatedOrder) {
+      await sendOrderDeliveredEmail({
+        customer_email: updatedOrder.customer_email,
+        customer_name: updatedOrder.customer_name,
+        order_id: updatedOrder.id.toString(),
+        product_name: updatedOrder.product_id, // Assuming product_id is sufficient for email
+        quantity_ordered: updatedOrder.quantity_ordered,
+        amount_paid: updatedOrder.amount_paid,
+        currency: updatedOrder.currency,
+        payment_status: updatedOrder.payment_status,
+        shipping_status: "delivered",
+      })
+    }
+
+    return { success: true, message: `Order #${orderId} marked as delivered.` }
+  } catch (error: any) {
+    console.error("Error delivering order:", error)
+    return { success: false, error: `Failed to deliver order: ${error.message}` }
+  }
+}
+
+export async function resendOrderEmail(orderId: number, emailType: "shipped" | "delivered") {
+  try {
+    const order = await getOrderById(orderId)
+
+    if (!order) {
+      return { success: false, error: `Order #${orderId} not found.` }
+    }
+
+    let result
+    if (emailType === "shipped") {
+      result = await sendOrderShippedEmail({
+        customer_email: order.customer_email,
+        customer_name: order.customer_name,
+        order_id: order.id.toString(),
+        product_name: order.product_id,
+        quantity_ordered: order.quantity_ordered,
+        amount_paid: order.amount_paid,
+        currency: order.currency,
+        payment_status: order.payment_status,
+        shipping_status: order.shipping_status,
+        tracking_number: order.tracking_number,
+        shipping_carrier: order.shipping_carrier,
+        estimated_delivery_date: order.estimated_delivery_date,
+        shipped_date: order.shipped_date,
+      })
+    } else if (emailType === "delivered") {
+      result = await sendOrderDeliveredEmail({
+        customer_email: order.customer_email,
+        customer_name: order.customer_name,
+        order_id: order.id.toString(),
+        product_name: order.product_id,
+        quantity_ordered: order.quantity_ordered,
+        amount_paid: order.amount_paid,
+        currency: order.currency,
+        payment_status: order.payment_status,
+        shipping_status: order.shipping_status,
+        delivered_date: order.delivered_date,
+      })
+    } else {
+      return { success: false, error: "Invalid email type specified." }
+    }
+
+    if (result?.success) {
+      return { success: true, message: `Successfully resent ${emailType} email for order #${orderId}.` }
+    } else {
+      return { success: false, error: result?.message || `Failed to resend ${emailType} email for order #${orderId}.` }
+    }
+  } catch (error: any) {
+    console.error(`Error resending ${emailType} email for order #${orderId}:`, error)
+    return { success: false, error: `Failed to resend email: ${error.message}` }
+  }
+}
