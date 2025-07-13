@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import MobileNav from "./mobile-nav" // Ensure MobileNav is imported
+import { MobileNav } from "./mobile-nav" // Ensure MobileNav is imported
 import { useCart } from "@/hooks/use-cart"
 import { ShoppingCart } from "lucide-react"
 
