@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server"
 import { neon } from "@neondatabase/serverless"
 import nodemailer from "nodemailer"
 import Stripe from "stripe"
+import type { CartItem } from "@/lib/types" // Import CartItem type
 
 const sql = neon(process.env.DATABASE_URL!)
 const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -39,48 +40,96 @@ async function getProductDisplayName(productId: string): Promise<string> {
   }
 }
 
-async function recordOrder(orderData: any) {
+// MODIFIED: recordOrder now accepts an array of items
+async function recordOrder(orderData: {
+  payment_id: string
+  customer_email: string
+  customer_name: string
+  shipping_address: string
+  phone_number: string
+  notes: string
+  order_type: string
+  order_status: string
+  shipping_status: string
+  total_amount: number
+  currency: string
+  items: {
+    productId: string
+    quantity: number
+    price: number
+    currency: string
+    productDisplayName: string // Added for convenience in recording
+  }[]
+}) {
   try {
     // Check if an order with this payment_id already exists
     const existingOrder = await sql`
-    SELECT id FROM orders WHERE payment_id = ${orderData.payment_id}
-  `
+      SELECT id FROM orders WHERE payment_id = ${orderData.payment_id}
+    `
     if (existingOrder.length > 0) {
       console.log(`Order with payment_id ${orderData.payment_id} already exists. Skipping insertion.`)
       return existingOrder[0].id // Return existing order ID
     }
 
+    // Construct notes based on all items
+    const allProductNames = orderData.items.map((item) => item.productDisplayName).join(", ")
+    const totalQuantityOrdered = orderData.items.reduce((sum, item) => sum + item.quantity, 0)
+    const detailedNotes =
+      `Stripe payment completed via webhook. Session ID: ${orderData.payment_id}. Items: ${allProductNames}. Total Quantity: ${totalQuantityOrdered}. ${orderData.notes || ""}`.trim()
+
+    // Insert into the main 'orders' table
     const result = await sql`
-    INSERT INTO orders (
-      product_id, customer_email, customer_name, quantity_ordered,
-      quantity_in_stock, quantity_preorder, payment_status, payment_id,
-      amount_paid, currency, shipping_address, phone_number, notes,
-      order_type, order_status, total_amount
-    ) VALUES (
-      ${orderData.product_id}, ${orderData.customer_email}, ${orderData.customer_name},
-      ${orderData.quantity_ordered}, ${orderData.quantity_in_stock}, ${orderData.quantity_preorder},
-      ${orderData.payment_status}, ${orderData.payment_id}, ${orderData.amount_paid},
-      ${orderData.currency}, ${orderData.shipping_address}, ${orderData.phone_number},
-      ${orderData.notes}, ${orderData.order_type}, ${orderData.order_status}, ${orderData.total_amount}
-    ) RETURNING id
-  `
-    // Update inventory
-    await sql`
-    UPDATE product_inventory
-    SET quantity_available = quantity_available - ${orderData.quantity_ordered}
-    WHERE product_id = ${orderData.product_id}
-  `
-    return result[0].id
+      INSERT INTO orders (
+        customer_email, customer_name, payment_status, payment_id,
+        total_amount, currency, shipping_address, phone_number, notes,
+        order_type, order_status, shipping_status
+      ) VALUES (
+        ${orderData.customer_email}, ${orderData.customer_name},
+        ${orderData.order_status}, ${orderData.payment_id}, ${orderData.total_amount},
+        ${orderData.currency}, ${orderData.shipping_address}, ${orderData.phone_number},
+        ${detailedNotes}, ${orderData.order_type}, ${orderData.order_status},
+        ${orderData.shipping_status}
+      ) RETURNING id
+    `
+    const orderId = result[0].id
+
+    // Insert each item into the 'order_items' table and update 'product_inventory'
+    for (const item of orderData.items) {
+      await sql`
+        INSERT INTO order_items (order_id, product_id, product_display_name, quantity, unit_price, currency)
+        VALUES (${orderId}, ${item.productId}, ${item.productDisplayName}, ${item.quantity}, ${item.price}, ${item.currency})
+      `
+      // Update individual product inventory
+      await sql`
+        UPDATE product_inventory
+        SET quantity_available = GREATEST(0, quantity_available - ${item.quantity}),
+            updated_at = CURRENT_TIMESTAMP
+        WHERE product_id = ${item.productId}
+      `
+    }
+
+    return orderId
   } catch (error) {
     console.error("Database error:", error)
     throw error
   }
 }
 
-// MODIFIED: sendOrderEmails now accepts productDisplayName
-async function sendOrderEmails(orderData: any, productDisplayName: string) {
+// MODIFIED: sendOrderEmails now accepts an array of CartItem
+async function sendOrderEmails(orderData: any, cartItems: CartItem[]) {
   try {
     console.log("Attempting to send customer email...") // Added log
+
+    const itemsHtml = cartItems
+      .map(
+        (item) => `
+      <li>
+        <strong>${item.name}</strong> (${item.subtitle}) - ${item.selectedQuantity} x ${item.selectedPrice}
+      </li>
+    `,
+      )
+      .join("")
+
     // Customer email
     const customerEmail = {
       from: '"AMA Fashion" <support@amariahco.com>',
@@ -95,10 +144,11 @@ async function sendOrderEmails(orderData: any, productDisplayName: string) {
             <div style="background: #f8f3ea; padding: 20px; border-radius: 8px; margin: 20px 0;">
               <h3 style="color: #2c2824; margin-top: 0;">Order Details:</h3>
               <p><strong>Order ID:</strong> ${orderData.payment_id}</p>
-              <p><strong>Product:</strong> ${productDisplayName}</p>
-              <p><strong>Quantity:</strong> ${orderData.quantity_ordered}</p>
-              <p><strong>Amount Paid:</strong> ${orderData.amount_paid} ${orderData.currency}</p>
+              <p><strong>Total Amount:</strong> ${orderData.total_amount} ${orderData.currency}</p>
               <p><strong>Payment Status:</strong> ✅ Confirmed</p>
+              <p><strong>Payment Method:</strong> Stripe</p>
+              <h4>Items:</h4>
+              <ul>${itemsHtml}</ul>
             </div>
             <div style="background: #2c2824; color: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
               <h3 style="margin-top: 0;">What's Next?</h3>
@@ -127,17 +177,18 @@ async function sendOrderEmails(orderData: any, productDisplayName: string) {
     const vendorEmail = {
       from: '"AMA Orders" <support@amariahco.com>',
       to: "support@amariahco.com",
-      subject: `🎉 New Order: ${productDisplayName} - ${orderData.amount_paid} ${orderData.currency}`,
+      subject: `🎉 New Stripe Order: ${orderData.total_amount} ${orderData.currency} (${cartItems.length} items)`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h1 style="color: #2c2824;">🎉 New Order Received!</h1>
+          <h1 style="color: #2c2824;">🎉 New Stripe Order Received!</h1>
           <div style="background: #f8f3ea; padding: 20px; border-radius: 8px; margin: 20px 0;">
             <h3>Order Information:</h3>
             <p><strong>Payment ID:</strong> ${orderData.payment_id}</p>
-            <p><strong>Product:</strong> ${productDisplayName}</p>
-            <p><strong>Quantity:</strong> ${orderData.quantity_ordered}</p>
-            <p><strong>Amount:</strong> ${orderData.amount_paid} ${orderData.currency}</p>
+            <p><strong>Total Amount:</strong> ${orderData.total_amount} ${orderData.currency}</p>
             <p><strong>Order Type:</strong> ${orderData.order_type}</p>
+            <p><strong>Payment Method:</strong> Stripe</p>
+            <h4>Items:</h4>
+            <ul>${itemsHtml}</ul>
           </div>
           <div style="background: #2c2824; color: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
             <h3 style="margin-top: 0;">Customer Details:</h3>
@@ -150,7 +201,7 @@ async function sendOrderEmails(orderData: any, productDisplayName: string) {
             <h3 style="color: #2c2824; margin-top: 0;">Action Items:</h3>
             <p>✅ Contact customer via WhatsApp within 24 hours</p>
             <p>✅ Confirm order details and delivery preferences</p>
-            <p>✅ Prepare the ${productDisplayName} for delivery</p>
+            <p>✅ Prepare the order for delivery</p>
             <p>✅ Update order status in admin panel</p>
           </div>
         </div>
@@ -158,7 +209,7 @@ async function sendOrderEmails(orderData: any, productDisplayName: string) {
     }
     await transporter.sendMail(vendorEmail)
     console.log("Vendor email sent successfully.") // Added log
-    console.log("✅ Order emails sent successfully")
+    console.log("✅ Stripe order emails sent successfully")
   } catch (error) {
     console.error("❌ Email sending failed:", error)
   }
@@ -182,49 +233,98 @@ export async function POST(request: NextRequest) {
   const session = event.data.object as Stripe.Checkout.Session
 
   if (event.type === "checkout.session.completed") {
-    // MODIFIED: Retrieve internal_product_id from session metadata
-    const productIdForDb = session.metadata?.internal_product_id || "unknown-product-id"
-    const productDisplayNameFromMetadata = session.metadata?.product_name_for_display || "AMA Fashion Item (Fallback)"
+    // MODIFIED: Retrieve cart_items_json from session metadata
+    const cartItemsJson = session.metadata?.cart_items_json
+    let cartItems: CartItem[] = []
+    if (cartItemsJson) {
+      try {
+        cartItems = JSON.parse(cartItemsJson) as CartItem[]
+        console.log("Webhook: Parsed cart items from metadata:", cartItems)
+      } catch (parseError) {
+        console.error("Webhook: Error parsing cart_items_json from metadata:", parseError)
+      }
+    }
 
-    console.log("Webhook: Processing checkout.session.completed event.")
-    console.log("Webhook: Product ID for DB storage (from metadata):", productIdForDb)
-    console.log("Webhook: Product Name for display (from metadata):", productDisplayNameFromMetadata)
+    if (cartItems.length === 0) {
+      console.warn(
+        "Webhook: No cart items found in session metadata. This might indicate an issue or a single-item legacy flow.",
+      )
+      // If no cart items, try to fall back to single product metadata if it exists
+      const singleProductId = session.metadata?.internal_product_id
+      if (singleProductId) {
+        const singleProductDisplayName =
+          session.metadata?.product_name_for_display || `AMA Fashion Item (${singleProductId})`
+        // Construct a single-item cart for processing
+        cartItems = [
+          {
+            id: singleProductId,
+            name: singleProductDisplayName,
+            subtitle: "", // Placeholder
+            materials: [], // Placeholder
+            description: "", // Placeholder
+            priceAED: "", // Placeholder
+            priceGBP: "", // Placeholder
+            images: [], // Placeholder
+            category: "", // Placeholder
+            essences: [], // Placeholder
+            selectedQuantity: 1,
+            selectedRegion: (session.currency === "aed" ? "UAE" : "UK") as "UAE" | "UK",
+            selectedPrice: `${(session.amount_total ?? 0) / 100} ${session.currency?.toUpperCase()}`,
+          },
+        ]
+        console.log("Webhook: Falling back to single product from metadata:", cartItems[0])
+      } else {
+        console.error("Webhook: No product or cart items found in session metadata. Cannot process order.")
+        return NextResponse.json({ error: "No product or cart items found in session metadata" }, { status: 400 })
+      }
+    }
 
-    // NEW: Fetch the human-readable product name for emails and logs using the extracted ID
-    // This call is still useful as a fallback or for ensuring consistency with your DB's latest name
-    const finalProductDisplayName = await getProductDisplayName(productIdForDb)
-    console.log("Webhook: Final product display name for emails (after DB lookup):", finalProductDisplayName)
+    // Prepare items for database recording and email sending
+    const itemsForProcessing = await Promise.all(
+      cartItems.map(async (item) => {
+        const productDisplayName = await getProductDisplayName(item.id)
+        return {
+          productId: item.id,
+          quantity: item.selectedQuantity,
+          price: Number.parseFloat(item.selectedPrice.match(/[\d.]+/)?.[0] || "0"), // Extract numeric price
+          currency: item.selectedRegion === "UAE" ? "AED" : "GBP",
+          productDisplayName: productDisplayName,
+        }
+      }),
+    )
+
+    const customerName = session.customer_details?.name || "Customer"
+    const customerPhone = session.customer_details?.phone || ""
+
+    const paymentId =
+      typeof session.payment_intent === "string"
+        ? session.payment_intent
+        : (session.payment_intent as Stripe.PaymentIntent)?.id || session.id
 
     const orderData = {
-      product_id: productIdForDb, // Use the unique ID for DB storage
-      customer_email: session.customer_details?.email,
-      customer_name: session.customer_details?.name || "Customer",
-      quantity_ordered: 1, // Assuming 1 for now, adjust if quantity is in metadata
-      quantity_in_stock: 1, // Placeholder, fetch from DB if needed
-      quantity_preorder: 0, // Placeholder, fetch from DB if needed
-      payment_status: "completed",
-      payment_id: session.payment_intent,
-      amount_paid: (session.amount_total ?? 0) / 100, // Convert from cents, default to 0 if null
-      currency: (session.currency ?? "GBP").toUpperCase(), // Default to "GBP" if null
-      // --- MODIFIED: Add more robust shipping address extraction ---
+      payment_id: paymentId, // Use the explicitly extracted string ID
+      customer_email: session.customer_details?.email || "",
+      customer_name: customerName,
       shipping_address: session.customer_details?.address
         ? `${session.customer_details.address.line1 || ""}${session.customer_details.address.line2 ? ", " + session.customer_details.address.line2 : ""}${session.customer_details.address.city ? ", " + session.customer_details.address.city : ""}${session.customer_details.address.state ? ", " + session.customer_details.address.state : ""}${session.customer_details.address.postal_code ? ", " + session.customer_details.address.postal_code : ""}${session.customer_details.address.country ? ", " + session.customer_details.address.country : ""}`
             .trim()
             .replace(/^, /, "") // Clean up leading comma if line1 is empty
-        : "", // If Stripe doesn't provide it, it remains empty for the webhook
-      // --- END MODIFIED ---
-      phone_number: session.customer_details?.phone || "",
-      notes: `Stripe payment completed via webhook. Session ID: ${session.id}. Product: ${finalProductDisplayName}`, // Use display name in notes
+        : "",
+      phone_number: customerPhone,
+      notes: `Stripe payment completed via webhook. Session ID: ${session.id}.`, // Notes will be detailed by recordOrder
       order_type: "purchase",
-      order_status: "paid",
-      total_amount: (session.amount_total ?? 0) / 100,
+      order_status: "completed", // Use 'completed' for successful payments
+      shipping_status: "paid", // Start with "paid" status
+      total_amount: (session.amount_total ?? 0) / 100, // Convert from cents
+      currency: (session.currency ?? "GBP").toUpperCase(),
+      items: itemsForProcessing, // Pass the processed items array
     }
     try {
       // Record order in database
       await recordOrder(orderData)
-      console.log("Order Data before sending emails:", orderData)
-      // Send email notifications - MODIFIED to pass finalProductDisplayName
-      await sendOrderEmails(orderData, finalProductDisplayName)
+      console.log("Webhook: Order Data before sending emails:", orderData)
+      // Send email notifications - MODIFIED to pass cartItems
+      await sendOrderEmails(orderData, cartItems)
       console.log("✅ Stripe order processed successfully via webhook")
     } catch (error) {
       console.error("❌ Error processing order from webhook:", error)

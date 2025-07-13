@@ -24,13 +24,13 @@ async function getProductDisplayName(productId: string): Promise<string> {
 
 export async function GET(request: Request) {
   try {
-    // MODIFIED: Join with product_inventory to get product_display_name
+    // MODIFIED: Cast total_amount and amount_paid to NUMERIC to ensure they are numbers
     const orders = (await sql`
       SELECT
         o.id, o.product_id, p.product_name AS product_display_name, o.customer_email, o.customer_name, o.quantity_ordered,
         o.quantity_in_stock, o.quantity_preorder, o.payment_status, o.payment_id,
-        o.amount_paid, o.currency, o.shipping_address, o.phone_number, o.notes,
-        o.order_type, o.order_status, o.total_amount, o.shipping_status,
+        o.amount_paid::NUMERIC, o.currency, o.shipping_address, o.phone_number, o.notes, -- Cast amount_paid
+        o.order_type, o.order_status, o.total_amount::NUMERIC, o.shipping_status, -- Cast total_amount
         o.tracking_number, o.shipping_carrier, o.shipped_date, o.delivered_date,
         o.estimated_delivery_date, o.created_at, o.updated_at
       FROM orders o
@@ -87,12 +87,13 @@ export async function PUT(request: Request) {
     `
 
     // NEW: Fetch the updated order with product_display_name for email sending
+    // MODIFIED: Cast total_amount and amount_paid to NUMERIC to ensure they are numbers
     const updatedOrderResult = await sql`
       SELECT
         o.id, o.product_id, p.product_name AS product_display_name, o.customer_email, o.customer_name, o.quantity_ordered,
         o.quantity_in_stock, o.quantity_preorder, o.payment_status, o.payment_id,
-        o.amount_paid, o.currency, o.shipping_address, o.phone_number, o.notes,
-        o.order_type, o.order_status, o.total_amount, o.shipping_status,
+        o.amount_paid::NUMERIC, o.currency, o.shipping_address, o.phone_number, o.notes, -- Cast amount_paid
+        o.order_type, o.order_status, o.total_amount::NUMERIC, o.shipping_status, -- Cast total_amount
         o.tracking_number, o.shipping_carrier, o.shipped_date, o.delivered_date,
         o.estimated_delivery_date, o.created_at, o.updated_at
       FROM orders o
@@ -107,14 +108,23 @@ export async function PUT(request: Request) {
     const order = updatedOrderResult[0] as Order // Cast to Order type for type safety
 
     // Send email notification to customer using the centralized email utility
+    // MODIFIED: Construct the 'items' array from the single-item order details
+    const orderItemsForEmail = [
+      {
+        product_display_name: order.product_display_name || order.product_id,
+        quantity: order.quantity_ordered,
+        unit_price: order.amount_paid, // Assuming amount_paid is the unit price for a single item order
+        currency: order.currency,
+      },
+    ]
+
     if (action === "mark_shipped") {
       await sendOrderShippedEmail({
         customer_email: order.customer_email,
         customer_name: order.customer_name,
         order_id: order.id.toString(),
-        product_name: order.product_display_name || order.product_id, // Use display name
-        quantity_ordered: order.quantity_ordered,
-        amount_paid: order.amount_paid,
+        items: orderItemsForEmail, // Pass the constructed items array
+        total_amount: order.total_amount,
         currency: order.currency,
         payment_status: order.payment_status,
         shipping_status: "shipped",
@@ -128,9 +138,8 @@ export async function PUT(request: Request) {
         customer_email: order.customer_email,
         customer_name: order.customer_name,
         order_id: order.id.toString(),
-        product_name: order.product_display_name || order.product_id, // Use display name
-        quantity_ordered: order.quantity_ordered,
-        amount_paid: order.amount_paid,
+        items: orderItemsForEmail, // Pass the constructed items array
+        total_amount: order.total_amount,
         currency: order.currency,
         payment_status: order.payment_status,
         shipping_status: "delivered",

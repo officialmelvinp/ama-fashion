@@ -166,7 +166,12 @@ export function useToast() {
 
   React.useEffect(() => {
     const listener = (newState: State) => {
-      setActiveToasts(newState)
+      // Defer the state update to the next tick of the event loop
+      // This prevents React from complaining about updating a component
+      // while another is rendering.
+      setTimeout(() => {
+        setActiveToasts(newState)
+      }, 0)
     }
 
     listeners.push(listener)

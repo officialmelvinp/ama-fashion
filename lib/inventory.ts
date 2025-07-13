@@ -1,5 +1,5 @@
 import { neon } from "@neondatabase/serverless"
-import type { InventoryItem, ProductWithStock, Order, ProductInventory } from "@/lib/types" // Import all necessary types
+import type { InventoryItem, ProductWithStock, Order, ProductInventory, OrderItem } from "@/lib/types" // Import all necessary types
 
 const sql = neon(process.env.DATABASE_URL!)
 
@@ -160,50 +160,6 @@ export async function updateProductStock(productId: string, newQuantity: number)
   }
 }
 
-// Enhanced order recording with quantity breakdown
-export async function recordOrder(orderData: {
-  productId: string
-  customerEmail: string
-  customerName: string
-  quantityOrdered: number
-  quantityFromStock: number
-  quantityPreorder: number
-  paymentStatus: "pending" | "completed" | "failed"
-  paymentId?: string
-  amountPaid: number
-  currency: string
-  shippingAddress?: string
-  phoneNumber?: string
-  notes?: string
-  orderType: string
-  orderStatus: string
-  totalAmount: number
-  shippingStatus: string
-}): Promise<boolean> {
-  try {
-    await sql`
-      INSERT INTO orders (
-        product_id, customer_email, customer_name, quantity_ordered,
-        quantity_in_stock, quantity_preorder, payment_status, payment_id,
-        amount_paid, currency, shipping_address, phone_number, notes,
-        order_type, order_status, total_amount, shipping_status
-      ) VALUES (
-        ${orderData.productId}, ${orderData.customerEmail}, ${orderData.customerName},
-        ${orderData.quantityOrdered}, ${orderData.quantityFromStock}, ${orderData.quantityPreorder},
-        ${orderData.paymentStatus}, ${orderData.paymentId || null},
-        ${orderData.amountPaid}, ${orderData.currency},
-        ${orderData.shippingAddress || null}, ${orderData.phoneNumber || null},
-        ${orderData.notes || null}, ${orderData.orderType}, ${orderData.orderStatus}, ${orderData.totalAmount},
-        ${orderData.shippingStatus}
-      )
-    `
-    return true
-  } catch (error) {
-    console.error("Error recording order:", error)
-    return false
-  }
-}
-
 // Get price history for a product
 export async function updateProductPrice(
   productId: string,
@@ -248,6 +204,23 @@ export async function updateProductPrice(
   }
 }
 
+// NEW: Function to update pre-order date
+export async function updatePreorderDate(productId: string, newPreorderDate: string | null): Promise<boolean> {
+  try {
+    await sql`
+      UPDATE product_inventory
+      SET
+        preorder_ready_date = ${newPreorderDate},
+        updated_at = CURRENT_TIMESTAMP
+      WHERE product_id = ${productId} AND status = 'active'
+    `
+    return true
+  } catch (error) {
+    console.error("Error updating pre-order date:", error)
+    return false
+  }
+}
+
 // Get price history for a product
 export async function getPriceHistory(productId: string): Promise<any[]> {
   try {
@@ -266,20 +239,32 @@ export async function getPriceHistory(productId: string): Promise<any[]> {
 
 export async function getOrders(): Promise<Order[]> {
   try {
-    // Ensure all columns from the Order interface are selected
-    const orders = (await sql`
+    const ordersData = (await sql`
       SELECT
-        o.id, o.product_id, p.product_name AS product_display_name, o.customer_email, o.customer_name, o.quantity_ordered,
-        o.quantity_in_stock, o.quantity_preorder, o.payment_status, o.payment_id,
-        o.amount_paid, o.currency, o.shipping_address, o.phone_number, o.notes,
-        o.order_type, o.order_status, o.total_amount, o.shipping_status,
-        o.tracking_number, o.shipping_carrier, o.shipped_date, o.delivered_date,
-        o.estimated_delivery_date, o.created_at, o.updated_at
-      FROM orders o
-      LEFT JOIN products p ON o.product_id = p.product_id
-      ORDER BY o.created_at DESC
+        id, customer_email, customer_name, payment_status, payment_id,
+        total_amount, currency, shipping_address, phone_number, notes,
+        order_type, order_status, shipping_status,
+        tracking_number, shipping_carrier, shipped_date, delivered_date,
+        estimated_delivery_date, created_at, updated_at
+      FROM orders
+      ORDER BY created_at DESC
     `) as Order[]
-    return orders
+
+    // Fetch order items for each order
+    const ordersWithItems = await Promise.all(
+      ordersData.map(async (order) => {
+        const items = (await sql`
+          SELECT
+            id, order_id, product_id, product_display_name, quantity, unit_price, currency, created_at, updated_at
+          FROM order_items
+          WHERE order_id = ${order.id}
+          ORDER BY id ASC
+        `) as OrderItem[]
+        return { ...order, items }
+      }),
+    )
+
+    return ordersWithItems
   } catch (error) {
     console.error("Error fetching orders:", error)
     throw new Error("Failed to fetch orders.")
@@ -288,20 +273,32 @@ export async function getOrders(): Promise<Order[]> {
 
 export async function getOrderById(orderId: number): Promise<Order | null> {
   try {
-    // MODIFIED: Added LEFT JOIN to product_inventory to fetch product_display_name
     const orders = (await sql`
       SELECT
-        o.id, o.product_id, p.product_name AS product_display_name, o.customer_email, o.customer_name, o.quantity_ordered,
-        o.quantity_in_stock, o.quantity_preorder, o.payment_status, o.payment_id,
-        o.amount_paid, o.currency, o.shipping_address, o.phone_number, o.notes,
-        o.order_type, o.order_status, o.total_amount, o.shipping_status,
-        o.tracking_number, o.shipping_carrier, o.shipped_date, o.delivered_date,
-        o.estimated_delivery_date, o.created_at, o.updated_at
-      FROM orders o
-      LEFT JOIN products p ON o.product_id = p.product_id
-      WHERE o.id = ${orderId}
+        id, customer_email, customer_name, payment_status, payment_id,
+        total_amount, currency, shipping_address, phone_number, notes,
+        order_type, order_status, shipping_status,
+        tracking_number, shipping_carrier, shipped_date, delivered_date,
+        estimated_delivery_date, created_at, updated_at
+      FROM orders
+      WHERE id = ${orderId}
     `) as Order[]
-    return orders.length > 0 ? orders[0] : null
+
+    if (orders.length === 0) {
+      return null
+    }
+
+    const order = orders[0]
+
+    const items = (await sql`
+      SELECT
+        id, order_id, product_id, product_display_name, quantity, unit_price, currency, created_at, updated_at
+      FROM order_items
+      WHERE order_id = ${order.id}
+      ORDER BY id ASC
+    `) as OrderItem[]
+
+    return { ...order, items }
   } catch (error) {
     console.error(`Error fetching order with ID ${orderId}:`, error)
     throw new Error(`Failed to fetch order with ID ${orderId}.`)

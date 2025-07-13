@@ -6,24 +6,14 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import Header from "@/components/header"
 
-type Product = {
+type CartItemDisplay = {
   id: string
   name: string
   subtitle: string
-  materials: string[]
-  description: string
-  priceAED: string // Added this
-  priceGBP: string // Added this
   images: string[]
-  category: string
-  essences: string[]
-  materialLine?: string // Made optional as in checkout page
-  colors?: string[]
-  selectedRegion?: "UAE" | "UK" // Added this
-  selectedPrice?: string // Added this
-  selectedQuantity?: number // Added this
-  stockLevel?: number // Added this
-  preOrderDate?: string // Added this
+  selectedQuantity: number
+  selectedPrice: string
+  selectedRegion: "UAE" | "UK"
 }
 
 type CustomerInfo = {
@@ -46,7 +36,7 @@ export default function PaymentSuccessPage() {
   // Stripe redirects with 'session_id'
   const stripeSessionId = searchParams.get("session_id")
 
-  const [product, setProduct] = useState<Product | null>(null)
+  const [cartItems, setCartItems] = useState<CartItemDisplay[]>([]) // Changed from product to cartItems
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
   const [processComplete, setProcessComplete] = useState(false)
@@ -55,11 +45,11 @@ export default function PaymentSuccessPage() {
 
   useEffect(() => {
     // Get stored data
-    const selectedProduct = localStorage.getItem("selectedProduct")
+    const storedCartItems = localStorage.getItem("cartItems") // Changed from selectedProduct
     const storedCustomerInfo = localStorage.getItem("customerInfo")
 
-    if (selectedProduct) {
-      setProduct(JSON.parse(selectedProduct))
+    if (storedCartItems) {
+      setCartItems(JSON.parse(storedCartItems)) // Changed from setProduct
     }
     if (storedCustomerInfo) {
       setCustomerInfo(JSON.parse(storedCustomerInfo))
@@ -102,7 +92,7 @@ export default function PaymentSuccessPage() {
         setProcessComplete(true)
         setOrderId(result.captureID || token)
         // Clear localStorage after successful payment
-        localStorage.removeItem("selectedProduct")
+        localStorage.removeItem("cartItems") // Changed from selectedProduct
         localStorage.removeItem("customerInfo")
       } else {
         console.error("Failed to capture PayPal payment")
@@ -132,7 +122,7 @@ export default function PaymentSuccessPage() {
                 address: `${customerInfo.address}, ${customerInfo.city}, ${customerInfo.country} ${customerInfo.postalCode}`,
               }
             : null,
-          product: product,
+          cartItems: cartItems, // Pass cartItems instead of product
         }),
       })
 
@@ -141,7 +131,7 @@ export default function PaymentSuccessPage() {
         setProcessComplete(true)
         setOrderId(result.orderId || sessionId)
         // Clear localStorage after successful payment
-        localStorage.removeItem("selectedProduct")
+        localStorage.removeItem("cartItems") // Changed from selectedProduct
         localStorage.removeItem("customerInfo")
       } else {
         console.error("Failed to verify Stripe session")
@@ -154,8 +144,8 @@ export default function PaymentSuccessPage() {
   }
 
   const whatsappMessage =
-    customerInfo && product && orderId
-      ? `Hello! I just completed my order for ${product.name} (Order: ${orderId}). Looking forward to delivery coordination. Thank you!`
+    customerInfo && orderId && cartItems.length > 0
+      ? `Hello! I just completed my order (Order: ${orderId}) for the following items: ${cartItems.map((item) => `${item.name} x${item.selectedQuantity}`).join(", ")}. Looking forward to delivery coordination. Thank you!`
       : "Hello! I just completed my AMA order and would like to coordinate delivery. Thank you!"
   const whatsappUrl = `https://wa.me/+447707783963?text=${encodeURIComponent(whatsappMessage)}`
 
@@ -204,13 +194,34 @@ export default function PaymentSuccessPage() {
                     <strong>Payer ID:</strong> {payerId}
                   </p>
                 )}
-                {product && (
+                {/* MODIFIED: Loop through cartItems instead of single product */}
+                {cartItems.length > 0 && (
                   <>
-                    <p>
-                      <strong>Product:</strong> {product.name} — {product.subtitle}
-                    </p>
-                    <p>
-                      <strong>Price:</strong> {product.selectedPrice || product.priceAED}
+                    <h3 className="font-semibold mt-4 mb-2">Items Ordered:</h3>
+                    {cartItems.map((item) => (
+                      <div key={item.id} className="border-b pb-2 mb-2 last:border-b-0 last:pb-0">
+                        <p>
+                          <strong>Product:</strong> {item.name} — {item.subtitle}
+                        </p>
+                        <p>
+                          <strong>Quantity:</strong> {item.selectedQuantity}
+                        </p>
+                        <p>
+                          <strong>Price:</strong> {item.selectedPrice}
+                        </p>
+                      </div>
+                    ))}
+                    {/* Calculate and display total price for all items */}
+                    <p className="font-bold text-lg mt-4">
+                      Total:{" "}
+                      {cartItems
+                        .reduce((sum, item) => {
+                          const priceMatch = item.selectedPrice.match(/[\d.]+/)
+                          const price = priceMatch ? Number.parseFloat(priceMatch[0]) : 0
+                          return sum + price * item.selectedQuantity
+                        }, 0)
+                        .toFixed(2)}{" "}
+                      {cartItems[0]?.selectedRegion === "UAE" ? "AED" : "GBP"}
                     </p>
                   </>
                 )}

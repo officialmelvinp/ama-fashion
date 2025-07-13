@@ -44,8 +44,13 @@ export default function AdminOrdersPage() {
         return
       }
       const data = await response.json()
-      // MODIFIED: Ensure orders is always an array, even if data.orders is undefined
-      setOrders(data.orders || [])
+      // MODIFIED: Ensure orders is always an array and parse numeric fields
+      const parsedOrders = (data.orders || []).map((order: Order) => ({
+        ...order,
+        total_amount: Number(order.total_amount),
+        amount_paid: Number(order.amount_paid),
+      }))
+      setOrders(parsedOrders)
     } catch (error) {
       console.error("Error fetching orders:", error)
       setOrders([]) // Set to empty array on error to prevent filter crash
@@ -139,10 +144,7 @@ export default function AdminOrdersPage() {
     const preOrders = orders.filter((o) => o.quantity_preorder > 0).length
     const totalRevenue = orders
       .filter((o) => o.payment_status === "completed")
-      .reduce((sum, o) => {
-        const amount = Number.parseFloat(o.amount_paid?.toString()) || 0
-        return sum + amount
-      }, 0)
+      .reduce((sum, o) => sum + o.total_amount, 0) // total_amount is now guaranteed to be a number from API
     return { totalOrders, paidOrders, shippedOrders, deliveredOrders, preOrders, totalRevenue }
   }
 
@@ -389,7 +391,10 @@ export default function AdminOrdersPage() {
                         </p>
                       )}
                       <p>
-                        <strong>Amount:</strong> {order.amount_paid} {order.currency}
+                        <strong>Amount:</strong> {Number(order.amount_paid).toFixed(2)} {order.currency}
+                      </p>
+                      <p className="font-bold text-base pt-2">
+                        <strong>Total Amount:</strong> {Number(order.total_amount).toFixed(2)} {order.currency}
                       </p>
                       <p>
                         <strong>Payment ID:</strong> {order.payment_id}

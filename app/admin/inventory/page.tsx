@@ -1,4 +1,5 @@
 "use client"
+
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -55,7 +56,7 @@ export default function AdminInventoryPage() {
       const response = await fetch("/api/admin/inventory", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productId, quantity: newQuantity }),
+        body: JSON.stringify({ productId, quantity: newQuantity, updateType: "stock" }), // ADDED updateType
       })
       if (response.ok) {
         await fetchInventory()

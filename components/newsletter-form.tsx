@@ -5,25 +5,31 @@ import type React from "react"
 import { useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { useToast } from "@/hooks/use-toast" // Import the useToast hook
 
 export default function NewsletterForm() {
   const [email, setEmail] = useState("")
-  const [message, setMessage] = useState("")
-  const [error, setError] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false) // Use isSubmitting for loading state
+  const { toast } = useToast() // Initialize useToast hook
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setMessage("")
-    setError("")
+    setIsSubmitting(true) // Set loading state
 
     // Basic email validation
     if (!email || !email.includes("@")) {
-      setError("Please enter a valid email address.")
+      toast({
+        title: "Invalid Email",
+        description: "Please enter a valid email address.",
+        variant: "destructive",
+      })
+      setIsSubmitting(false)
       return
     }
 
     try {
-      const response = await fetch("/api/newsletter", {
+      const response = await fetch("/api/subscribe", {
+        // Changed API endpoint to /api/subscribe
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -31,44 +37,63 @@ export default function NewsletterForm() {
         body: JSON.stringify({ email }),
       })
 
-      const result = await response.json()
+      const data = await response.json()
 
-      if (result.success) {
-        setMessage(result.message)
+      if (response.ok) {
+        toast({
+          title: "Subscribed!",
+          description: data.message,
+          variant: "success",
+        })
         setEmail("") // Clear the input
-        setError("") // Clear any previous errors
       } else {
-        setError(result.error || "Something went wrong. Please try again.")
-        setMessage("") // Clear any previous success messages
+        toast({
+          title: "Subscription Failed",
+          description: data.error || "Something went wrong.",
+          variant: "destructive",
+        })
       }
-    } catch (err: any) {
-      setError("Something went wrong. Please try again.")
-      setMessage("") // Clear any previous success messages
+    } catch (error) {
+      console.error("Newsletter subscription error:", error)
+      toast({
+        title: "Error",
+        description: "Could not connect to the server. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSubmitting(false) // Reset loading state
     }
   }
 
   return (
-    <div className="max-w-md mx-auto">
-      <h2 className="font-serif text-3xl mb-4">Join Our Manifestation</h2>
-      <p className="mb-6 opacity-80">
-        Be the first to know about new collections, exclusive offers, and spiritually-rooted content.
-      </p>
+    <div className="max-w-md mx-auto text-center">
+      {" "}
+      {/* Added text-center for consistent alignment */}
+      <h2 className="text-2xl md:text-3xl font-serif text-[#2c2824] mb-4">Join Our Newsletter</h2>{" "}
+      {/* Updated text and styling */}
+      <p className="text-[#2c2824]/80 mb-6">Stay updated with our latest collections, exclusive offers, and stories.</p>{" "}
+      {/* Updated text and styling */}
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
+        <div suppressHydrationWarning>
+          {" "}
+          {/* ADDED suppressHydrationWarning HERE */}
           <Input
             type="email"
             placeholder="Enter your email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full bg-white/10 border-white/20 text-white placeholder-white/60"
+            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#2c2824] focus:border-transparent" // Updated styling
           />
         </div>
-        <Button className="w-full" type="submit">
-          Subscribe
+        <Button
+          type="submit"
+          disabled={isSubmitting} // Disable button while submitting
+          className="w-full bg-[#2c2824] text-white hover:bg-[#2c2824]/90 py-2 text-base" // Updated styling
+        >
+          {isSubmitting ? "Subscribing..." : "Subscribe"} {/* Dynamic button text */}
         </Button>
-        {error && <p className="text-red-400 text-sm">{error}</p>}
-        {message && <p className="text-green-400 text-sm">{message}</p>}
+        {/* Removed error and message paragraphs, as useToast handles notifications */}
       </form>
     </div>
   )

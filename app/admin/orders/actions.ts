@@ -28,7 +28,6 @@ export async function handleShipOrder(
     `
 
     // Fetch updated order details to send email.
-    // getOrderById should now return product_display_name from the joined product_inventory table.
     const updatedOrder = await getOrderById(orderId)
 
     if (updatedOrder) {
@@ -36,10 +35,9 @@ export async function handleShipOrder(
         customer_email: updatedOrder.customer_email,
         customer_name: updatedOrder.customer_name,
         order_id: updatedOrder.id.toString(),
-        product_name: updatedOrder.product_display_name || updatedOrder.product_id, // Use display name
-        quantity_ordered: updatedOrder.quantity_ordered,
-        amount_paid: updatedOrder.amount_paid,
-        currency: updatedOrder.currency,
+        items: updatedOrder.items, // Pass the items array
+        total_amount: updatedOrder.total_amount, // Pass total amount
+        currency: updatedOrder.currency, // Pass currency
         payment_status: updatedOrder.payment_status,
         shipping_status: "shipped",
         tracking_number: updatedOrder.tracking_number,
@@ -70,7 +68,6 @@ export async function handleDeliverOrder(orderId: number) {
     `
 
     // Fetch updated order details to send email.
-    // getOrderById should now return product_display_name from the joined product_inventory table.
     const updatedOrder = await getOrderById(orderId)
 
     if (updatedOrder) {
@@ -78,10 +75,9 @@ export async function handleDeliverOrder(orderId: number) {
         customer_email: updatedOrder.customer_email,
         customer_name: updatedOrder.customer_name,
         order_id: updatedOrder.id.toString(),
-        product_name: updatedOrder.product_display_name || updatedOrder.product_id, // Use display name
-        quantity_ordered: updatedOrder.quantity_ordered,
-        amount_paid: updatedOrder.amount_paid,
-        currency: updatedOrder.currency,
+        items: updatedOrder.items, // Pass the items array
+        total_amount: updatedOrder.total_amount, // Pass total amount
+        currency: updatedOrder.currency, // Pass currency
         payment_status: updatedOrder.payment_status,
         shipping_status: "delivered",
         delivered_date: updatedOrder.delivered_date,
@@ -111,10 +107,9 @@ export async function resendOrderEmail(orderId: number, emailType: "shipped" | "
         customer_email: order.customer_email,
         customer_name: order.customer_name,
         order_id: order.id.toString(),
-        product_name: order.product_display_name || order.product_id, // Use display name
-        quantity_ordered: order.quantity_ordered,
-        amount_paid: order.amount_paid,
-        currency: order.currency,
+        items: order.items, // Pass the items array
+        total_amount: order.total_amount, // Pass total amount
+        currency: order.currency, // Pass currency
         payment_status: order.payment_status,
         shipping_status: order.shipping_status,
         tracking_number: order.tracking_number,
@@ -127,10 +122,9 @@ export async function resendOrderEmail(orderId: number, emailType: "shipped" | "
         customer_email: order.customer_email,
         customer_name: order.customer_name,
         order_id: order.id.toString(),
-        product_name: order.product_display_name || order.product_id, // Use display name
-        quantity_ordered: order.quantity_ordered,
-        amount_paid: order.amount_paid,
-        currency: order.currency,
+        items: order.items, // Pass the items array
+        total_amount: order.total_amount, // Pass total amount
+        currency: order.currency, // Pass currency
         payment_status: order.payment_status,
         shipping_status: order.shipping_status,
         delivered_date: order.delivered_date,
