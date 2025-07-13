@@ -31,14 +31,12 @@ async function recordOrder(orderData: any) {
         ${orderData.notes}, ${orderData.order_type}, ${orderData.order_status}, ${orderData.total_amount}
       ) RETURNING id
     `
-
     // Update inventory
     await sql`
-      UPDATE product_inventory 
+      UPDATE product_inventory
       SET quantity_available = quantity_available - ${orderData.quantity_ordered}
       WHERE product_id = ${orderData.product_id}
     `
-
     return result[0].id
   } catch (error) {
     console.error("Database error:", error)
@@ -59,7 +57,6 @@ async function sendOrderEmails(orderData: any) {
             <h1 style="color: #2c2824; font-family: serif; text-align: center; margin-bottom: 30px;">
               Thank You for Your Order! 🎉
             </h1>
-            
             <div style="background: #f8f3ea; padding: 20px; border-radius: 8px; margin: 20px 0;">
               <h3 style="color: #2c2824; margin-top: 0;">Order Details:</h3>
               <p><strong>Order ID:</strong> ${orderData.payment_id}</p>
@@ -68,20 +65,17 @@ async function sendOrderEmails(orderData: any) {
               <p><strong>Amount Paid:</strong> ${orderData.amount_paid} ${orderData.currency}</p>
               <p><strong>Payment Status:</strong> ✅ Confirmed</p>
             </div>
-            
             <div style="background: #2c2824; color: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
               <h3 style="margin-top: 0;">What's Next?</h3>
               <p>📱 We'll contact you via WhatsApp within 24 hours to confirm your order details and arrange delivery.</p>
               <p>📦 Your beautiful AMA piece will be prepared with love and care.</p>
               <p>🚚 We'll coordinate delivery to your address.</p>
             </div>
-            
             <div style="text-align: center; margin: 30px 0;">
               <p style="color: #2c2824; font-style: italic;">
                 "Conscious luxury. Spiritually rooted. Intentionally crafted."
               </p>
             </div>
-            
             <div style="border-top: 1px solid #eee; padding-top: 20px; text-align: center; color: #666; font-size: 14px;">
               <p>AMA Fashion - Conscious Luxury African Fashion</p>
               <p>Dubai & UK | support@amariahco.com</p>
@@ -90,7 +84,6 @@ async function sendOrderEmails(orderData: any) {
         </div>
       `,
     }
-
     // Vendor email
     const vendorEmail = {
       from: '"AMA Orders" <support@amariahco.com>',
@@ -99,7 +92,6 @@ async function sendOrderEmails(orderData: any) {
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <h1 style="color: #2c2824;">🎉 New Order Received!</h1>
-          
           <div style="background: #f8f3ea; padding: 20px; border-radius: 8px; margin: 20px 0;">
             <h3>Order Information:</h3>
             <p><strong>Payment ID:</strong> ${orderData.payment_id}</p>
@@ -108,7 +100,6 @@ async function sendOrderEmails(orderData: any) {
             <p><strong>Amount:</strong> ${orderData.amount_paid} ${orderData.currency}</p>
             <p><strong>Order Type:</strong> ${orderData.order_type}</p>
           </div>
-          
           <div style="background: #2c2824; color: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
             <h3 style="margin-top: 0;">Customer Details:</h3>
             <p><strong>Name:</strong> ${orderData.customer_name}</p>
@@ -116,7 +107,6 @@ async function sendOrderEmails(orderData: any) {
             <p><strong>Phone:</strong> ${orderData.phone_number || "Not provided"}</p>
             <p><strong>Address:</strong> ${orderData.shipping_address || "Not provided"}</p>
           </div>
-          
           <div style="background: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0;">
             <h3 style="color: #2c2824; margin-top: 0;">Action Items:</h3>
             <p>✅ Contact customer via WhatsApp within 24 hours</p>
@@ -127,10 +117,8 @@ async function sendOrderEmails(orderData: any) {
         </div>
       `,
     }
-
     await transporter.sendMail(customerEmail)
     await transporter.sendMail(vendorEmail)
-
     console.log("✅ Order emails sent successfully")
   } catch (error) {
     console.error("❌ Email sending failed:", error)
@@ -141,19 +129,30 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.text()
     const signature = request.headers.get("stripe-signature")
-
     // For now, we'll parse the webhook data manually
     // In production, you should verify the webhook signature
     const event = JSON.parse(body)
-
     console.log("🎯 Stripe webhook received:", event.type)
 
     if (event.type === "checkout.session.completed") {
       const session = event.data.object
 
-      // Extract product info from line items
-      const productName = session.display_items?.[0]?.custom?.name || "AMA Fashion Item"
-      const productId = productName.replace("AMA Fashion - ", "")
+      let productName = "AMA Fashion Item" // Default fallback
+
+      // --- IMPROVED PRODUCT NAME EXTRACTION ---
+      // Try to get product name from line_items (recommended for Stripe Products/Prices)
+      // Note: line_items must be expanded when creating the Checkout Session for this to work.
+      if (session.line_items && session.line_items.data && session.line_items.data.length > 0) {
+        // Prioritize description, then product name if available
+        productName =
+          session.line_items.data[0].description || session.line_items.data[0].price?.product?.name || productName
+      } else if (session.display_items && session.display_items.length > 0) {
+        // Fallback to display_items if line_items not available or not expanded
+        productName = session.display_items[0].custom?.name || productName
+      }
+      // --- END IMPROVED PRODUCT NAME EXTRACTION ---
+
+      const productId = productName.replace("AMA Fashion - ", "") // Your existing logic
 
       const orderData = {
         product_id: productId,
@@ -167,9 +166,14 @@ export async function POST(request: NextRequest) {
         amount_paid: session.amount_total / 100, // Convert from cents
         currency: session.currency.toUpperCase(),
         shipping_address: session.customer_details?.address
-          ? `${session.customer_details.address.line1}, ${session.customer_details.address.city}, ${session.customer_details.address.country}`
+          ? `${session.customer_details.address.line1}, ${session.customer_details.address.address_line2 ? session.customer_details.address.address_line2 + ", " : ""}${session.customer_details.address.city}, ${session.customer_details.address.country}`
           : "",
+        // --- PHONE NUMBER NOTE ---
+        // The phone number (session.customer_details?.phone) is only populated if
+        // phone_number_collection is enabled when creating the Stripe Checkout Session.
+        // If it's still "Not provided", ensure it's collected upstream.
         phone_number: session.customer_details?.phone || "",
+        // --- END PHONE NUMBER NOTE ---
         notes: `Stripe payment completed. Session ID: ${session.id}`,
         order_type: "purchase",
         order_status: "paid",
@@ -179,12 +183,14 @@ export async function POST(request: NextRequest) {
       // Record order in database
       await recordOrder(orderData)
 
+      // --- CONSOLE.LOG FOR DEBUGGING PRICE ---
+      console.log("Order Data before sending emails:", orderData)
+      // --- END CONSOLE.LOG ---
+
       // Send email notifications
       await sendOrderEmails(orderData)
-
       console.log("✅ Stripe order processed successfully")
     }
-
     return NextResponse.json({ received: true })
   } catch (error) {
     console.error("❌ Stripe webhook error:", error)

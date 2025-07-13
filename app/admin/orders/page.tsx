@@ -1,4 +1,5 @@
 "use client"
+
 import { useState, useEffect, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -6,11 +7,9 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Package, CreditCard, Calendar, Search, Truck, CheckCircle } from "lucide-react"
-// Add useToast import
 import { useToast } from "@/hooks/use-toast"
-// Import the new action
-import { handleShipOrder, handleDeliverOrder, resendOrderEmail } from "./actions" // Import Server Actions
-import type { Order } from "@/lib/types" // Import Order type from lib/types
+import { handleShipOrder, handleDeliverOrder, resendOrderEmail } from "./actions"
+import type { Order } from "@/lib/types"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
 export default function AdminOrdersPage() {
@@ -18,7 +17,7 @@ export default function AdminOrdersPage() {
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState("all")
   const [searchTerm, setSearchTerm] = useState("")
-  const [isPending, startTransition] = useTransition() // Initialize useTransition
+  const [isPending, startTransition] = useTransition()
   const [shippingForm, setShippingForm] = useState<{
     orderId: number | null
     trackingNumber: string
@@ -31,7 +30,7 @@ export default function AdminOrdersPage() {
     estimatedDelivery: "",
   })
   const router = useRouter()
-  const { toast } = useToast() // Initialize useToast
+  const { toast } = useToast()
 
   useEffect(() => {
     fetchOrders()
@@ -70,9 +69,8 @@ export default function AdminOrdersPage() {
       } else if (action === "mark_delivered") {
         result = await handleDeliverOrder(orderId)
       }
-
       if (result?.success) {
-        await fetchOrders() // Re-fetch orders to update UI
+        await fetchOrders()
         setShippingForm({ orderId: null, trackingNumber: "", carrier: "", estimatedDelivery: "" })
         alert(result.message)
       } else {
@@ -142,6 +140,19 @@ export default function AdminOrdersPage() {
       default:
         return <Badge variant="secondary">Pending</Badge>
     }
+  }
+
+  // Helper function to format phone numbers
+  const formatPhoneNumber = (phoneNumber: string | null | undefined): string => {
+    if (!phoneNumber) return "Not provided"
+    // Basic formatting for common phone number patterns
+    const cleaned = ("" + phoneNumber).replace(/\D/g, "")
+    const match = cleaned.match(/^(\d{3})(\d{3})(\d{4})$/) // Matches 10 digits
+    if (match) {
+      return `(${match[1]}) ${match[2]}-${match[3]}`
+    }
+    // For international numbers or other formats, you might need more complex logic
+    return phoneNumber
   }
 
   const stats = getOrderStats()
@@ -328,7 +339,7 @@ export default function AdminOrdersPage() {
                         <strong>Email:</strong> {order.customer_email}
                       </p>
                       <p>
-                        <strong>Phone:</strong> {order.phone_number || "Not provided"}
+                        <strong>Phone:</strong> {formatPhoneNumber(order.phone_number)}
                       </p>
                       {order.shipping_address && (
                         <p>
