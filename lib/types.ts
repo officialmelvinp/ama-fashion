@@ -1,5 +1,4 @@
 // This file defines common types used across the application.
-
 export interface ProductInventory {
   product_id: string
   product_name: string
@@ -18,6 +17,7 @@ export interface ProductInventory {
 export interface Order {
   id: number
   product_id: string
+  product_display_name?: string // Added this property here
   customer_email: string
   customer_name: string
   quantity_ordered: number

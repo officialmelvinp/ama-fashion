@@ -3,6 +3,7 @@
 import { neon } from "@neondatabase/serverless"
 import { getOrderById } from "@/lib/inventory" // This now includes getOrderById
 import { sendOrderShippedEmail, sendOrderDeliveredEmail } from "@/lib/email" // This is the new email utility file
+import { revalidatePath } from "next/cache" // Added revalidatePath for cache invalidation
 
 const sql = neon(process.env.DATABASE_URL!)
 
@@ -26,7 +27,8 @@ export async function handleShipOrder(
       WHERE id = ${orderId}
     `
 
-    // Fetch updated order details to send email
+    // Fetch updated order details to send email.
+    // getOrderById should now return product_display_name from the joined product_inventory table.
     const updatedOrder = await getOrderById(orderId)
 
     if (updatedOrder) {
@@ -34,7 +36,7 @@ export async function handleShipOrder(
         customer_email: updatedOrder.customer_email,
         customer_name: updatedOrder.customer_name,
         order_id: updatedOrder.id.toString(),
-        product_name: updatedOrder.product_id, // Assuming product_id is sufficient for email, or fetch product name
+        product_name: updatedOrder.product_display_name || updatedOrder.product_id, // Use display name
         quantity_ordered: updatedOrder.quantity_ordered,
         amount_paid: updatedOrder.amount_paid,
         currency: updatedOrder.currency,
@@ -43,9 +45,11 @@ export async function handleShipOrder(
         tracking_number: updatedOrder.tracking_number,
         shipping_carrier: updatedOrder.shipping_carrier,
         estimated_delivery_date: updatedOrder.estimated_delivery_date,
+        shipped_date: updatedOrder.shipped_date,
       })
     }
 
+    revalidatePath("/admin/orders") // Revalidate the admin orders page to show updated status
     return { success: true, message: `Order #${orderId} marked as shipped.` }
   } catch (error: any) {
     console.error("Error shipping order:", error)
@@ -65,7 +69,8 @@ export async function handleDeliverOrder(orderId: number) {
       WHERE id = ${orderId}
     `
 
-    // Fetch updated order details to send email
+    // Fetch updated order details to send email.
+    // getOrderById should now return product_display_name from the joined product_inventory table.
     const updatedOrder = await getOrderById(orderId)
 
     if (updatedOrder) {
@@ -73,15 +78,17 @@ export async function handleDeliverOrder(orderId: number) {
         customer_email: updatedOrder.customer_email,
         customer_name: updatedOrder.customer_name,
         order_id: updatedOrder.id.toString(),
-        product_name: updatedOrder.product_id, // Assuming product_id is sufficient for email
+        product_name: updatedOrder.product_display_name || updatedOrder.product_id, // Use display name
         quantity_ordered: updatedOrder.quantity_ordered,
         amount_paid: updatedOrder.amount_paid,
         currency: updatedOrder.currency,
         payment_status: updatedOrder.payment_status,
         shipping_status: "delivered",
+        delivered_date: updatedOrder.delivered_date,
       })
     }
 
+    revalidatePath("/admin/orders") // Revalidate the admin orders page to show updated status
     return { success: true, message: `Order #${orderId} marked as delivered.` }
   } catch (error: any) {
     console.error("Error delivering order:", error)
@@ -91,6 +98,7 @@ export async function handleDeliverOrder(orderId: number) {
 
 export async function resendOrderEmail(orderId: number, emailType: "shipped" | "delivered") {
   try {
+    // Fetch order details, including product_display_name
     const order = await getOrderById(orderId)
 
     if (!order) {
@@ -103,7 +111,7 @@ export async function resendOrderEmail(orderId: number, emailType: "shipped" | "
         customer_email: order.customer_email,
         customer_name: order.customer_name,
         order_id: order.id.toString(),
-        product_name: order.product_id,
+        product_name: order.product_display_name || order.product_id, // Use display name
         quantity_ordered: order.quantity_ordered,
         amount_paid: order.amount_paid,
         currency: order.currency,
@@ -119,7 +127,7 @@ export async function resendOrderEmail(orderId: number, emailType: "shipped" | "
         customer_email: order.customer_email,
         customer_name: order.customer_name,
         order_id: order.id.toString(),
-        product_name: order.product_id,
+        product_name: order.product_display_name || order.product_id, // Use display name
         quantity_ordered: order.quantity_ordered,
         amount_paid: order.amount_paid,
         currency: order.currency,

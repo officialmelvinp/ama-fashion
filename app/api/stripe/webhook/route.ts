@@ -22,6 +22,23 @@ const transporter = nodemailer.createTransport({
   },
 })
 
+// NEW: Helper function to get product display name from the database
+async function getProductDisplayName(productId: string): Promise<string> {
+  try {
+    const result = await sql`
+      SELECT product_name FROM products WHERE product_id = ${productId}
+    `
+    if (result.length > 0) {
+      return result[0].product_name // Corrected to product_name
+    }
+    console.warn(`Product display name not found for ID: ${productId}. Using fallback.`)
+    return `AMA Fashion Item (${productId})` // Fallback if not found
+  } catch (error) {
+    console.error(`Error fetching product display name for ${productId}:`, error)
+    return `AMA Fashion Item (${productId})` // Fallback on error
+  }
+}
+
 async function recordOrder(orderData: any) {
   try {
     // Check if an order with this payment_id already exists
@@ -60,7 +77,8 @@ async function recordOrder(orderData: any) {
   }
 }
 
-async function sendOrderEmails(orderData: any) {
+// MODIFIED: sendOrderEmails now accepts productDisplayName
+async function sendOrderEmails(orderData: any, productDisplayName: string) {
   try {
     console.log("Attempting to send customer email...") // Added log
     // Customer email
@@ -77,7 +95,7 @@ async function sendOrderEmails(orderData: any) {
             <div style="background: #f8f3ea; padding: 20px; border-radius: 8px; margin: 20px 0;">
               <h3 style="color: #2c2824; margin-top: 0;">Order Details:</h3>
               <p><strong>Order ID:</strong> ${orderData.payment_id}</p>
-              <p><strong>Product:</strong> ${orderData.product_id}</p>
+              <p><strong>Product:</strong> ${productDisplayName}</p>
               <p><strong>Quantity:</strong> ${orderData.quantity_ordered}</p>
               <p><strong>Amount Paid:</strong> ${orderData.amount_paid} ${orderData.currency}</p>
               <p><strong>Payment Status:</strong> ✅ Confirmed</p>
@@ -109,14 +127,14 @@ async function sendOrderEmails(orderData: any) {
     const vendorEmail = {
       from: '"AMA Orders" <support@amariahco.com>',
       to: "support@amariahco.com",
-      subject: `🎉 New Order: ${orderData.product_id} - ${orderData.amount_paid} ${orderData.currency}`,
+      subject: `🎉 New Order: ${productDisplayName} - ${orderData.amount_paid} ${orderData.currency}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <h1 style="color: #2c2824;">🎉 New Order Received!</h1>
           <div style="background: #f8f3ea; padding: 20px; border-radius: 8px; margin: 20px 0;">
             <h3>Order Information:</h3>
             <p><strong>Payment ID:</strong> ${orderData.payment_id}</p>
-            <p><strong>Product:</strong> ${orderData.product_id}</p>
+            <p><strong>Product:</strong> ${productDisplayName}</p>
             <p><strong>Quantity:</strong> ${orderData.quantity_ordered}</p>
             <p><strong>Amount:</strong> ${orderData.amount_paid} ${orderData.currency}</p>
             <p><strong>Order Type:</strong> ${orderData.order_type}</p>
@@ -132,7 +150,7 @@ async function sendOrderEmails(orderData: any) {
             <h3 style="color: #2c2824; margin-top: 0;">Action Items:</h3>
             <p>✅ Contact customer via WhatsApp within 24 hours</p>
             <p>✅ Confirm order details and delivery preferences</p>
-            <p>✅ Prepare the ${orderData.product_id} for delivery</p>
+            <p>✅ Prepare the ${productDisplayName} for delivery</p>
             <p>✅ Update order status in admin panel</p>
           </div>
         </div>
@@ -164,10 +182,10 @@ export async function POST(request: NextRequest) {
   const session = event.data.object as Stripe.Checkout.Session
 
   if (event.type === "checkout.session.completed") {
-    let productName = "AMA Fashion Item (Fallback)" // Default fallback with clear indicator
+    // MODIFIED: Extract product_id from Stripe session line items
+    let productIdForDb = "unknown-product-id" // Default fallback
+    let productDisplayName = "AMA Fashion Item (Fallback)" // Default fallback for display
 
-    // --- IMPROVED PRODUCT NAME EXTRACTION ---
-    // Ensure line_items are expanded when creating the Checkout Session for this to work reliably.
     console.log("Webhook: Processing checkout.session.completed event.")
     console.log("Webhook: Session line_items:", JSON.stringify(session.line_items, null, 2))
 
@@ -175,42 +193,40 @@ export async function POST(request: NextRequest) {
       const firstLineItem = session.line_items.data[0]
       console.log("Webhook: First line item:", JSON.stringify(firstLineItem, null, 2))
 
-      // Prioritize description, then product name if available
-      if (firstLineItem.description) {
-        productName = firstLineItem.description
-        console.log("Webhook: Product name from description:", productName)
-      } else if (firstLineItem.price?.product) {
-        const product = firstLineItem.price.product
-        console.log("Webhook: Line item product data:", JSON.stringify(product, null, 2))
-
-        // Check if 'product' is a Stripe.Product object (not just a string ID or deleted product)
-        if (typeof product === "object" && product !== null && !("deleted" in product)) {
-          productName = product.name || productName
-          console.log("Webhook: Product name from product.name:", productName)
-        } else if (typeof product === "string") {
-          // If product is just the ID string, use it as a fallback name
-          productName = product
-          console.log("Webhook: Product name from product ID string:", productName)
-        }
+      // Prioritize product ID from Stripe's product object, then description
+      if (
+        firstLineItem.price?.product &&
+        typeof firstLineItem.price.product === "object" &&
+        !("deleted" in firstLineItem.price.product)
+      ) {
+        productIdForDb = firstLineItem.price.product.id || productIdForDb
+        productDisplayName = firstLineItem.price.product.name || productDisplayName
+        console.log("Webhook: Product ID from Stripe product object:", productIdForDb)
+        console.log("Webhook: Product Name from Stripe product object:", productDisplayName)
+      } else if (firstLineItem.description) {
+        // If product object is not available or deleted, use description as a fallback for display name
+        // For the ID, we might need a more robust mapping if description isn't a direct ID
+        productDisplayName = firstLineItem.description
+        // If description is like "AMA Fashion - Product Name", try to extract ID
+        productIdForDb = firstLineItem.description.replace("AMA Fashion - ", "") || productIdForDb
+        console.log("Webhook: Product Name from description:", productDisplayName)
+        console.log("Webhook: Product ID (derived from description):", productIdForDb)
+      } else if (typeof firstLineItem.price?.product === "string") {
+        // If product is just the ID string, use it as both ID and initial display name
+        productIdForDb = firstLineItem.price.product
+        productDisplayName = firstLineItem.price.product
+        console.log("Webhook: Product ID from product ID string:", productIdForDb)
       }
     }
-    console.log("Webhook: Final extracted productName:", productName)
-    // --- END IMPROVED PRODUCT NAME EXTRACTION ---
+    console.log("Webhook: Final extracted productIdForDb:", productIdForDb)
+    console.log("Webhook: Final extracted productDisplayName (before DB lookup):", productDisplayName)
 
-    const productId = productName.replace("AMA Fashion - ", "") // Your existing logic
-    console.log("Webhook: Product ID (after replace):", productId)
-
-    // Retrieve customerInfo from localStorage (if available) for address fallback
-    // Note: This is a client-side concept. For webhooks, you'd typically rely on Stripe's data.
-    // However, if you're passing customerInfo via metadata in create-checkout, you could retrieve it here.
-    // For now, we'll assume customerInfo is NOT directly available in the webhook context
-    // unless explicitly passed via Stripe metadata.
-    // Let's assume for now that the customerInfo is NOT available directly in the webhook.
-    // The previous conversation implies customerInfo is passed to verify-session, but not webhook.
-    // So, we'll rely solely on Stripe's session.customer_details for the webhook.
+    // NEW: Fetch the human-readable product name for emails and logs using the extracted ID
+    const finalProductDisplayName = await getProductDisplayName(productIdForDb)
+    console.log("Webhook: Final product display name for emails (after DB lookup):", finalProductDisplayName)
 
     const orderData = {
-      product_id: productId,
+      product_id: productIdForDb, // Use the unique ID for DB storage
       customer_email: session.customer_details?.email,
       customer_name: session.customer_details?.name || "Customer",
       quantity_ordered: 1, // Assuming 1 for now, adjust if quantity is in metadata
@@ -228,19 +244,17 @@ export async function POST(request: NextRequest) {
         : "", // If Stripe doesn't provide it, it remains empty for the webhook
       // --- END MODIFIED ---
       phone_number: session.customer_details?.phone || "",
-      notes: `Stripe payment completed via webhook. Session ID: ${session.id}`,
+      notes: `Stripe payment completed via webhook. Session ID: ${session.id}. Product: ${finalProductDisplayName}`, // Use display name in notes
       order_type: "purchase",
       order_status: "paid",
       total_amount: (session.amount_total ?? 0) / 100,
     }
-    console.log("Webhook: Final orderData before DB/Email:", orderData)
-
     try {
       // Record order in database
       await recordOrder(orderData)
       console.log("Order Data before sending emails:", orderData)
-      // Send email notifications
-      await sendOrderEmails(orderData)
+      // Send email notifications - MODIFIED to pass finalProductDisplayName
+      await sendOrderEmails(orderData, finalProductDisplayName)
       console.log("✅ Stripe order processed successfully via webhook")
     } catch (error) {
       console.error("❌ Error processing order from webhook:", error)

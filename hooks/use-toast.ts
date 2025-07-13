@@ -109,6 +109,7 @@ export const reducer = (state: State, action: Action): State => {
         ),
       }
     }
+
     case "REMOVE_TOAST":
       if (action.toastId === undefined) {
         return {
@@ -124,7 +125,6 @@ export const reducer = (state: State, action: Action): State => {
 }
 
 const listeners: ((state: State) => void)[] = []
-
 let state: State = {
   toasts: [],
 }
@@ -134,11 +134,11 @@ function dispatch(action: Action) {
   listeners.forEach((listener) => listener(state))
 }
 
-type Toast = Pick<ToasterToast, "id" | "duration" | "promise" | "action" | "description" | "title" | "variant">
+// MODIFIED: Omit 'id', 'open', and 'onOpenChange' from the Toast type for the input props
+type Toast = Omit<ToasterToast, "id" | "open" | "onOpenChange">
 
 function toast({ ...props }: Toast) {
   const id = genId()
-
   const update = (props: ToasterToast) => dispatch({ type: "UPDATE_TOAST", toast: { ...props, id } })
   const dismiss = () => dispatch({ type: "DISMISS_TOAST", toastId: id })
 

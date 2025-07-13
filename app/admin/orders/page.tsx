@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Package, CreditCard, Calendar, Search, Truck, CheckCircle } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { handleShipOrder, handleDeliverOrder, resendOrderEmail } from "./actions"
-import type { Order } from "@/lib/types"
+import type { Order } from "@/lib/types" // Ensure this type includes product_display_name
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
 export default function AdminOrdersPage() {
@@ -44,9 +44,11 @@ export default function AdminOrdersPage() {
         return
       }
       const data = await response.json()
-      setOrders(data.orders)
+      // MODIFIED: Ensure orders is always an array, even if data.orders is undefined
+      setOrders(data.orders || [])
     } catch (error) {
       console.error("Error fetching orders:", error)
+      setOrders([]) // Set to empty array on error to prevent filter crash
     } finally {
       setLoading(false)
     }
@@ -69,18 +71,30 @@ export default function AdminOrdersPage() {
       } else if (action === "mark_delivered") {
         result = await handleDeliverOrder(orderId)
       }
+
       if (result?.success) {
-        await fetchOrders()
+        await fetchOrders() // Re-fetch orders to get updated data including product_display_name
         setShippingForm({ orderId: null, trackingNumber: "", carrier: "", estimatedDelivery: "" })
-        alert(result.message)
+        // MODIFIED: Use toast for success message
+        toast({
+          title: "Order Status Updated",
+          description: result.message,
+          variant: "success",
+        })
       } else {
-        alert(result?.error || "Failed to update order status.")
+        // MODIFIED: Use toast for error message
+        toast({
+          title: "Error",
+          description: result?.error || "Failed to update order status.",
+          variant: "destructive",
+        })
       }
     })
   }
 
   const handleResendEmail = async (orderId: number, emailType: "shipped" | "delivered") => {
     startTransition(async () => {
+      // The resendOrderEmail action will now handle fetching the product_display_name
       const result = await resendOrderEmail(orderId, emailType)
       if (result.success) {
         toast({
@@ -106,11 +120,14 @@ export default function AdminOrdersPage() {
       (filter === "delivered" && order.shipping_status === "delivered") ||
       (filter === "preorder" && order.quantity_preorder > 0) ||
       (filter === "pending" && order.payment_status === "pending")
+
     const matchesSearch =
       order.customer_email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (order.product_display_name && order.product_display_name.toLowerCase().includes(searchTerm.toLowerCase())) || // Search by display name
       order.product_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (order.tracking_number && order.tracking_number.toLowerCase().includes(searchTerm.toLowerCase()))
+
     return matchesFilter && matchesSearch
   })
 
@@ -237,6 +254,7 @@ export default function AdminOrdersPage() {
             </CardContent>
           </Card>
         </div>
+
         {/* Filters - Only show if there are orders */}
         {orders.length > 0 && (
           <div className="flex gap-4 mb-6">
@@ -267,6 +285,7 @@ export default function AdminOrdersPage() {
           </div>
         )}
       </div>
+
       {/* Orders List */}
       <div className="space-y-4">
         {orders.length === 0 ? (
@@ -353,7 +372,8 @@ export default function AdminOrdersPage() {
                     <h3 className="font-semibold mb-2 text-[#2c2824]">Order Details</h3>
                     <div className="text-sm space-y-1">
                       <p>
-                        <strong>Product:</strong> {order.product_id}
+                        {/* MODIFIED: Use product_display_name, fallback to product_id */}
+                        <strong>Product:</strong> {order.product_display_name || order.product_id}
                       </p>
                       <p>
                         <strong>Total Quantity:</strong> {order.quantity_ordered}

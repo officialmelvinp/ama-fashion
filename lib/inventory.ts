@@ -202,6 +202,7 @@ export async function updateProductPrice(
     if (currentPrices.length > 0) {
       const oldPriceAED = currentPrices[0].price_aed
       const oldPriceGBP = currentPrices[0].price_gbp
+
       // Record price history
       await sql`
         INSERT INTO price_history (
@@ -213,6 +214,7 @@ export async function updateProductPrice(
         )
       `
     }
+
     // Update prices
     await sql`
       UPDATE product_inventory
@@ -250,14 +252,15 @@ export async function getOrders(): Promise<Order[]> {
     // Ensure all columns from the Order interface are selected
     const orders = (await sql`
       SELECT
-        id, product_id, customer_email, customer_name, quantity_ordered,
-        quantity_in_stock, quantity_preorder, payment_status, payment_id,
-        amount_paid, currency, shipping_address, phone_number, notes,
-        order_type, order_status, total_amount, shipping_status,
-        tracking_number, shipping_carrier, shipped_date, delivered_date,
-        estimated_delivery_date, created_at, updated_at
-      FROM orders
-      ORDER BY created_at DESC
+        o.id, o.product_id, p.product_name AS product_display_name, o.customer_email, o.customer_name, o.quantity_ordered,
+        o.quantity_in_stock, o.quantity_preorder, o.payment_status, o.payment_id,
+        o.amount_paid, o.currency, o.shipping_address, o.phone_number, o.notes,
+        o.order_type, o.order_status, o.total_amount, o.shipping_status,
+        o.tracking_number, o.shipping_carrier, o.shipped_date, o.delivered_date,
+        o.estimated_delivery_date, o.created_at, o.updated_at
+      FROM orders o
+      LEFT JOIN products p ON o.product_id = p.product_id
+      ORDER BY o.created_at DESC
     `) as Order[]
     return orders
   } catch (error) {
@@ -268,16 +271,18 @@ export async function getOrders(): Promise<Order[]> {
 
 export async function getOrderById(orderId: number): Promise<Order | null> {
   try {
+    // MODIFIED: Added LEFT JOIN to product_inventory to fetch product_display_name
     const orders = (await sql`
       SELECT
-        id, product_id, customer_email, customer_name, quantity_ordered,
-        quantity_in_stock, quantity_preorder, payment_status, payment_id,
-        amount_paid, currency, shipping_address, phone_number, notes,
-        order_type, order_status, total_amount, shipping_status,
-        tracking_number, shipping_carrier, shipped_date, delivered_date,
-        estimated_delivery_date, created_at, updated_at
-      FROM orders
-      WHERE id = ${orderId}
+        o.id, o.product_id, p.product_name AS product_display_name, o.customer_email, o.customer_name, o.quantity_ordered,
+        o.quantity_in_stock, o.quantity_preorder, o.payment_status, o.payment_id,
+        o.amount_paid, o.currency, o.shipping_address, o.phone_number, o.notes,
+        o.order_type, o.order_status, o.total_amount, o.shipping_status,
+        o.tracking_number, o.shipping_carrier, o.shipped_date, o.delivered_date,
+        o.estimated_delivery_date, o.created_at, o.updated_at
+      FROM orders o
+      LEFT JOIN products p ON o.product_id = p.product_id
+      WHERE o.id = ${orderId}
     `) as Order[]
     return orders.length > 0 ? orders[0] : null
   } catch (error) {

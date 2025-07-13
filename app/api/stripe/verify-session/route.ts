@@ -18,6 +18,23 @@ const transporter = nodemailer.createTransport({
   },
 })
 
+// NEW: Helper function to get product display name from the database
+async function getProductDisplayName(productId: string): Promise<string> {
+  try {
+    const result = await sql`
+      SELECT product_name FROM products WHERE product_id = ${productId}
+    `
+    if (result.length > 0) {
+      return result[0].product_name // Corrected to product_name
+    }
+    console.warn(`Product display name not found for ID: ${productId}. Using fallback.`)
+    return `AMA Fashion Item (${productId})` // Fallback if not found
+  } catch (error) {
+    console.error(`Error fetching product display name for ${productId}:`, error)
+    return `AMA Fashion Item (${productId})` // Fallback on error
+  }
+}
+
 async function recordOrder(orderData: any) {
   try {
     // Check if an order with this payment_id already exists
@@ -57,7 +74,8 @@ async function recordOrder(orderData: any) {
   }
 }
 
-async function sendOrderEmails(orderData: any) {
+// MODIFIED: sendOrderEmails now accepts productDisplayName
+async function sendOrderEmails(orderData: any, productDisplayName: string) {
   try {
     console.log("Attempting to send customer email...") // Added log
     // Customer email
@@ -74,7 +92,7 @@ async function sendOrderEmails(orderData: any) {
                         <div style="background: #f8f3ea; padding: 20px; border-radius: 8px; margin: 20px 0;">
               <h3 style="color: #2c2824; margin-top: 0;">Order Details:</h3>
               <p><strong>Order ID:</strong> ${orderData.payment_id}</p>
-              <p><strong>Product:</strong> ${orderData.product_id}</p>
+              <p><strong>Product:</strong> ${productDisplayName}</p>
               <p><strong>Quantity:</strong> ${orderData.quantity_ordered}</p>
               <p><strong>Amount Paid:</strong> ${orderData.amount_paid} ${orderData.currency}</p>
               <p><strong>Payment Status:</strong> ✅ Confirmed</p>
@@ -82,7 +100,7 @@ async function sendOrderEmails(orderData: any) {
             </div>
                         <div style="background: #2c2824; color: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
               <h3 style="margin-top: 0;">What's Next?</h3>
-              <p>📱 We'll contact you via WhatsApp within 24 hours to confirm your order details and arrange delivery.</p>
+              <p>📱 We'll contact you via Email and WhatsApp within 24 hours to confirm your order details and arrange delivery.</p>
               <p>📦 Your beautiful AMA piece will be prepared with love and care.</p>
               <p>🚚 We'll coordinate delivery to your address.</p>
             </div>
@@ -107,14 +125,14 @@ async function sendOrderEmails(orderData: any) {
     const vendorEmail = {
       from: '"AMA Orders" <support@amariahco.com>',
       to: "support@amariahco.com",
-      subject: `🎉 New Stripe Order: ${orderData.product_id} - ${orderData.amount_paid} ${orderData.currency}`,
+      subject: `🎉 New Stripe Order: ${productDisplayName} - ${orderData.amount_paid} ${orderData.currency}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <h1 style="color: #2c2824;">🎉 New Stripe Order Received!</h1>
                         <div style="background: #f8f3ea; padding: 20px; border-radius: 8px; margin: 20px 0;">
             <h3>Order Information:</h3>
             <p><strong>Payment ID:</strong> ${orderData.payment_id}</p>
-            <p><strong>Product:</strong> ${orderData.product_id}</p>
+            <p><strong>Product:</strong> ${productDisplayName}</p>
             <p><strong>Quantity:</strong> ${orderData.quantity_ordered}</p>
             <p><strong>Amount:</strong> ${orderData.amount_paid} ${orderData.currency}</p>
             <p><strong>Order Type:</strong> ${orderData.order_type}</p>
@@ -131,7 +149,7 @@ async function sendOrderEmails(orderData: any) {
             <h3 style="color: #2c2824; margin-top: 0;">Action Items:</h3>
             <p>✅ Contact customer via WhatsApp within 24 hours</p>
             <p>✅ Confirm order details and delivery preferences</p>
-            <p>✅ Prepare the ${orderData.product_id} for delivery</p>
+            <p>✅ Prepare the ${productDisplayName} for delivery</p>
             <p>✅ Update order status in admin panel</p>
           </div>
         </div>
@@ -167,35 +185,15 @@ export async function POST(request: NextRequest) {
     }
     const session = await response.json()
     console.log("✅ Stripe session verified successfully")
-    // Extract order information with better product name handling
-    // Prioritize product.name from the client-side product object, then fallback to Stripe session line_items
-    let productName = product?.name || product?.id || "AMA Fashion Item (Fallback)"
-    console.log("Verify Session: Product object received from client:", JSON.stringify(product, null, 2))
 
-    // If product name is still generic, try to get it from Stripe session line items (if expanded)
-    if (
-      productName.includes("AMA Fashion Item") &&
-      session.line_items &&
-      session.line_items.data &&
-      session.line_items.data.length > 0
-    ) {
-      const firstLineItem = session.line_items.data[0]
-      console.log("Verify Session: First line item from Stripe session:", JSON.stringify(firstLineItem, null, 2))
-      if (firstLineItem.description) {
-        productName = firstLineItem.description
-        console.log("Verify Session: Product name from line item description:", productName)
-      } else if (firstLineItem.price?.product) {
-        const stripeProduct = firstLineItem.price.product
-        if (typeof stripeProduct === "object" && stripeProduct !== null && !("deleted" in stripeProduct)) {
-          productName = stripeProduct.name || productName
-          console.log("Verify Session: Product name from Stripe product object:", productName)
-        } else if (typeof stripeProduct === "string") {
-          productName = stripeProduct // Fallback to product ID if it's just a string
-          console.log("Verify Session: Product name from Stripe product ID string:", productName)
-        }
-      }
-    }
-    console.log("Verify Session: Final extracted productName:", productName)
+    // MODIFIED: Use product.id from client for database storage
+    const productIdForDb = product?.id || "unknown-product-id" // Ensure a unique ID is stored
+    console.log("Verify Session: Product ID for DB storage:", productIdForDb)
+
+    // NEW: Fetch the human-readable product name for emails and logs
+    const productDisplayName = await getProductDisplayName(productIdForDb)
+    console.log("Verify Session: Product display name for emails:", productDisplayName)
+
     const customerName =
       session.customer_details?.name ||
       (customerInfo?.firstName && customerInfo?.lastName
@@ -206,7 +204,7 @@ export async function POST(request: NextRequest) {
       customerInfo?.phone ||
       (customerInfo?.firstName ? "Phone not provided during checkout" : "")
     const orderData = {
-      product_id: productName,
+      product_id: productIdForDb, // Use the unique ID for DB storage
       customer_email: session.customer_details?.email || customerInfo?.email || "",
       customer_name: customerName,
       quantity_ordered: 1,
@@ -224,7 +222,7 @@ export async function POST(request: NextRequest) {
           ? `${customerInfo.address}, ${customerInfo.city}, ${customerInfo.country}${customerInfo.postalCode ? ", " + customerInfo.postalCode : ""}`
           : "",
       phone_number: customerPhone,
-      notes: `Stripe payment completed. Session ID: ${session.id}. Product: ${productName}`,
+      notes: `Stripe payment completed. Session ID: ${session.id}. Product: ${productDisplayName}`, // Use display name in notes
       order_type: "purchase",
       order_status: "paid",
       shipping_status: "paid", // Start with "paid" status
@@ -234,8 +232,8 @@ export async function POST(request: NextRequest) {
     console.log("💾 Recording order data:", orderData)
     // Record order in database
     await recordOrder(orderData)
-    // Send email notifications
-    await sendOrderEmails(orderData)
+    // Send email notifications - MODIFIED to pass productDisplayName
+    await sendOrderEmails(orderData, productDisplayName)
     return NextResponse.json({
       success: true,
       orderId: session.payment_intent || session.id,

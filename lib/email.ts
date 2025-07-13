@@ -7,7 +7,6 @@ interface EmailOptions {
 }
 
 // Configure your email transporter using environment variables
-// This setup is based on the configurations seen in your diagnostic/test routes.
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST,
   port: Number(process.env.EMAIL_PORT),
@@ -122,3 +121,67 @@ export async function sendOrderDeliveredEmail(data: OrderEmailData) {
   `
   return sendEmail({ to: data.customer_email, subject, html })
 }
+
+const resendOrderEmail = async (orderId: number, emailType: "shipped" | "delivered", productDisplayName: string) => {
+  try {
+    // Fetch order details from the database
+    // const order = await getOrderDetails(orderId); // Replace with your actual data fetching logic
+
+    // Mock order data for testing
+    const order = {
+      customer_email: "test@example.com",
+      customer_name: "Test Customer",
+      product_name: productDisplayName,
+      quantity_ordered: 1,
+      amount_paid: 100,
+      currency: "USD",
+      payment_status: "completed",
+      shipping_status: "shipped",
+      tracking_number: "1234567890",
+      shipping_carrier: "DHL",
+      estimated_delivery_date: "2024-01-30",
+      shipped_date: "2024-01-23",
+      delivered_date: "2024-01-29",
+    }
+
+    if (emailType === "shipped") {
+      await sendOrderShippedEmail({
+        customer_email: order.customer_email,
+        customer_name: order.customer_name,
+        order_id: String(orderId),
+        product_name: order.product_name,
+        quantity_ordered: order.quantity_ordered,
+        amount_paid: order.amount_paid,
+        currency: order.currency,
+        payment_status: order.payment_status,
+        shipping_status: order.shipping_status,
+        tracking_number: order.tracking_number,
+        shipping_carrier: order.shipping_carrier,
+        estimated_delivery_date: order.estimated_delivery_date,
+        shipped_date: order.shipped_date,
+      })
+      return { success: true, message: "Shipped email resent successfully" }
+    } else if (emailType === "delivered") {
+      await sendOrderDeliveredEmail({
+        customer_email: order.customer_email,
+        customer_name: order.customer_name,
+        order_id: String(orderId),
+        product_name: order.product_name,
+        quantity_ordered: order.quantity_ordered,
+        amount_paid: order.amount_paid,
+        currency: order.currency,
+        payment_status: order.payment_status,
+        shipping_status: order.shipping_status,
+        delivered_date: order.delivered_date,
+      })
+      return { success: true, message: "Delivered email resent successfully" }
+    } else {
+      return { success: false, error: "Invalid email type" }
+    }
+  } catch (error: any) {
+    console.error("Error resending order email:", error)
+    return { success: false, error: error.message || "Failed to resend order email" }
+  }
+}
+
+export { resendOrderEmail }
