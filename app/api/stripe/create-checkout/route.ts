@@ -1,10 +1,11 @@
 import Stripe from "stripe"
 import { NextResponse } from "next/server"
 
-// Initialize Stripe with your secret key and API version
+// Initialize Stripe with your secret key and a standard, recent API version
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  // IMPORTANT: Using "2025-06-30.basil" to satisfy the TypeScript error.
-  // This is highly unusual for a Stripe API version, but it's what your local types expect.
+  // Reverting to "2025-06-30.basil" to satisfy your local TypeScript environment.
+  // WARNING: This is not a standard Stripe API version and might cause runtime issues.
+  // The long-term fix is to clear your node_modules and reinstall dependencies.
   apiVersion: "2025-06-30.basil",
 })
 
@@ -12,7 +13,24 @@ export async function POST(req: Request) {
   try {
     const { productName, productPriceInCents, quantityOrdered, success_url, cancel_url } = await req.json()
 
+    // --- ADDED LOGGING FOR DEBUGGING ---
+    console.log("Received parameters for Stripe checkout:", {
+      productName,
+      productPriceInCents,
+      quantityOrdered,
+      success_url,
+      cancel_url,
+    })
+    // --- END ADDED LOGGING ---
+
     if (!productName || !productPriceInCents || !quantityOrdered || !success_url || !cancel_url) {
+      console.error("Missing required parameters for checkout session. Received:", {
+        productName,
+        productPriceInCents,
+        quantityOrdered,
+        success_url,
+        cancel_url,
+      })
       return new NextResponse("Missing required parameters for checkout session.", { status: 400 })
     }
 
