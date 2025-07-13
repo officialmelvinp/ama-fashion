@@ -3,19 +3,19 @@ import { stripe } from "@/lib/stripe" // Use the shared Stripe instance
 
 export async function POST(req: NextRequest) {
   try {
-    const { productName, productPriceInCents, quantityOrdered, currency } = await req.json()
+    const { productId, productName, productPriceInCents, quantityOrdered, currency } = await req.json()
 
-    // --- ADDED DETAILED LOGGING FOR DEBUGGING CURRENCY ---
     console.log("Received parameters for Stripe checkout:", {
+      productId, // Log the internal product ID
       productName,
       productPriceInCents,
       quantityOrdered,
-      currency, // Log the currency received from the frontend
+      currency,
     })
-    // --- END ADDED DETAILED LOGGING ---
 
-    if (!productName || !productPriceInCents || !quantityOrdered || !currency) {
+    if (!productId || !productName || !productPriceInCents || !quantityOrdered || !currency) {
       console.error("Missing required parameters for checkout session. Received:", {
+        productId,
         productName,
         productPriceInCents,
         quantityOrdered,
@@ -30,16 +30,15 @@ export async function POST(req: NextRequest) {
       phone_number_collection: {
         enabled: true,
       },
-      // --- START ADDITION FOR SHIPPING ADDRESS COLLECTION ---
       shipping_address_collection: {
-        allowed_countries: ["GB", "AE"], // Specify countries you ship to (e.g., UK and UAE)
+        allowed_countries: ["GB", "AE"],
       },
       shipping_options: [
         {
           shipping_rate_data: {
             type: "fixed_amount",
             fixed_amount: {
-              amount: 0, // Set to 0 for free shipping, or your actual shipping cost in cents
+              amount: 0,
               currency: currency,
             },
             display_name: "Standard shipping",
@@ -50,13 +49,15 @@ export async function POST(req: NextRequest) {
           },
         },
       ],
-      // --- END ADDITION FOR SHIPPING ADDRESS COLLECTION ---
       line_items: [
         {
           price_data: {
-            currency: currency, // Use the dynamic currency here
+            currency: currency,
             product_data: {
               name: productName,
+              // Optionally, you can also pass your internal product_id here if you want Stripe to associate it
+              // with its own product object, but metadata is more direct for your use case.
+              // id: productId, // This would create a Stripe Product with your ID, but it's not always necessary.
             },
             unit_amount: productPriceInCents,
           },
@@ -67,6 +68,11 @@ export async function POST(req: NextRequest) {
       success_url: `${origin}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/cancel`,
       expand: ["line_items.data.price.product"],
+      // NEW: Add your internal product_id to session metadata
+      metadata: {
+        internal_product_id: productId,
+        product_name_for_display: productName, // Also store display name for convenience
+      },
     })
     return NextResponse.json({ url: session.url })
   } catch (error: any) {

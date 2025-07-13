@@ -22,7 +22,7 @@ const transporter = nodemailer.createTransport({
   },
 })
 
-// NEW: Helper function to get product display name from the database
+// Helper function to get product display name from the database
 async function getProductDisplayName(productId: string): Promise<string> {
   try {
     const result = await sql`
@@ -182,46 +182,16 @@ export async function POST(request: NextRequest) {
   const session = event.data.object as Stripe.Checkout.Session
 
   if (event.type === "checkout.session.completed") {
-    // MODIFIED: Extract product_id from Stripe session line items
-    let productIdForDb = "unknown-product-id" // Default fallback
-    let productDisplayName = "AMA Fashion Item (Fallback)" // Default fallback for display
+    // MODIFIED: Retrieve internal_product_id from session metadata
+    const productIdForDb = session.metadata?.internal_product_id || "unknown-product-id"
+    const productDisplayNameFromMetadata = session.metadata?.product_name_for_display || "AMA Fashion Item (Fallback)"
 
     console.log("Webhook: Processing checkout.session.completed event.")
-    console.log("Webhook: Session line_items:", JSON.stringify(session.line_items, null, 2))
-
-    if (session.line_items && session.line_items.data && session.line_items.data.length > 0) {
-      const firstLineItem = session.line_items.data[0]
-      console.log("Webhook: First line item:", JSON.stringify(firstLineItem, null, 2))
-
-      // Prioritize product ID from Stripe's product object, then description
-      if (
-        firstLineItem.price?.product &&
-        typeof firstLineItem.price.product === "object" &&
-        !("deleted" in firstLineItem.price.product)
-      ) {
-        productIdForDb = firstLineItem.price.product.id || productIdForDb
-        productDisplayName = firstLineItem.price.product.name || productDisplayName
-        console.log("Webhook: Product ID from Stripe product object:", productIdForDb)
-        console.log("Webhook: Product Name from Stripe product object:", productDisplayName)
-      } else if (firstLineItem.description) {
-        // If product object is not available or deleted, use description as a fallback for display name
-        // For the ID, we might need a more robust mapping if description isn't a direct ID
-        productDisplayName = firstLineItem.description
-        // If description is like "AMA Fashion - Product Name", try to extract ID
-        productIdForDb = firstLineItem.description.replace("AMA Fashion - ", "") || productIdForDb
-        console.log("Webhook: Product Name from description:", productDisplayName)
-        console.log("Webhook: Product ID (derived from description):", productIdForDb)
-      } else if (typeof firstLineItem.price?.product === "string") {
-        // If product is just the ID string, use it as both ID and initial display name
-        productIdForDb = firstLineItem.price.product
-        productDisplayName = firstLineItem.price.product
-        console.log("Webhook: Product ID from product ID string:", productIdForDb)
-      }
-    }
-    console.log("Webhook: Final extracted productIdForDb:", productIdForDb)
-    console.log("Webhook: Final extracted productDisplayName (before DB lookup):", productDisplayName)
+    console.log("Webhook: Product ID for DB storage (from metadata):", productIdForDb)
+    console.log("Webhook: Product Name for display (from metadata):", productDisplayNameFromMetadata)
 
     // NEW: Fetch the human-readable product name for emails and logs using the extracted ID
+    // This call is still useful as a fallback or for ensuring consistency with your DB's latest name
     const finalProductDisplayName = await getProductDisplayName(productIdForDb)
     console.log("Webhook: Final product display name for emails (after DB lookup):", finalProductDisplayName)
 

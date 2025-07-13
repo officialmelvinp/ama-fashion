@@ -18,7 +18,7 @@ const transporter = nodemailer.createTransport({
   },
 })
 
-// NEW: Helper function to get product display name from the database
+// Helper function to get product display name from the database
 async function getProductDisplayName(productId: string): Promise<string> {
   try {
     const result = await sql`
@@ -100,7 +100,7 @@ async function sendOrderEmails(orderData: any, productDisplayName: string) {
             </div>
                         <div style="background: #2c2824; color: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
               <h3 style="margin-top: 0;">What's Next?</h3>
-              <p>📱 We'll contact you via Email and WhatsApp within 24 hours to confirm your order details and arrange delivery.</p>
+              <p>📱 We'll contact you via email and WhatsApp within 24 hours to confirm your order details and arrange delivery.</p>
               <p>📦 Your beautiful AMA piece will be prepared with love and care.</p>
               <p>🚚 We'll coordinate delivery to your address.</p>
             </div>
@@ -186,9 +186,9 @@ export async function POST(request: NextRequest) {
     const session = await response.json()
     console.log("✅ Stripe session verified successfully")
 
-    // MODIFIED: Use product.id from client for database storage
-    const productIdForDb = product?.id || "unknown-product-id" // Ensure a unique ID is stored
-    console.log("Verify Session: Product ID for DB storage:", productIdForDb)
+    // MODIFIED: Retrieve internal_product_id from session metadata
+    const productIdForDb = session.metadata?.internal_product_id || "unknown-product-id"
+    console.log("Verify Session: Product ID for DB storage (from metadata):", productIdForDb)
 
     // NEW: Fetch the human-readable product name for emails and logs
     const productDisplayName = await getProductDisplayName(productIdForDb)
