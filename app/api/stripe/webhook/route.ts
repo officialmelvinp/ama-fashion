@@ -1,42 +1,58 @@
-import { type NextRequest, NextResponse } from "next/server"
+import { NextResponse, type NextRequest } from "next/server"
 import { neon } from "@neondatabase/serverless"
 import nodemailer from "nodemailer"
+import Stripe from "stripe"
 
 const sql = neon(process.env.DATABASE_URL!)
+const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: "2025-06-30.basil",
+})
 
-// Email configuration
+// Email configuration - UPDATED HOST AND ADDED rejectUnauthorized
 const transporter = nodemailer.createTransport({
-  host: "mail.amariahco.com",
+  host: "premium169.web-hosting.com", // Corrected host
   port: 465,
   secure: true,
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
+    pass: process.env.EMAIL_PASSWORD,
+  },
+  tls: {
+    rejectUnauthorized: false, // Added to handle potential certificate issues
   },
 })
 
 async function recordOrder(orderData: any) {
   try {
+    // Check if an order with this payment_id already exists
+    const existingOrder = await sql`
+    SELECT id FROM orders WHERE payment_id = ${orderData.payment_id}
+  `
+    if (existingOrder.length > 0) {
+      console.log(`Order with payment_id ${orderData.payment_id} already exists. Skipping insertion.`)
+      return existingOrder[0].id // Return existing order ID
+    }
+
     const result = await sql`
-      INSERT INTO orders (
-        product_id, customer_email, customer_name, quantity_ordered,
-        quantity_in_stock, quantity_preorder, payment_status, payment_id,
-        amount_paid, currency, shipping_address, phone_number, notes,
-        order_type, order_status, total_amount
-      ) VALUES (
-        ${orderData.product_id}, ${orderData.customer_email}, ${orderData.customer_name},
-        ${orderData.quantity_ordered}, ${orderData.quantity_in_stock}, ${orderData.quantity_preorder},
-        ${orderData.payment_status}, ${orderData.payment_id}, ${orderData.amount_paid},
-        ${orderData.currency}, ${orderData.shipping_address}, ${orderData.phone_number},
-        ${orderData.notes}, ${orderData.order_type}, ${orderData.order_status}, ${orderData.total_amount}
-      ) RETURNING id
-    `
+    INSERT INTO orders (
+      product_id, customer_email, customer_name, quantity_ordered,
+      quantity_in_stock, quantity_preorder, payment_status, payment_id,
+      amount_paid, currency, shipping_address, phone_number, notes,
+      order_type, order_status, total_amount
+    ) VALUES (
+      ${orderData.product_id}, ${orderData.customer_email}, ${orderData.customer_name},
+      ${orderData.quantity_ordered}, ${orderData.quantity_in_stock}, ${orderData.quantity_preorder},
+      ${orderData.payment_status}, ${orderData.payment_id}, ${orderData.amount_paid},
+      ${orderData.currency}, ${orderData.shipping_address}, ${orderData.phone_number},
+      ${orderData.notes}, ${orderData.order_type}, ${orderData.order_status}, ${orderData.total_amount}
+    ) RETURNING id
+  `
     // Update inventory
     await sql`
-      UPDATE product_inventory
-      SET quantity_available = quantity_available - ${orderData.quantity_ordered}
-      WHERE product_id = ${orderData.product_id}
-    `
+    UPDATE product_inventory
+    SET quantity_available = quantity_available - ${orderData.quantity_ordered}
+    WHERE product_id = ${orderData.product_id}
+  `
     return result[0].id
   } catch (error) {
     console.error("Database error:", error)
@@ -46,6 +62,7 @@ async function recordOrder(orderData: any) {
 
 async function sendOrderEmails(orderData: any) {
   try {
+    console.log("Attempting to send customer email...") // Added log
     // Customer email
     const customerEmail = {
       from: '"AMA Fashion" <support@amariahco.com>',
@@ -84,6 +101,10 @@ async function sendOrderEmails(orderData: any) {
         </div>
       `,
     }
+    await transporter.sendMail(customerEmail)
+    console.log("Customer email sent successfully.") // Added log
+
+    console.log("Attempting to send vendor email...") // Added log
     // Vendor email
     const vendorEmail = {
       from: '"AMA Orders" <support@amariahco.com>',
@@ -117,8 +138,8 @@ async function sendOrderEmails(orderData: any) {
         </div>
       `,
     }
-    await transporter.sendMail(customerEmail)
     await transporter.sendMail(vendorEmail)
+    console.log("Vendor email sent successfully.") // Added log
     console.log("✅ Order emails sent successfully")
   } catch (error) {
     console.error("❌ Email sending failed:", error)
@@ -126,74 +147,85 @@ async function sendOrderEmails(orderData: any) {
 }
 
 export async function POST(request: NextRequest) {
+  const body = await request.text()
+  const signature = request.headers.get("stripe-signature")
+
+  let event
+
   try {
-    const body = await request.text()
-    const signature = request.headers.get("stripe-signature")
-    // For now, we'll parse the webhook data manually
-    // In production, you should verify the webhook signature
-    const event = JSON.parse(body)
-    console.log("🎯 Stripe webhook received:", event.type)
+    // Verify the webhook signature
+    event = stripeClient.webhooks.constructEvent(body, signature!, process.env.STRIPE_WEBHOOK_SECRET!)
+  } catch (error: any) {
+    console.error("❌ Stripe webhook signature verification failed:", error.message)
+    return new NextResponse(`Webhook Error: ${error.message}`, { status: 400 })
+  }
 
-    if (event.type === "checkout.session.completed") {
-      const session = event.data.object
+  // Explicitly cast event.data.object to Stripe.Checkout.Session
+  const session = event.data.object as Stripe.Checkout.Session
 
-      let productName = "AMA Fashion Item" // Default fallback
+  if (event.type === "checkout.session.completed") {
+    let productName = "AMA Fashion Item" // Default fallback
 
-      // --- IMPROVED PRODUCT NAME EXTRACTION ---
-      // Try to get product name from line_items (recommended for Stripe Products/Prices)
-      // Note: line_items must be expanded when creating the Checkout Session for this to work.
-      if (session.line_items && session.line_items.data && session.line_items.data.length > 0) {
-        // Prioritize description, then product name if available
-        productName =
-          session.line_items.data[0].description || session.line_items.data[0].price?.product?.name || productName
-      } else if (session.display_items && session.display_items.length > 0) {
-        // Fallback to display_items if line_items not available or not expanded
-        productName = session.display_items[0].custom?.name || productName
+    // --- IMPROVED PRODUCT NAME EXTRACTION ---
+    // Ensure line_items are expanded when creating the Checkout Session for this to work reliably.
+    if (session.line_items && session.line_items.data && session.line_items.data.length > 0) {
+      const firstLineItem = session.line_items.data[0]
+      // Prioritize description, then product name if available
+      if (firstLineItem.description) {
+        productName = firstLineItem.description
+      } else if (firstLineItem.price?.product) {
+        const product = firstLineItem.price.product
+        // Check if 'product' is a Stripe.Product object (not just a string ID or deleted product)
+        if (typeof product === "object" && product !== null && !("deleted" in product)) {
+          productName = product.name || productName
+        } else if (typeof product === "string") {
+          // If product is just the ID string, use it as a fallback name
+          productName = product
+        }
       }
-      // --- END IMPROVED PRODUCT NAME EXTRACTION ---
+    }
+    // --- END IMPROVED PRODUCT NAME EXTRACTION ---
 
-      const productId = productName.replace("AMA Fashion - ", "") // Your existing logic
+    const productId = productName.replace("AMA Fashion - ", "") // Your existing logic
 
-      const orderData = {
-        product_id: productId,
-        customer_email: session.customer_email,
-        customer_name: session.customer_details?.name || "Customer",
-        quantity_ordered: 1,
-        quantity_in_stock: 1,
-        quantity_preorder: 0,
-        payment_status: "completed",
-        payment_id: session.payment_intent,
-        amount_paid: session.amount_total / 100, // Convert from cents
-        currency: session.currency.toUpperCase(),
-        shipping_address: session.customer_details?.address
-          ? `${session.customer_details.address.line1}, ${session.customer_details.address.address_line2 ? session.customer_details.address.address_line2 + ", " : ""}${session.customer_details.address.city}, ${session.customer_details.address.country}`
-          : "",
-        // --- PHONE NUMBER NOTE ---
-        // The phone number (session.customer_details?.phone) is only populated if
-        // phone_number_collection is enabled when creating the Stripe Checkout Session.
-        // If it's still "Not provided", ensure it's collected upstream.
-        phone_number: session.customer_details?.phone || "",
-        // --- END PHONE NUMBER NOTE ---
-        notes: `Stripe payment completed. Session ID: ${session.id}`,
-        order_type: "purchase",
-        order_status: "paid",
-        total_amount: session.amount_total / 100,
-      }
+    const orderData = {
+      product_id: productId,
+      customer_email: session.customer_details?.email,
+      customer_name: session.customer_details?.name || "Customer",
+      quantity_ordered: 1, // Assuming 1 for now, adjust if quantity is in metadata
+      quantity_in_stock: 1, // Placeholder, fetch from DB if needed
+      quantity_preorder: 0, // Placeholder, fetch from DB if needed
+      payment_status: "completed",
+      payment_id: session.payment_intent,
+      amount_paid: (session.amount_total ?? 0) / 100, // Convert from cents, default to 0 if null
+      currency: (session.currency ?? "GBP").toUpperCase(), // Default to "GBP" if null
+      shipping_address: session.customer_details?.address
+        ? `${session.customer_details.address.line1}, ${session.customer_details.address.line2 ? session.customer_details.address.line2 + ", " : ""}${session.customer_details.address.city}, ${session.customer_details.address.country}`
+        : "",
+      phone_number: session.customer_details?.phone || "",
+      notes: `Stripe payment completed via webhook. Session ID: ${session.id}`,
+      order_type: "purchase",
+      order_status: "paid",
+      total_amount: (session.amount_total ?? 0) / 100,
+    }
 
+    try {
       // Record order in database
       await recordOrder(orderData)
-
       // --- CONSOLE.LOG FOR DEBUGGING PRICE ---
       console.log("Order Data before sending emails:", orderData)
       // --- END CONSOLE.LOG ---
-
       // Send email notifications
       await sendOrderEmails(orderData)
-      console.log("✅ Stripe order processed successfully")
+      console.log("✅ Stripe order processed successfully via webhook")
+    } catch (error) {
+      console.error("❌ Error processing order from webhook:", error)
+      return NextResponse.json(
+        { error: error instanceof Error ? error.message : "Webhook processing failed" },
+        { status: 500 },
+      )
     }
-    return NextResponse.json({ received: true })
-  } catch (error) {
-    console.error("❌ Stripe webhook error:", error)
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Webhook failed" }, { status: 500 })
   }
+
+  return NextResponse.json({ received: true })
 }
