@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
@@ -68,7 +67,6 @@ export default function CheckoutPage() {
     if (selectedProduct) {
       const product = JSON.parse(selectedProduct)
       setProduct(product)
-
       // Fetch pre-order date for this product
       fetchPreOrderDate(product.id)
     }
@@ -96,13 +94,10 @@ export default function CheckoutPage() {
 
   const extractPrice = (priceString: string) => {
     if (!priceString) return 0
-
     console.log("Extracting price from:", priceString) // Debug log
-
     // Handle decimal numbers - updated regex to capture decimals
     const aedMatch = priceString.match(/([\d.]+)\s*AED/)
     const gbpMatch = priceString.match(/£([\d.]+)\s*GBP/)
-
     if (aedMatch) {
       const price = Number.parseFloat(aedMatch[1]) // Use parseFloat instead of parseInt
       console.log("Extracted AED price:", price) // Debug log
@@ -112,7 +107,6 @@ export default function CheckoutPage() {
       console.log("Extracted GBP price:", price) // Debug log
       return price
     }
-
     console.log("No price match found, returning 0") // Debug log
     return 0
   }
@@ -122,46 +116,35 @@ export default function CheckoutPage() {
     const unitPrice = extractPrice(product.selectedPrice || product.priceAED)
     const quantity = product.selectedQuantity || 1
     const total = unitPrice * quantity
-
     console.log("Price calculation:", { unitPrice, quantity, total }) // Debug log
     return total
   }
 
   const getOrderBreakdown = () => {
     if (!product) return { inStock: 0, preOrder: 0 }
-
     const quantity = product.selectedQuantity || 1
     const stockLevel = product.stockLevel || 0
-
     const inStock = Math.min(quantity, stockLevel)
     const preOrder = Math.max(0, quantity - stockLevel)
-
     return { inStock, preOrder }
   }
 
   const handlePayPalCheckout = async () => {
     if (!product) return
-
     setIsLoading(true)
     setError("")
-
     try {
       console.log("🚀 Starting PayPal checkout process...")
-
       const totalPrice = calculateTotalPrice()
       const customerData = {
         ...form,
         quantity: product.selectedQuantity || 1,
         orderBreakdown: getOrderBreakdown(),
       }
-
       localStorage.setItem("customerInfo", JSON.stringify(customerData))
-
       const order = await createPayPalOrder(product.id, totalPrice)
       console.log("✅ PayPal order created:", order)
-
       const approveLink = order.links?.find((link: { rel: string }) => link.rel === "approve")
-
       if (approveLink) {
         console.log("🚀 Redirecting to PayPal...")
         window.location.href = approveLink.href
@@ -178,23 +161,21 @@ export default function CheckoutPage() {
 
   const handleStripeCheckout = async () => {
     if (!product) return
-
     setIsLoading(true)
     setError("")
-
     try {
       console.log("🚀 Starting Stripe checkout process...")
-
       const region = product.selectedRegion || "UAE"
       const currency = region === "UAE" ? "aed" : "gbp"
       const totalPrice = calculateTotalPrice()
+      const quantityOrdered = product.selectedQuantity || 1
+      const productPriceInCents = Math.round(totalPrice * 100) // Convert to cents/smallest unit [^3]
 
       const customerData = {
         ...form,
-        quantity: product.selectedQuantity || 1,
+        quantity: quantityOrdered,
         orderBreakdown: getOrderBreakdown(),
       }
-
       localStorage.setItem("customerInfo", JSON.stringify(customerData))
 
       // Create Stripe checkout session
@@ -205,18 +186,21 @@ export default function CheckoutPage() {
         },
         body: JSON.stringify({
           productId: product.id,
-          amount: totalPrice,
+          productName: product.name, // Added missing parameter
+          productPriceInCents: productPriceInCents, // Added missing parameter
+          quantityOrdered: quantityOrdered, // Added missing parameter
+          amount: totalPrice, // This might be redundant if productPriceInCents is used for line items
           currency: currency,
           region: region,
-          quantity: product.selectedQuantity || 1,
           customerInfo: customerData,
+          success_url: `${window.location.origin}/success`, // Added success URL
+          cancel_url: `${window.location.origin}/cancel`, // Added cancel URL
         }),
       })
 
       if (!response.ok) {
         throw new Error("Failed to create Stripe checkout session")
       }
-
       const { url } = await response.json()
       window.location.href = url
     } catch (error) {
@@ -258,16 +242,13 @@ export default function CheckoutPage() {
     <div className="min-h-screen bg-[#f8f3ea]">
       {/* Navigation Header */}
       <Header bgColor="bg-white/90 backdrop-blur-sm" textColor="text-[#2c2824]" />
-
       <div className="container mx-auto py-12 px-4">
         <div className="max-w-6xl mx-auto">
           <h1 className="text-3xl md:text-4xl font-serif text-center mb-12 text-[#2c2824]">Complete Your Order</h1>
-
           <div className="grid lg:grid-cols-2 gap-12">
             {/* Product Summary */}
             <div className="bg-white p-8 rounded-lg shadow-sm">
               <h2 className="text-xl font-serif mb-6 text-[#2c2824]">Order Summary</h2>
-
               <div className="flex gap-6 mb-6">
                 <div className="relative w-24 h-32 flex-shrink-0">
                   <Image
@@ -288,21 +269,18 @@ export default function CheckoutPage() {
                   <p className="text-sm italic text-[#2c2824]/90">{product.description}</p>
                 </div>
               </div>
-
               {/* Quantity and Price Breakdown */}
               <div className="border-t pt-4 space-y-3">
                 <div className="flex justify-between items-center">
                   <span className="text-[#2c2824]">Unit Price:</span>
                   <span className="text-[#2c2824]">{product.selectedPrice || product.priceAED}</span>
                 </div>
-
                 <div className="flex justify-between items-center">
                   <span className="text-[#2c2824]">Quantity:</span>
                   <span className="text-[#2c2824]">
                     {quantity} piece{quantity > 1 ? "s" : ""}
                   </span>
                 </div>
-
                 {/* Order Type Breakdown */}
                 {preOrder > 0 && (
                   <div className="bg-orange-50 p-3 rounded-lg text-sm">
@@ -337,18 +315,15 @@ export default function CheckoutPage() {
                     )}
                   </div>
                 )}
-
                 <div className="flex justify-between items-center text-lg font-medium text-[#2c2824] pt-2 border-t">
                   <span>Total:</span>
                   <span>{selectedRegion === "UAE" ? `${totalPrice} AED` : `£${totalPrice} GBP`}</span>
                 </div>
               </div>
             </div>
-
             {/* Checkout Form */}
             <div className="bg-white p-8 rounded-lg shadow-sm">
               <h2 className="text-xl font-serif mb-6 text-[#2c2824]">Shipping Information</h2>
-
               {/* Payment Method Selection */}
               <div className="mb-6">
                 <Label className="text-base font-medium mb-3 block">Choose Payment Method</Label>
@@ -372,7 +347,6 @@ export default function CheckoutPage() {
                       ✅ Visa, Mastercard • Apple Pay, Google Pay • 3D Secure protected
                     </div>
                   </button>
-
                   <button
                     type="button"
                     onClick={() => setPaymentMethod("paypal")}
@@ -394,7 +368,6 @@ export default function CheckoutPage() {
                   </button>
                 </div>
               </div>
-
               {/* Error Display */}
               {error && (
                 <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
@@ -402,7 +375,6 @@ export default function CheckoutPage() {
                   <p className="text-red-600 text-xs mt-2">Check the browser console (F12) for more details.</p>
                 </div>
               )}
-
               <form className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -430,7 +402,6 @@ export default function CheckoutPage() {
                     />
                   </div>
                 </div>
-
                 <div>
                   <Label htmlFor="email">Email Address *</Label>
                   <Input
@@ -444,7 +415,6 @@ export default function CheckoutPage() {
                     autoComplete="email"
                   />
                 </div>
-
                 <div>
                   <Label htmlFor="phone">Phone Number (for WhatsApp contact) *</Label>
                   <Input
@@ -459,7 +429,6 @@ export default function CheckoutPage() {
                     autoComplete="tel"
                   />
                 </div>
-
                 <div>
                   <Label htmlFor="address">Street Address *</Label>
                   <Input
@@ -472,7 +441,6 @@ export default function CheckoutPage() {
                     autoComplete="street-address"
                   />
                 </div>
-
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="city">City *</Label>
@@ -499,7 +467,6 @@ export default function CheckoutPage() {
                     />
                   </div>
                 </div>
-
                 <div>
                   <Label htmlFor="postalCode">Postal Code</Label>
                   <Input
@@ -511,7 +478,6 @@ export default function CheckoutPage() {
                     autoComplete="postal-code"
                   />
                 </div>
-
                 <div>
                   <Label htmlFor="notes">Special Instructions (Optional)</Label>
                   <Textarea
@@ -524,7 +490,6 @@ export default function CheckoutPage() {
                     rows={3}
                   />
                 </div>
-
                 <div className="pt-6">
                   <Button
                     onClick={handleCheckout}
@@ -547,11 +512,9 @@ export default function CheckoutPage() {
                         : "Pay with Card (Stripe)"}
                   </Button>
                 </div>
-
                 <div className="text-center text-sm text-[#2c2824]/60 mt-4">
                   <p>🔒 Secure payment powered by {paymentMethod === "paypal" ? "PayPal" : "Stripe"}</p>
                   <p>📱 You&apos;ll receive WhatsApp contact after payment for delivery coordination</p>
-
                   {/* Order Type Information */}
                   {preOrder > 0 && (
                     <div className="bg-orange-50 p-3 rounded-lg mt-3 text-xs">
@@ -574,7 +537,6 @@ export default function CheckoutPage() {
                       )}
                     </div>
                   )}
-
                   {paymentMethod === "stripe" && (
                     <div className="text-xs mt-2 space-y-1">
                       <p>💳 {selectedRegion === "UAE" ? "UAE" : "UK"} cards supported • No account required</p>
