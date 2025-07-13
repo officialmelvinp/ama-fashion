@@ -3,6 +3,23 @@ import type { InventoryItem, ProductWithStock, Order, ProductInventory } from "@
 
 const sql = neon(process.env.DATABASE_URL!)
 
+// Helper function to get product display name from the database
+export async function getProductDisplayName(productId: string): Promise<string> {
+  try {
+    const result = await sql`
+      SELECT product_name FROM products WHERE product_id = ${productId}
+    `
+    if (result.length > 0) {
+      return result[0].product_name
+    }
+    console.warn(`Product display name not found for ID: ${productId}. Using fallback.`)
+    return `AMA Fashion Item (${productId})` // Fallback if not found
+  } catch (error) {
+    console.error(`Error fetching product display name for ${productId}:`, error)
+    return `AMA Fashion Item (${productId})` // Fallback on error
+  }
+}
+
 // Get inventory for a specific product, now returning ProductInventory type
 export async function getProductInventory(productId: string): Promise<ProductInventory | null> {
   try {
