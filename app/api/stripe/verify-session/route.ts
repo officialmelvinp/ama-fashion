@@ -168,7 +168,34 @@ export async function POST(request: NextRequest) {
     const session = await response.json()
     console.log("✅ Stripe session verified successfully")
     // Extract order information with better product name handling
-    const productName = product?.name || product?.id || "AMA Fashion Item"
+    // Prioritize product.name from the client-side product object, then fallback to Stripe session line_items
+    let productName = product?.name || product?.id || "AMA Fashion Item (Fallback)"
+    console.log("Verify Session: Product object received from client:", JSON.stringify(product, null, 2))
+
+    // If product name is still generic, try to get it from Stripe session line items (if expanded)
+    if (
+      productName.includes("AMA Fashion Item") &&
+      session.line_items &&
+      session.line_items.data &&
+      session.line_items.data.length > 0
+    ) {
+      const firstLineItem = session.line_items.data[0]
+      console.log("Verify Session: First line item from Stripe session:", JSON.stringify(firstLineItem, null, 2))
+      if (firstLineItem.description) {
+        productName = firstLineItem.description
+        console.log("Verify Session: Product name from line item description:", productName)
+      } else if (firstLineItem.price?.product) {
+        const stripeProduct = firstLineItem.price.product
+        if (typeof stripeProduct === "object" && stripeProduct !== null && !("deleted" in stripeProduct)) {
+          productName = stripeProduct.name || productName
+          console.log("Verify Session: Product name from Stripe product object:", productName)
+        } else if (typeof stripeProduct === "string") {
+          productName = stripeProduct // Fallback to product ID if it's just a string
+          console.log("Verify Session: Product name from Stripe product ID string:", productName)
+        }
+      }
+    }
+    console.log("Verify Session: Final extracted productName:", productName)
     const customerName =
       session.customer_details?.name ||
       (customerInfo?.firstName && customerInfo?.lastName
@@ -190,9 +217,11 @@ export async function POST(request: NextRequest) {
       amount_paid: (session.amount_total ?? 0) / 100, // Convert from cents
       currency: (session.currency ?? "GBP").toUpperCase(),
       shipping_address: session.customer_details?.address
-        ? `${session.customer_details.address.line1}, ${session.customer_details.address.line2 ? session.customer_details.address.line2 + ", " : ""}${session.customer_details.address.city}, ${session.customer_details.address.country}`
-        : customerInfo?.address
-          ? `${customerInfo.address}, ${customerInfo.city}, ${customerInfo.country}`
+        ? `${session.customer_details.address.line1 || ""}${session.customer_details.address.line2 ? ", " + session.customer_details.address.line2 : ""}${session.customer_details.address.city ? ", " + session.customer_details.address.city : ""}${session.customer_details.address.state ? ", " + session.customer_details.address.state : ""}${session.customer_details.address.postal_code ? ", " + session.customer_details.address.postal_code : ""}${session.customer_details.address.country ? ", " + session.customer_details.address.country : ""}`
+            .trim()
+            .replace(/^, /, "") // Clean up leading comma if line1 is empty
+        : customerInfo?.address && customerInfo?.city && customerInfo?.country
+          ? `${customerInfo.address}, ${customerInfo.city}, ${customerInfo.country}${customerInfo.postalCode ? ", " + customerInfo.postalCode : ""}`
           : "",
       phone_number: customerPhone,
       notes: `Stripe payment completed. Session ID: ${session.id}. Product: ${productName}`,
@@ -201,6 +230,7 @@ export async function POST(request: NextRequest) {
       shipping_status: "paid", // Start with "paid" status
       total_amount: (session.amount_total ?? 0) / 100,
     }
+    console.log("Verify Session: Final orderData before DB/Email:", orderData)
     console.log("💾 Recording order data:", orderData)
     // Record order in database
     await recordOrder(orderData)

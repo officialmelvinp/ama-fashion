@@ -8,7 +8,7 @@ const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-06-30.basil",
 })
 
-// Email configuration - UPDATED HOST AND ADDED rejectUnauthorized
+// Email configuration
 const transporter = nodemailer.createTransport({
   host: "premium169.web-hosting.com", // Corrected host
   port: 465,
@@ -164,29 +164,50 @@ export async function POST(request: NextRequest) {
   const session = event.data.object as Stripe.Checkout.Session
 
   if (event.type === "checkout.session.completed") {
-    let productName = "AMA Fashion Item" // Default fallback
+    let productName = "AMA Fashion Item (Fallback)" // Default fallback with clear indicator
 
     // --- IMPROVED PRODUCT NAME EXTRACTION ---
     // Ensure line_items are expanded when creating the Checkout Session for this to work reliably.
+    console.log("Webhook: Processing checkout.session.completed event.")
+    console.log("Webhook: Session line_items:", JSON.stringify(session.line_items, null, 2))
+
     if (session.line_items && session.line_items.data && session.line_items.data.length > 0) {
       const firstLineItem = session.line_items.data[0]
+      console.log("Webhook: First line item:", JSON.stringify(firstLineItem, null, 2))
+
       // Prioritize description, then product name if available
       if (firstLineItem.description) {
         productName = firstLineItem.description
+        console.log("Webhook: Product name from description:", productName)
       } else if (firstLineItem.price?.product) {
         const product = firstLineItem.price.product
+        console.log("Webhook: Line item product data:", JSON.stringify(product, null, 2))
+
         // Check if 'product' is a Stripe.Product object (not just a string ID or deleted product)
         if (typeof product === "object" && product !== null && !("deleted" in product)) {
           productName = product.name || productName
+          console.log("Webhook: Product name from product.name:", productName)
         } else if (typeof product === "string") {
           // If product is just the ID string, use it as a fallback name
           productName = product
+          console.log("Webhook: Product name from product ID string:", productName)
         }
       }
     }
+    console.log("Webhook: Final extracted productName:", productName)
     // --- END IMPROVED PRODUCT NAME EXTRACTION ---
 
     const productId = productName.replace("AMA Fashion - ", "") // Your existing logic
+    console.log("Webhook: Product ID (after replace):", productId)
+
+    // Retrieve customerInfo from localStorage (if available) for address fallback
+    // Note: This is a client-side concept. For webhooks, you'd typically rely on Stripe's data.
+    // However, if you're passing customerInfo via metadata in create-checkout, you could retrieve it here.
+    // For now, we'll assume customerInfo is NOT directly available in the webhook context
+    // unless explicitly passed via Stripe metadata.
+    // Let's assume for now that the customerInfo is NOT available directly in the webhook.
+    // The previous conversation implies customerInfo is passed to verify-session, but not webhook.
+    // So, we'll rely solely on Stripe's session.customer_details for the webhook.
 
     const orderData = {
       product_id: productId,
@@ -199,22 +220,25 @@ export async function POST(request: NextRequest) {
       payment_id: session.payment_intent,
       amount_paid: (session.amount_total ?? 0) / 100, // Convert from cents, default to 0 if null
       currency: (session.currency ?? "GBP").toUpperCase(), // Default to "GBP" if null
+      // --- MODIFIED: Add more robust shipping address extraction ---
       shipping_address: session.customer_details?.address
-        ? `${session.customer_details.address.line1}, ${session.customer_details.address.line2 ? session.customer_details.address.line2 + ", " : ""}${session.customer_details.address.city}, ${session.customer_details.address.country}`
-        : "",
+        ? `${session.customer_details.address.line1 || ""}${session.customer_details.address.line2 ? ", " + session.customer_details.address.line2 : ""}${session.customer_details.address.city ? ", " + session.customer_details.address.city : ""}${session.customer_details.address.state ? ", " + session.customer_details.address.state : ""}${session.customer_details.address.postal_code ? ", " + session.customer_details.address.postal_code : ""}${session.customer_details.address.country ? ", " + session.customer_details.address.country : ""}`
+            .trim()
+            .replace(/^, /, "") // Clean up leading comma if line1 is empty
+        : "", // If Stripe doesn't provide it, it remains empty for the webhook
+      // --- END MODIFIED ---
       phone_number: session.customer_details?.phone || "",
       notes: `Stripe payment completed via webhook. Session ID: ${session.id}`,
       order_type: "purchase",
       order_status: "paid",
       total_amount: (session.amount_total ?? 0) / 100,
     }
+    console.log("Webhook: Final orderData before DB/Email:", orderData)
 
     try {
       // Record order in database
       await recordOrder(orderData)
-      // --- CONSOLE.LOG FOR DEBUGGING PRICE ---
       console.log("Order Data before sending emails:", orderData)
-      // --- END CONSOLE.LOG ---
       // Send email notifications
       await sendOrderEmails(orderData)
       console.log("✅ Stripe order processed successfully via webhook")

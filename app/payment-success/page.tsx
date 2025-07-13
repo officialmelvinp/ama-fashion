@@ -12,12 +12,18 @@ type Product = {
   subtitle: string
   materials: string[]
   description: string
-  price: string
+  priceAED: string // Added this
+  priceGBP: string // Added this
   images: string[]
   category: string
   essences: string[]
-  materialLine: string
+  materialLine?: string // Made optional as in checkout page
   colors?: string[]
+  selectedRegion?: "UAE" | "UK" // Added this
+  selectedPrice?: string // Added this
+  selectedQuantity?: number // Added this
+  stockLevel?: number // Added this
+  preOrderDate?: string // Added this
 }
 
 type CustomerInfo = {
@@ -34,11 +40,9 @@ type CustomerInfo = {
 
 export default function PaymentSuccessPage() {
   const searchParams = useSearchParams()
-
   // PayPal redirects with 'token' (order ID) and 'PayerID'
   const paypalToken = searchParams.get("token") // PayPal order ID
   const payerId = searchParams.get("PayerID")
-
   // Stripe redirects with 'session_id'
   const stripeSessionId = searchParams.get("session_id")
 
@@ -57,7 +61,6 @@ export default function PaymentSuccessPage() {
     if (selectedProduct) {
       setProduct(JSON.parse(selectedProduct))
     }
-
     if (storedCustomerInfo) {
       setCustomerInfo(JSON.parse(storedCustomerInfo))
     }
@@ -154,7 +157,6 @@ export default function PaymentSuccessPage() {
     customerInfo && product && orderId
       ? `Hello! I just completed my order for ${product.name} (Order: ${orderId}). Looking forward to delivery coordination. Thank you!`
       : "Hello! I just completed my AMA order and would like to coordinate delivery. Thank you!"
-
   const whatsappUrl = `https://wa.me/+447707783963?text=${encodeURIComponent(whatsappMessage)}`
 
   if (isProcessing) {
@@ -174,7 +176,6 @@ export default function PaymentSuccessPage() {
     <div className="min-h-screen bg-[#f8f3ea]">
       {/* Navigation Header */}
       <Header bgColor="bg-white/90 backdrop-blur-sm" textColor="text-[#2c2824]" />
-
       <div className="container mx-auto py-12 px-4">
         <div className="max-w-2xl mx-auto text-center">
           {/* Success Icon */}
@@ -183,13 +184,11 @@ export default function PaymentSuccessPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
-
           <h1 className="text-3xl md:text-4xl font-serif text-[#2c2824] mb-4">Payment Successful!</h1>
           <p className="text-lg text-[#2c2824]/80 mb-8">
             Thank you for your order. Your {paymentMethod === "paypal" ? "PayPal" : "Stripe"} payment has been processed
             successfully.
           </p>
-
           {orderId && (
             <div className="bg-white p-6 rounded-lg shadow-sm mb-8">
               <h2 className="font-serif text-xl text-[#2c2824] mb-4">Order Details</h2>
@@ -211,7 +210,7 @@ export default function PaymentSuccessPage() {
                       <strong>Product:</strong> {product.name} — {product.subtitle}
                     </p>
                     <p>
-                      <strong>Price:</strong> {product.price}
+                      <strong>Price:</strong> {product.selectedPrice || product.priceAED}
                     </p>
                   </>
                 )}
@@ -231,7 +230,6 @@ export default function PaymentSuccessPage() {
               </div>
             </div>
           )}
-
           <div className="bg-[#2c2824] text-white p-8 rounded-lg mb-8">
             <h2 className="font-serif text-2xl mb-4">Next Steps</h2>
             <div className="space-y-4 text-left">
@@ -262,7 +260,6 @@ export default function PaymentSuccessPage() {
               </div>
             </div>
           </div>
-
           <div className="space-y-4">
             <Button
               onClick={() => window.open(whatsappUrl, "_blank")}
@@ -270,14 +267,12 @@ export default function PaymentSuccessPage() {
             >
               📱 Contact us on WhatsApp
             </Button>
-
             <Link href="/shop">
               <Button variant="outline" className="w-full py-3 text-lg bg-transparent">
                 Continue Shopping
               </Button>
             </Link>
           </div>
-
           <div className="mt-12 text-center">
             <p className="text-sm text-[#2c2824]/60 italic">
               &ldquo;Every thread a prayer. Every silhouette, a sanctuary.&rdquo;

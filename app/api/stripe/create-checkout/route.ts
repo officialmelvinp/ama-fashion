@@ -30,6 +30,27 @@ export async function POST(req: NextRequest) {
       phone_number_collection: {
         enabled: true,
       },
+      // --- START ADDITION FOR SHIPPING ADDRESS COLLECTION ---
+      shipping_address_collection: {
+        allowed_countries: ["GB", "AE"], // Specify countries you ship to (e.g., UK and UAE)
+      },
+      shipping_options: [
+        {
+          shipping_rate_data: {
+            type: "fixed_amount",
+            fixed_amount: {
+              amount: 0, // Set to 0 for free shipping, or your actual shipping cost in cents
+              currency: currency,
+            },
+            display_name: "Standard shipping",
+            delivery_estimate: {
+              minimum: { unit: "business_day", value: 5 },
+              maximum: { unit: "business_day", value: 7 },
+            },
+          },
+        },
+      ],
+      // --- END ADDITION FOR SHIPPING ADDRESS COLLECTION ---
       line_items: [
         {
           price_data: {
