@@ -34,7 +34,7 @@ export default function CartPage() {
   return (
     <div className="min-h-screen bg-[#f8f3ea]">
       <Header bgColor="bg-white/90 backdrop-blur-sm" textColor="text-[#2c2824]" />
-      <div className="container mx-auto py-12 px-4">
+      <div className="container mx-auto pt-24 pb-12 px-4">
         <h1 className="text-3xl md:text-4xl font-serif text-center mb-12 text-[#2c2824]">Your Shopping Cart</h1>
 
         {totalItems === 0 ? (
