@@ -10,6 +10,12 @@ import type { OrderConfirmationEmailData, OrderShippedEmailData, OrderDeliveredE
 // and bundle size. These types define the structure of data for different email purposes.
 
 // Email configuration using environment variables
+console.log("EMAIL: Initializing Nodemailer transporter...")
+console.log("EMAIL: Host:", process.env.EMAIL_HOST)
+console.log("EMAIL: Port:", Number(process.env.EMAIL_PORT))
+console.log("EMAIL: Secure:", process.env.EMAIL_SECURE === "True")
+console.log("EMAIL: User (first 3 chars):", process.env.EMAIL_USER?.substring(0, 3) + "***")
+console.log("EMAIL: Reject Unauthorized:", process.env.EMAIL_REJECT_UNAUTHORIZED === "False")
 const transporter = nodemailer.createTransport({
   // This block sets up the email 'transporter', which is Nodemailer's way of
   // configuring how emails are sent (e.g., which SMTP server to use, authentication details).
@@ -57,6 +63,12 @@ export async function sendOrderConfirmationEmail(data: OrderConfirmationEmailDat
   // This is an asynchronous function to send an order confirmation email.
   // It takes one argument, 'data', which must conform to the 'OrderConfirmationEmailData' interface.
   try {
+    console.log(
+      `EMAIL: Attempting to send order confirmation email to ${data.customer_email} for order ${data.order_id}`,
+    )
+    console.log("EMAIL: Mail options from:", process.env.EMAIL_FROM)
+    console.log("EMAIL: Mail options to:", data.customer_email)
+    console.log("EMAIL: Mail options subject:", `Order Confirmation #${data.order_id}`)
     // A try-catch block is used to handle potential errors during email sending.
     const itemsHtml = data.items
       .map(
@@ -113,11 +125,11 @@ export async function sendOrderConfirmationEmail(data: OrderConfirmationEmailDat
       html: emailHtml,
       // The HTML content of the email.
     })
-    console.log(`Order confirmation email sent to ${data.customer_email} for order ${data.order_id}`)
+    console.log(`✅ EMAIL: Order confirmation email sent to ${data.customer_email} for order ${data.order_id}`)
     // Logs a success message to the console.
   } catch (error) {
     // If any error occurs within the try block, it's caught here.
-    console.error("Error sending order confirmation email:", error)
+    console.error("❌ EMAIL: Error sending order confirmation email:", error)
     // Logs the error to the console.
     throw error
     // Re-throws the error, allowing the calling function (e.g., your API route) to handle it.
