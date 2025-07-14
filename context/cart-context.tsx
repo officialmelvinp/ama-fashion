@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { createContext, useState, useEffect, useCallback, useContext } from "react"
-import type { CartItem, Product, Region } from "@/lib/types"
+import type { CartItem, Product, Region } from "@/lib/types" // Correctly import CartItem, Product, Region
 import { useToast } from "@/hooks/use-toast"
 
 interface CartContextType {
@@ -29,11 +29,30 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     try {
       const storedCart = localStorage.getItem(CART_STORAGE_KEY)
       if (storedCart) {
-        setItems(JSON.parse(storedCart))
+        const parsedCart: CartItem[] = JSON.parse(storedCart)
+
+        // Validate loaded items: ensure they have selectedPrice, selectedQuantity, selectedRegion
+        const isValidCart = parsedCart.every(
+          (item) =>
+            item.id &&
+            typeof item.selectedQuantity === "number" && // Use selectedQuantity
+            item.selectedQuantity >= 0 &&
+            typeof item.selectedRegion === "string" &&
+            typeof item.selectedPrice === "string",
+        )
+
+        if (isValidCart) {
+          setItems(parsedCart)
+        } else {
+          console.warn("Loaded cart from localStorage has an invalid structure. Clearing cart.")
+          localStorage.removeItem(CART_STORAGE_KEY)
+          setItems([]) // Clear items in state as well
+        }
       }
     } catch (error) {
-      console.error("Failed to load cart from localStorage:", error)
+      console.error("Failed to load or parse cart from localStorage:", error)
       localStorage.removeItem(CART_STORAGE_KEY)
+      setItems([]) // Clear items in state on parse error
     } finally {
       setIsLoaded(true)
     }
@@ -55,7 +74,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
         if (existingItemIndex > -1) {
           const updatedItems = [...prevItems]
-          updatedItems[existingItemIndex].selectedQuantity += quantity
+          updatedItems[existingItemIndex].selectedQuantity += quantity // Use selectedQuantity
           toast({
             title: "Cart Updated",
             description: `${product.name} quantity updated in cart.`,
@@ -65,7 +84,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         } else {
           const newItem: CartItem = {
             ...product,
-            selectedQuantity: quantity,
+            selectedQuantity: quantity, // Use selectedQuantity
             selectedRegion: region,
             selectedPrice: price,
           }
@@ -99,10 +118,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const updateItemQuantity = useCallback(
     (productId: string, quantity: number) => {
       setItems((prevItems) => {
-        const updatedItems = prevItems.map((item) =>
-          item.id === productId ? { ...item, selectedQuantity: quantity } : item,
+        const updatedItems = prevItems.map(
+          (item) => (item.id === productId ? { ...item, selectedQuantity: quantity } : item), // Use selectedQuantity
         )
-        const filteredItems = updatedItems.filter((item) => item.selectedQuantity > 0)
+        const filteredItems = updatedItems.filter((item) => item.selectedQuantity > 0) // Use selectedQuantity
         toast({
           title: "Cart Updated",
           description: "Item quantity adjusted.",
@@ -124,14 +143,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, [toast])
 
   const getTotalItems = useCallback(() => {
-    return items.reduce((total, item) => total + item.selectedQuantity, 0)
+    return items.reduce((total, item) => total + item.selectedQuantity, 0) // Use selectedQuantity
   }, [items])
 
   const getTotalPrice = useCallback(() => {
     return items.reduce((total, item) => {
       const priceMatch = item.selectedPrice.match(/[\d.]+/)
       const price = priceMatch ? Number.parseFloat(priceMatch[0]) : 0
-      return total + price * item.selectedQuantity
+      return total + price * item.selectedQuantity // Use selectedQuantity
     }, 0)
   }, [items])
 

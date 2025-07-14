@@ -1,38 +1,20 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { stripe } from "@/lib/stripe" // Use the shared Stripe instance
+import Stripe from "stripe"
+import type { CartItem } from "@/lib/types" // Ensure CartItem is imported
 
-// NEW: Define a specific interface for the items received by this API route
-interface StripeCheckoutItem {
-  id: string
-  name: string
-  price: number // Numeric price (already extracted on client)
-  quantity: number
-  currency: string // 'aed' or 'gbp'
-}
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: "2025-06-30.basil",
+})
 
-// Helper to extract numeric price from string (e.g., "100 AED" or "£75 GBP")
-// This function is no longer strictly needed here if price is already numeric from client,
-// but kept for robustness if the client-side mapping changes.
-const extractNumericPrice = (priceString: string): number => {
-  if (!priceString) return 0
-  const match = priceString.match(/[\d.]+/)
-  return match ? Number.parseFloat(match[0]) : 0
-}
-
-export async function POST(req: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
-    // MODIFIED: Use the new StripeCheckoutItem type for cartItems
-    const { cartItems, currency, customerInfo, success_url, cancel_url } = (await req.json()) as {
-      cartItems: StripeCheckoutItem[] // Use the new type here
-      currency: string
-      customerInfo: any // You might want to define a more specific type for customerInfo
-      success_url: string
-      cancel_url: string
+    const { cartItems, customerInfo } = (await request.json()) as {
+      cartItems: CartItem[] // Use the CartItem type
+      customerInfo: any // Define a more specific type for customerInfo if available
     }
 
     console.log("Received parameters for Stripe checkout:", {
       cartItems,
-      currency,
       customerInfo,
     })
 
@@ -41,51 +23,65 @@ export async function POST(req: NextRequest) {
       return new NextResponse("No items in cart.", { status: 400 })
     }
 
-    // Map cart items to Stripe line items
-    const lineItems = cartItems.map((item: StripeCheckoutItem, index) => {
-      // Use StripeCheckoutItem here
-      // Price is already numeric from the client, so use item.price directly
-      const unitAmountInCents = Math.round(item.price * 100)
-
-      // Add detailed logging for each item's quantity
-      console.log(
-        `Processing item ${index}: ${item.name}, quantity: ${item.quantity}, unitAmountInCents: ${unitAmountInCents}`,
-      )
+    // Prepare line items for Stripe
+    const lineItems = cartItems.map((item: CartItem) => {
+      const priceNumeric = Number.parseFloat(item.selectedPrice.match(/[\d.]+/)?.[0] || "0")
+      const currency = item.selectedRegion === "UAE" ? "aed" : "gbp"
 
       // Ensure quantity is a number and greater than 0
-      if (typeof item.quantity !== "number" || item.quantity <= 0) {
-        console.error(`Invalid quantity for item ${item.name}: ${item.quantity}`)
+      if (typeof item.selectedQuantity !== "number" || item.selectedQuantity <= 0) {
+        console.error(`Invalid quantity for item ${item.name}: ${item.selectedQuantity}`)
         throw new Error(`Quantity for item ${item.name} is invalid or missing.`)
       }
 
+      // Construct absolute image URL
+      const imageUrl =
+        item.images && item.images.length > 0
+          ? `${request.nextUrl.origin}${item.images[0]}` // Convert relative path to absolute URL
+          : undefined // Or provide a default placeholder URL if no image
+
+      console.log(
+        `Processing item: ${item.name}, quantity: ${item.selectedQuantity}, unitAmountInCents: ${Math.round(
+          priceNumeric * 100,
+        )}, imageUrl: ${imageUrl}`,
+      )
+
       return {
         price_data: {
-          currency: currency, // Use the session-level currency
+          currency: currency,
           product_data: {
             name: item.name,
-            // REMOVED: description and images as they are not directly available in StripeCheckoutItem
-            // If you need these, you'll need to pass them from the client or fetch them here.
+            description: item.subtitle,
+            images: imageUrl ? [imageUrl] : [], // Use the absolute URL
             metadata: {
               internal_product_id: item.id, // Store your internal product ID
             },
           },
-          unit_amount: unitAmountInCents,
+          unit_amount: Math.round(priceNumeric * 100), // Convert to cents
         },
-        quantity: item.quantity, // MODIFIED: Use item.quantity (from client-side mapping)
+        quantity: item.selectedQuantity,
       }
     })
 
-    // Calculate total amount for metadata if needed, or rely on Stripe's sum
-    const totalAmountForMetadata = lineItems.reduce((sum, item) => {
-      return sum + (item.price_data.unit_amount || 0) * item.quantity
-    }, 0)
+    // --- MODIFIED: Simplify cart_items_json in metadata ---
+    const simplifiedCartItems = cartItems.map((item) => ({
+      id: item.id,
+      qty: item.selectedQuantity,
+      region: item.selectedRegion,
+    }))
+    // --- END MODIFIED ---
 
     const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      line_items: lineItems,
+      mode: "payment",
+      success_url: `${request.nextUrl.origin}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${request.nextUrl.origin}/cancel`,
       phone_number_collection: {
         enabled: true,
       },
       shipping_address_collection: {
-        allowed_countries: ["GB", "AE"],
+        allowed_countries: ["GB", "AE", "US", "CA", "AU", "DE", "FR", "IE", "NL", "SG"], // Add countries as needed
       },
       shipping_options: [
         {
@@ -93,7 +89,7 @@ export async function POST(req: NextRequest) {
             type: "fixed_amount",
             fixed_amount: {
               amount: 0,
-              currency: currency,
+              currency: lineItems[0]?.price_data.currency || "aed", // Use currency from first item or default
             },
             display_name: "Standard shipping",
             delivery_estimate: {
@@ -103,31 +99,17 @@ export async function POST(req: NextRequest) {
           },
         },
       ],
-      line_items: lineItems, // Use the dynamically generated line items
-      mode: "payment",
-      success_url: `${success_url}?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: cancel_url,
-      // Expand line_items to get product details in the session object
-      expand: ["line_items.data.price.product"],
-      // NEW: Add cart items and customer info to session metadata
+      // Store the simplified cartItems array in metadata
       metadata: {
-        cart_items_json: JSON.stringify(
-          cartItems.map((item) => ({
-            id: item.id,
-            name: item.name,
-            quantity: item.quantity, // Use item.quantity here
-            price: item.price, // Use item.price here
-            currency: item.currency, // Use item.currency here
-          })),
-        ),
-        customer_info_json: JSON.stringify(customerInfo),
-        total_amount_in_cents: totalAmountForMetadata,
+        cart_items_json: JSON.stringify(simplifiedCartItems), // Use simplified version
+        customer_info_json: JSON.stringify(customerInfo), // Also store customer info for webhook
       },
+      customer_email: customerInfo?.email, // Pre-fill customer email
     })
+
     return NextResponse.json({ url: session.url })
   } catch (error: any) {
     console.error("Error creating Stripe Checkout Session:", error)
-    // Return error message as plain text if it's a Stripe error, otherwise generic
     return new NextResponse(error.message || "Internal Server Error", { status: 500 })
   }
 }

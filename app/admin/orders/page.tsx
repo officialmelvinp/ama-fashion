@@ -76,7 +76,6 @@ export default function AdminOrdersPage() {
       } else if (action === "mark_delivered") {
         result = await handleDeliverOrder(orderId)
       }
-
       if (result?.success) {
         await fetchOrders() // Re-fetch orders to get updated data including product_display_name
         setShippingForm({ orderId: null, trackingNumber: "", carrier: "", estimatedDelivery: "" })
@@ -123,16 +122,14 @@ export default function AdminOrdersPage() {
       (filter === "paid" && order.payment_status === "completed") ||
       (filter === "shipped" && order.shipping_status === "shipped") ||
       (filter === "delivered" && order.shipping_status === "delivered") ||
-      (filter === "preorder" && order.quantity_preorder > 0) ||
+      (filter === "preorder" && (order.quantity_preorder ?? 0) > 0) ||
       (filter === "pending" && order.payment_status === "pending")
-
     const matchesSearch =
       order.customer_email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.customer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (order.product_display_name && order.product_display_name.toLowerCase().includes(searchTerm.toLowerCase())) || // Search by display name
-      order.product_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.product_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (order.tracking_number && order.tracking_number.toLowerCase().includes(searchTerm.toLowerCase()))
-
     return matchesFilter && matchesSearch
   })
 
@@ -141,7 +138,7 @@ export default function AdminOrdersPage() {
     const paidOrders = orders.filter((o) => o.payment_status === "completed").length
     const shippedOrders = orders.filter((o) => o.shipping_status === "shipped").length
     const deliveredOrders = orders.filter((o) => o.shipping_status === "delivered").length
-    const preOrders = orders.filter((o) => o.quantity_preorder > 0).length
+    const preOrders = orders.filter((o) => (o.quantity_preorder ?? 0) > 0).length
     const totalRevenue = orders
       .filter((o) => o.payment_status === "completed")
       .reduce((sum, o) => sum + o.total_amount, 0) // total_amount is now guaranteed to be a number from API
@@ -256,7 +253,6 @@ export default function AdminOrdersPage() {
             </CardContent>
           </Card>
         </div>
-
         {/* Filters - Only show if there are orders */}
         {orders.length > 0 && (
           <div className="flex gap-4 mb-6">
@@ -287,7 +283,6 @@ export default function AdminOrdersPage() {
           </div>
         )}
       </div>
-
       {/* Orders List */}
       <div className="space-y-4">
         {orders.length === 0 ? (
@@ -343,7 +338,7 @@ export default function AdminOrdersPage() {
                       {order.payment_status}
                     </Badge>
                     {getShippingStatusBadge(order.shipping_status)}
-                    {order.quantity_preorder > 0 && <Badge variant="secondary">Pre-Order</Badge>}
+                    {(order.quantity_preorder ?? 0) > 0 && <Badge variant="secondary">Pre-Order</Badge>}
                   </div>
                 </div>
               </CardHeader>
@@ -354,7 +349,7 @@ export default function AdminOrdersPage() {
                     <h3 className="font-semibold mb-2 text-[#2c2824]">Customer Information</h3>
                     <div className="text-sm space-y-1">
                       <p>
-                        <strong>Name:</strong> {order.customer_name}
+                        <strong>Name:</strong> {order.customer_name ?? "N/A"}
                       </p>
                       <p>
                         <strong>Email:</strong> {order.customer_email}
@@ -380,12 +375,12 @@ export default function AdminOrdersPage() {
                       <p>
                         <strong>Total Quantity:</strong> {order.quantity_ordered}
                       </p>
-                      {order.quantity_in_stock > 0 && (
+                      {(order.quantity_in_stock ?? 0) > 0 && (
                         <p>
                           <strong>In Stock:</strong> {order.quantity_in_stock}
                         </p>
                       )}
-                      {order.quantity_preorder > 0 && (
+                      {(order.quantity_preorder ?? 0) > 0 && (
                         <p>
                           <strong>Pre-Order:</strong> {order.quantity_preorder}
                         </p>

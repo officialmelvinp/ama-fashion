@@ -1,8 +1,9 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { neon } from "@neondatabase/serverless"
-import { sendOrderConfirmationEmail, sendEmail } from "@/lib/email" // Import centralized email functions
-import { getProductDisplayName } from "@/lib/inventory" // Import helper to get product display name
-import type { CartItem } from "@/lib/types" // Import CartItem type
+import { sendOrderConfirmationEmail } from "@/lib/email" // Import customer email sender
+import { sendVendorNotificationEmail } from "@/lib/email-vendor" // Import vendor email sender
+import { recordOrder, getProductDisplayName } from "@/lib/inventory" // Import recordOrder and getProductDisplayName
+import type { OrderItemEmailData, RecordOrderData } from "@/lib/types" // Import CartItem and OrderItemEmailData types
 
 const sql = neon(process.env.DATABASE_URL!)
 
@@ -57,154 +58,6 @@ async function verifyPayPalWebhook(headers: any, body: string) {
   }
 }
 
-// MODIFIED: recordOrder now accepts an array of items
-async function recordOrder(orderData: {
-  payment_id: string
-  customer_email: string
-  customer_name: string
-  shipping_address: string
-  phone_number: string
-  notes: string
-  order_type: string
-  order_status: string
-  shipping_status: string
-  total_amount: number
-  currency: string
-  items: {
-    productId: string
-    quantity: number
-    price: number
-    currency: string
-    productDisplayName: string // Added for convenience in recording
-  }[]
-}) {
-  try {
-    console.log("💾 Recording order to database:", orderData.payment_id)
-    // Check if order already exists
-    const existingOrder = await sql`
-    SELECT id FROM orders WHERE payment_id = ${orderData.payment_id}
-  `
-    if (existingOrder.length > 0) {
-      console.log(`Order with payment_id ${orderData.payment_id} already exists. Skipping insertion.`)
-      return existingOrder[0].id // Return existing order ID
-    }
-
-    // Construct notes based on all items
-    const allProductNames = orderData.items.map((item) => item.productDisplayName).join(", ")
-    const totalQuantityOrdered = orderData.items.reduce((sum, item) => sum + item.quantity, 0)
-    const detailedNotes =
-      `PayPal webhook payment. Order ID: ${orderData.payment_id}. Items: ${allProductNames}. Total Quantity: ${totalQuantityOrdered}. ${orderData.notes || ""}`.trim()
-
-    // Insert into the main 'orders' table
-    const result = await sql`
-    INSERT INTO orders (
-      customer_email, customer_name, payment_status, payment_id,
-      total_amount, currency, shipping_address, phone_number, notes,
-      order_type, order_status, shipping_status
-    ) VALUES (
-      ${orderData.customer_email}, ${orderData.customer_name},
-      ${orderData.order_status}, ${orderData.payment_id}, ${orderData.total_amount},
-      ${orderData.currency}, ${orderData.shipping_address}, ${orderData.phone_number},
-      ${detailedNotes}, ${orderData.order_type}, ${orderData.order_status},
-      ${orderData.shipping_status}
-    ) RETURNING id
-  `
-    const orderId = result[0].id
-
-    // Insert each item into the 'order_items' table and update 'product_inventory'
-    for (const item of orderData.items) {
-      await sql`
-      INSERT INTO order_items (order_id, product_id, product_display_name, quantity, unit_price, currency)
-      VALUES (${orderId}, ${item.productId}, ${item.productDisplayName}, ${item.quantity}, ${item.price}, ${item.currency})
-    `
-      // Update individual product inventory
-      await sql`
-      UPDATE product_inventory
-      SET quantity_available = GREATEST(0, quantity_available - ${item.quantity}),
-          updated_at = CURRENT_TIMESTAMP
-      WHERE product_id = ${item.productId}
-    `
-    }
-
-    console.log("✅ Order recorded successfully with ID:", orderId)
-    return orderId
-  } catch (error) {
-    console.error("❌ Database error:", error)
-    throw error
-  }
-}
-
-// MODIFIED: sendPayPalWebhookEmails now accepts an array of CartItem
-async function sendPayPalWebhookEmails(orderData: any, cartItems: CartItem[]) {
-  try {
-    console.log("📧 Sending PayPal webhook emails for:", orderData.payment_id)
-
-    const itemsHtml = cartItems
-      .map(
-        (item) => `
-    <li>
-      <strong>${item.name}</strong> (${item.subtitle}) - ${item.selectedQuantity} x ${item.selectedPrice}
-    </li>
-  `,
-      )
-      .join("")
-
-    // Customer confirmation email
-    await sendOrderConfirmationEmail({
-      customer_email: orderData.customer_email,
-      customer_name: orderData.customer_name,
-      order_id: orderData.payment_id,
-      items: cartItems.map((item) => ({
-        product_display_name: item.name,
-        quantity: item.selectedQuantity,
-        unit_price: Number.parseFloat(item.selectedPrice.match(/[\d.]+/)?.[0] || "0"),
-        currency: item.selectedRegion === "UAE" ? "AED" : "GBP",
-      })),
-      total_amount: orderData.total_amount,
-      currency: orderData.currency,
-      payment_status: orderData.payment_status,
-      shipping_status: "paid", // Initial shipping status
-    })
-
-    // Send vendor notification email
-    const vendorEmailSubject = `🎉 New PayPal Webhook Order: ${orderData.total_amount} ${orderData.currency} (${cartItems.length} items)`
-    const vendorEmailHtml = `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <h1 style="color: #2c2824;">🎉 New PayPal Webhook Order Received!</h1>
-      <div style="background: #f8f3ea; padding: 20px; border-radius: 8px; margin: 20px 0;">
-        <h3>Order Information:</h3>
-        <p><strong>Payment ID:</strong> ${orderData.payment_id}</p>
-        <p><strong>Total Amount:</strong> ${orderData.total_amount} ${orderData.currency}</p>
-        <p><strong>Order Type:</strong> ${orderData.order_type}</p>
-        <p><strong>Payment Method:</strong> PayPal Webhook</p>
-        <h4>Items:</h4>
-        <ul>${itemsHtml}</ul>
-      </div>
-      <div style="background: #2c2824; color: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
-        <h3 style="margin-top: 0;">Customer Details:</h3>
-        <p><strong>Name:</strong> ${orderData.customer_name}</p>
-        <p><strong>Email:</strong> ${orderData.customer_email}</p>
-        <p><strong>Phone:</strong> ${orderData.phone_number || "Not provided"}</p>
-        <p><strong>Address:</strong> ${orderData.shipping_address || "Not provided"}</p>
-      </div>
-      <div style="background: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0;">
-        <h3 style="color: #2c2824; margin-top: 0;">Action Items:</h3>
-        <p>✅ Contact customer via WhatsApp within 24 hours</p>
-        <p>✅ Confirm order details and delivery preferences</p>
-        <p>✅ Prepare the order for delivery</p>
-        <p>✅ Update order status in admin panel</p>
-      </div>
-    </div>
-  `
-    await sendEmail({ to: "support@amariahco.com", subject: vendorEmailSubject, html: vendorEmailHtml })
-
-    console.log("✅ PayPal webhook emails sent successfully")
-  } catch (error) {
-    console.error("❌ Email sending failed:", error)
-    // Don't throw error here - we still want to return success even if email fails
-  }
-}
-
 async function handlePaymentCaptureCompleted(event: any) {
   try {
     const resource = event.resource
@@ -220,23 +73,14 @@ async function handlePaymentCaptureCompleted(event: any) {
       currency,
     })
 
-    // Check if order already exists
-    const existingOrder = await sql`
-    SELECT id FROM orders WHERE payment_id = ${captureId}
-  `
-    if (existingOrder.length > 0) {
-      console.log("✅ Order already exists, skipping...")
-      return
-    }
+    // Check if order already exists using the shared recordOrder function's internal check
+    // We don't need to explicitly check here, recordOrder will handle it.
 
     // Extract line items from the webhook event
     const paypalLineItems = resource.purchase_units?.[0]?.items || []
     if (paypalLineItems.length === 0) {
       console.warn("No line items found in PayPal webhook event. Cannot process order details.")
-      // Fallback for single item if no line items are present (e.g., older PayPal integrations)
-      // This part might need to be adjusted based on how your PayPal orders are structured
-      // if they don't always include detailed line items in the webhook.
-      // For now, we'll create a dummy item if none are found.
+      // Fallback for single item if no line items are present
       const fallbackProductId = resource.purchase_units?.[0]?.reference_id || "unknown-product-id-webhook"
       const fallbackProductDisplayName = await getProductDisplayName(fallbackProductId)
       const fallbackPrice = amount / (resource.purchase_units?.[0]?.quantity || 1) // Distribute total amount if quantity is available
@@ -252,64 +96,91 @@ async function handlePaymentCaptureCompleted(event: any) {
     }
 
     // Prepare items for database recording and email sending
-    const itemsForProcessing = await Promise.all(
+    const itemsForProcessing: OrderItemEmailData[] = await Promise.all(
       paypalLineItems.map(async (item: any) => {
         const productId = item.sku || item.name // Use SKU or name as product_id
         const productDisplayName = await getProductDisplayName(productId)
         return {
-          productId: productId,
+          product_id: productId,
+          product_display_name: productDisplayName,
           quantity: Number.parseInt(item.quantity),
-          price: Number.parseFloat(item.unit_amount.value),
+          unit_price: Number.parseFloat(item.unit_amount.value),
           currency: item.unit_amount.currency_code,
-          productDisplayName: productDisplayName,
         }
       }),
     )
 
-    // Convert itemsForProcessing to CartItem[] for sendPayPalWebhookEmails
-    const cartItemsForEmail: CartItem[] = itemsForProcessing.map((item) => ({
-      id: item.productId,
-      name: item.productDisplayName,
-      subtitle: "", // Webhook doesn't provide subtitle directly
-      materials: [], // Webhook doesn't provide materials directly
-      description: "", // Webhook doesn't provide description directly
-      priceAED: item.currency === "AED" ? `${item.price} AED` : "",
-      priceGBP: item.currency === "GBP" ? `£${item.price} GBP` : "",
-      images: [], // Webhook doesn't provide images directly
-      category: "", // Webhook doesn't provide category directly
-      essences: [], // Webhook doesn't provide essences directly
-      selectedQuantity: item.quantity,
-      selectedRegion: item.currency === "AED" ? "UAE" : "UK", // Infer region from currency
-      selectedPrice: `${item.price.toFixed(2)} ${item.currency}`, // Formatted price string
-    }))
+    const customerEmail = resource.payee?.email_address || "" // PayPal webhook might provide payee email
+    const customerName =
+      resource.payer?.name?.given_name && resource.payer?.name?.surname
+        ? `${resource.payer.name.given_name} ${resource.payer.name.surname}`
+        : "PayPal Customer" // Try to get customer name
+    const shippingAddress = resource.shipping?.address?.address_line_1 || "" // Try to get shipping address
+    const phoneNumber = resource.payer?.phone_number?.national_number || "" // Try to get phone number
 
-    // Record the order
-    const orderData = {
-      payment_id: captureId,
-      customer_email: resource.payee?.email_address || "", // PayPal webhook might provide payee email
-      customer_name:
-        resource.payer?.name?.given_name && resource.payer?.name?.surname
-          ? `${resource.payer.name.given_name} ${resource.payer.name.surname}`
-          : "PayPal Customer", // Try to get customer name
-      shipping_address: resource.shipping?.address?.address_line_1 || "", // Try to get shipping address
-      phone_number: resource.payer?.phone_number?.national_number || "", // Try to get phone number
-      notes: `PayPal webhook payment. Order ID: ${orderId}.`, // Notes will be detailed by recordOrder
-      order_type: "purchase",
-      order_status: "completed", // Use 'completed' for successful payments
-      shipping_status: "paid", // Start with "paid" status
-      total_amount: amount,
+    // Record the order using the shared recordOrder function
+    const orderDataForRecord = {
+      paymentIntentId: captureId, // Use capture ID as paymentIntentId for consistency
+      paypalOrderId: orderId, // Keep PayPal order ID for reference
+      customerEmail: customerEmail,
+      customerName: customerName,
+      shippingAddress: shippingAddress,
+      phoneNumber: phoneNumber,
+      notes: `PayPal webhook payment. Order ID: ${orderId}.`,
+      orderType: "purchase",
+      orderStatus: "completed", // Use 'completed' for successful payments
+      shippingStatus: "paid", // Start with "paid" status
+      totalAmount: amount,
       currency: currency,
-      items: itemsForProcessing, // Pass the processed items array
+      status: "completed",
+      items: itemsForProcessing.map((item) => ({
+        productId: item.product_id,
+        quantity: item.quantity,
+        price: item.unit_price,
+      })),
+    } as RecordOrderData
+
+    const recordResult = await recordOrder(orderDataForRecord)
+    const orderDbId = recordResult.orderId
+
+    if (!recordResult.success || !orderDbId) {
+      console.error("❌ Failed to record order in DB from webhook:", recordResult.message)
+      return // Exit if order recording failed
     }
 
-    await recordOrder(orderData)
+    console.log(`🎉 Order recorded with ID: ${orderDbId} from webhook.`)
 
-    // Send notification email - MODIFIED to use consolidated function
-    await sendPayPalWebhookEmails(orderData, cartItemsForEmail)
+    // Send customer confirmation email
+    await sendOrderConfirmationEmail({
+      customer_name: customerName,
+      customer_email: customerEmail,
+      order_id: orderDbId.toString(), // Use the DB order ID
+      items: itemsForProcessing,
+      total_amount: amount,
+      currency: currency,
+      payment_status: "Confirmed",
+      shipping_status: "paid",
+    })
+    console.log("✅ Customer confirmation email sent from webhook.")
+
+    // Send vendor notification email
+    await sendVendorNotificationEmail({
+      order_id: orderDbId.toString(), // Use the DB order ID
+      customer_name: customerName,
+      customer_email: customerEmail,
+      payment_id: captureId, // Pass PayPal capture ID
+      phone_number: phoneNumber,
+      shipping_address: shippingAddress,
+      total_amount: amount,
+      currency: currency,
+      items: itemsForProcessing,
+      payment_method: "PayPal Webhook",
+    })
+    console.log("✅ Vendor notification email sent from webhook.")
 
     console.log("✅ PayPal webhook processed successfully")
   } catch (error) {
-    console.error("❌ Error handling PayPal payment capture:", error)
+    console.error("❌ Error handling PayPal payment capture from webhook:", error)
     throw error
   }
 }
@@ -320,33 +191,35 @@ async function handlePaymentCaptureRefunded(event: any) {
     const captureId = resource.id
     const refundAmount = Number.parseFloat(resource.amount.value)
     const currency = resource.amount.currency_code
+
     console.log("💸 PayPal refund processed:", {
       captureId,
       refundAmount,
       currency,
     })
-    // Update order status
+
+    // Update order status in DB
     await sql`
-    UPDATE orders
-    SET order_status = 'refunded',
-        notes = CONCAT(notes, ' | Refunded: ${refundAmount} ${currency}')
-    WHERE payment_id = ${captureId}
-  `
-    // Send notification
-    const vendorEmailSubject = `💸 PayPal Refund: ${refundAmount} ${currency}`
-    const vendorEmailHtml = `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <h1 style="color: #2c2824;">💸 PayPal Refund Processed</h1>
-      <div style="background: #fff3cd; padding: 20px; border-radius: 8px; margin: 20px 0;">
-        <h3>Refund Details:</h3>
-        <p><strong>Capture ID:</strong> ${captureId}</p>
-        <p><strong>Refund Amount:</strong> ${refundAmount} ${currency}</p>
-        <p><strong>Status:</strong> Refunded</p>
-      </div>
-    </div>
-  `
-    await sendEmail({ to: "support@amariahco.com", subject: vendorEmailSubject, html: vendorEmailHtml })
-    console.log("✅ PayPal refund webhook processed")
+      UPDATE orders
+      SET order_status = 'refunded',
+          notes = CONCAT(notes, ' | Refunded: ${refundAmount} ${currency}')
+      WHERE payment_id = ${captureId}
+    `
+
+    // Send vendor notification email for refund
+    await sendVendorNotificationEmail({
+      order_id: captureId, // Use captureId as order_id for refund notification
+      customer_name: "Refund Notification", // Provide a placeholder name
+      customer_email: process.env.VENDOR_EMAIL_RECIPIENT || "support@amariahco.com", // Send to vendor email
+      phone_number: null,
+      shipping_address: null,
+      total_amount: refundAmount,
+      currency: currency,
+      items: [], // No specific items for refund notification
+      payment_method: "PayPal Refund", // Add payment_method
+      // notes: `Refund processed for capture ID: ${captureId}. Amount: ${refundAmount} ${currency}.`, // This is not part of the type
+    })
+    console.log("✅ PayPal refund webhook processed and vendor email sent.")
   } catch (error) {
     console.error("❌ Error handling PayPal refund:", error)
     throw error
@@ -358,6 +231,7 @@ export async function POST(request: NextRequest) {
     const body = await request.text()
     const event = JSON.parse(body)
     const headers = Object.fromEntries(request.headers.entries())
+
     console.log("🔔 PayPal webhook received:", event.event_type)
 
     // Verify webhook signature (optional but recommended for production)

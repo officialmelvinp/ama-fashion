@@ -6,11 +6,14 @@ const sql = neon(process.env.DATABASE_URL!)
 // Helper function to get product display name from the database
 export async function getProductDisplayName(productId: string): Promise<string> {
   try {
+    // Querying product_inventory for product_id as a fallback display name
     const result = await sql`
-      SELECT product_name FROM products WHERE product_id = ${productId}
+      SELECT product_id FROM product_inventory WHERE product_id = ${productId}
     `
     if (result.length > 0) {
-      return result[0].product_name
+      // If you have a 'product_name' column in product_inventory, use it here.
+      // Otherwise, product_id is the best available display name from this table.
+      return result[0].product_id
     }
     console.warn(`Product display name not found for ID: ${productId}. Using fallback.`)
     return `AMA Fashion Item (${productId})` // Fallback if not found
@@ -23,30 +26,45 @@ export async function getProductDisplayName(productId: string): Promise<string> 
 // Get inventory for a specific product, now returning ProductInventory type
 export async function getProductInventory(productId: string): Promise<ProductInventory | null> {
   try {
-    // Assuming product_name and other details are in a 'products' table, joined with 'product_inventory'
-    // If product_name is directly in product_inventory, adjust this query.
+    // Querying product_inventory table
     const result = await sql`
       SELECT
-        pi.product_id,
-        p.product_name, -- Assuming 'p' is an alias for a 'products' table
-        p.description,
-        pi.price_aed as price, -- Using price_aed as the main price for ProductInventory
-        'AED' as currency, -- Assuming AED as default currency for this view
-        pi.quantity_available,
-        (pi.quantity_available = 0 AND pi.preorder_ready_date IS NOT NULL) as preorder_available,
-        pi.preorder_ready_date as preorder_eta,
-        p.image_url,
-        (pi.quantity_available > 0) as isAvailable,
-        pi.price_aed as "priceAED",
-        pi.price_gbp as "priceGBP"
-      FROM product_inventory pi
-      JOIN products p ON pi.product_id = p.product_id -- Join with a 'products' table
-      WHERE pi.product_id = ${productId} AND pi.status = 'active'
+        product_id,
+        product_id as product_name, -- Using product_id as product_name for now
+        NULL as description, -- Placeholder: Add description to product_inventory or join with 'products' table
+        NULL as price, -- Placeholder: Add price to product_inventory or join with 'products' table
+        NULL as currency, -- Placeholder: Add currency to product_inventory or join with 'products' table
+        NULL as image_url, -- Placeholder: Add image_url to product_inventory or join with 'products' table
+        quantity_available as "stockQuantity",
+        0 as "preorderQuantity", -- Assuming no dedicated preorder_quantity column in product_inventory
+        preorder_ready_date as preorder_eta,
+        (quantity_available > 0) as "isAvailable",
+        price_aed as "priceAED",
+        price_gbp as "priceGBP"
+      FROM product_inventory
+      WHERE product_id = ${productId} AND status = 'active'
     `
-    return (result[0] as ProductInventory) || null
-  } catch (error) {
-    console.error("Error fetching product inventory:", error)
+    if (result.length > 0) {
+      const row = result[0]
+      return {
+        product_id: row.product_id,
+        product_name: row.product_name,
+        description: row.description,
+        price: row.price ? Number.parseFloat(row.price as string) : null, // Ensure price is a number or null
+        currency: row.currency,
+        stockQuantity: row.stockQuantity,
+        preorderQuantity: row.preorderQuantity,
+        preorder_eta: row.preorder_eta,
+        image_url: row.image_url,
+        isAvailable: row.isAvailable === true, // Ensure boolean type
+        priceAED: row.priceAED ? Number.parseFloat(row.priceAED as string) : null,
+        priceGBP: row.priceGBP ? Number.parseFloat(row.priceGBP as string) : null,
+      } as ProductInventory
+    }
     return null
+  } catch (error) {
+    console.error(`Error fetching product inventory for ${productId}:`, error)
+    throw new Error("Failed to fetch product inventory.")
   }
 }
 
@@ -56,15 +74,19 @@ export async function getAllProductsWithStock(): Promise<ProductWithStock[]> {
     const result = await sql`
       SELECT
         product_id as "productId",
-        quantity_available as "stockLevel",
-        (quantity_available > 0) as "isAvailable",
+        quantity_available as "stockLevel", -- Corrected column name
+        (quantity_available > 0) as "isAvailable", -- Corrected column name
         price_aed as "priceAED",
         price_gbp as "priceGBP"
-      FROM product_inventory
-      WHERE status = 'active'
+      FROM product_inventory -- Corrected table name
       ORDER BY product_id
     `
-    return result as ProductWithStock[]
+    // Ensure priceAED and priceGBP are numbers
+    return result.map((row) => ({
+      ...row,
+      priceAED: row.priceAED ? Number.parseFloat(row.priceAED as string) : undefined,
+      priceGBP: row.priceGBP ? Number.parseFloat(row.priceGBP as string) : undefined,
+    })) as ProductWithStock[]
   } catch (error) {
     console.error("Error fetching products with stock:", error)
     return []
@@ -75,8 +97,8 @@ export async function getAllProductsWithStock(): Promise<ProductWithStock[]> {
 export async function getAvailableProducts(): Promise<string[]> {
   try {
     const result = await sql`
-      SELECT product_id FROM product_inventory
-      WHERE quantity_available > 0 AND status = 'active'
+      SELECT product_id FROM product_inventory -- Corrected table name
+      WHERE quantity_available > 0 -- Corrected column name
     `
     return result.map((row: any) => row.product_id)
   } catch (error) {
@@ -88,44 +110,48 @@ export async function getAvailableProducts(): Promise<string[]> {
 // Enhanced stock update with quantity tracking
 export async function updateStock(
   productId: string,
-  quantityPurchased = 1,
-): Promise<{
-  success: boolean
-  quantityFromStock: number
-  quantityPreorder: number
-  remainingStock: number
-}> {
+  quantityOrdered: number,
+): Promise<{ success: boolean; quantityFromStock: number; quantityPreorder: number }> {
   try {
-    // Get current stock
-    const currentStock = await sql`
-      SELECT quantity_available FROM product_inventory
+    // Fetch from product_inventory
+    const productResult = await sql`
+      SELECT quantity_available, preorder_ready_date FROM product_inventory
       WHERE product_id = ${productId} AND status = 'active'
     `
-    if (currentStock.length === 0) {
-      return { success: false, quantityFromStock: 0, quantityPreorder: 0, remainingStock: 0 }
-    }
-    const available = currentStock[0].quantity_available
-    const quantityFromStock = Math.min(quantityPurchased, available)
-    const quantityPreorder = Math.max(0, quantityPurchased - available)
 
-    // Update stock (don't go below 0)
-    const result = await sql`
-      UPDATE product_inventory
-      SET
-        quantity_available = GREATEST(0, quantity_available - ${quantityFromStock}),
-        updated_at = CURRENT_TIMESTAMP
-      WHERE product_id = ${productId} AND status = 'active'
-      RETURNING quantity_available
-    `
-    return {
-      success: true,
-      quantityFromStock,
-      quantityPreorder,
-      remainingStock: result[0]?.quantity_available || 0,
+    if (productResult.length === 0) {
+      console.error(`Product ${productId} not found for stock update.`)
+      return { success: false, quantityFromStock: 0, quantityPreorder: 0 }
     }
+
+    let { quantity_available: stockQuantity } = productResult[0]
+    let quantityFromStock = 0
+    let quantityPreorder = 0
+
+    if (stockQuantity >= quantityOrdered) {
+      // Fulfill entirely from stock
+      quantityFromStock = quantityOrdered
+      stockQuantity -= quantityOrdered
+    } else {
+      // Fulfill partially from stock, rest from preorder
+      quantityFromStock = stockQuantity
+      quantityPreorder = quantityOrdered - stockQuantity
+      stockQuantity = 0
+      // Note: preorder_quantity is not directly updated here as it's not a column in product_inventory
+      // If you need to track this, add a 'preorder_quantity' column to product_inventory.
+    }
+
+    await sql`
+      UPDATE product_inventory -- Corrected table name
+      SET
+        quantity_available = ${stockQuantity}, -- Corrected column name
+        updated_at = CURRENT_TIMESTAMP
+      WHERE product_id = ${productId}
+    `
+    return { success: true, quantityFromStock, quantityPreorder }
   } catch (error) {
-    console.error("Error updating stock:", error)
-    return { success: false, quantityFromStock: 0, quantityPreorder: 0, remainingStock: 0 }
+    console.error(`Error updating stock for product ${productId}:`, error)
+    return { success: false, quantityFromStock: 0, quantityPreorder: 0 }
   }
 }
 
@@ -133,8 +159,21 @@ export async function updateStock(
 export async function getAllInventory(): Promise<InventoryItem[]> {
   try {
     const result = await sql`
-      SELECT * FROM product_inventory
-      WHERE status = 'active'
+      SELECT
+        id, -- Added id as it's in your InventoryItem type and database data
+        product_id,
+        quantity_available,
+        -- Assuming total_quantity is sum of quantity_available and a preorder_quantity column
+        -- If not, you might need to calculate it or fetch from another source.
+        -- For now, using quantity_available as total_quantity if no explicit preorder_quantity column.
+        quantity_available as total_quantity, -- Using quantity_available as total_quantity
+        status,
+        price_aed,
+        price_gbp,
+        preorder_ready_date,
+        created_at,
+        updated_at
+      FROM product_inventory -- Corrected table name
       ORDER BY product_id
     `
     return result as InventoryItem[]
@@ -147,11 +186,11 @@ export async function getAllInventory(): Promise<InventoryItem[]> {
 export async function updateProductStock(productId: string, newQuantity: number): Promise<boolean> {
   try {
     await sql`
-      UPDATE product_inventory
+      UPDATE product_inventory -- Corrected table name
       SET
-        quantity_available = ${newQuantity},
+        quantity_available = ${newQuantity}, -- Corrected column name
         updated_at = CURRENT_TIMESTAMP
-      WHERE product_id = ${productId} AND status = 'active'
+      WHERE product_id = ${productId}
     `
     return true
   } catch (error) {
@@ -169,13 +208,12 @@ export async function updateProductPrice(
 ): Promise<boolean> {
   try {
     const currentPrices = await sql`
-      SELECT price_aed, price_gbp FROM product_inventory
-      WHERE product_id = ${productId} AND status = 'active'
+      SELECT price_aed, price_gbp FROM product_inventory -- Corrected table name
+      WHERE product_id = ${productId}
     `
     if (currentPrices.length > 0) {
       const oldPriceAED = currentPrices[0].price_aed
       const oldPriceGBP = currentPrices[0].price_gbp
-
       // Record price history
       await sql`
         INSERT INTO price_history (
@@ -187,15 +225,14 @@ export async function updateProductPrice(
         )
       `
     }
-
     // Update prices
     await sql`
-      UPDATE product_inventory
+      UPDATE product_inventory -- Corrected table name
       SET
         price_aed = ${newPriceAED},
         price_gbp = ${newPriceGBP},
         updated_at = CURRENT_TIMESTAMP
-      WHERE product_id = ${productId} AND status = 'active'
+      WHERE product_id = ${productId}
     `
     return true
   } catch (error) {
@@ -208,11 +245,11 @@ export async function updateProductPrice(
 export async function updatePreorderDate(productId: string, newPreorderDate: string | null): Promise<boolean> {
   try {
     await sql`
-      UPDATE product_inventory
+      UPDATE product_inventory -- Corrected table name
       SET
-        preorder_ready_date = ${newPreorderDate},
+        preorder_ready_date = ${newPreorderDate}, -- Corrected column name
         updated_at = CURRENT_TIMESTAMP
-      WHERE product_id = ${productId} AND status = 'active'
+      WHERE product_id = ${productId}
     `
     return true
   } catch (error) {
@@ -250,7 +287,7 @@ export async function getOrders(): Promise<Order[]> {
       ORDER BY created_at DESC
     `) as Order[]
 
-    // Fetch order items for each order
+    // Fetch order items for each order and populate summary fields
     const ordersWithItems = await Promise.all(
       ordersData.map(async (order) => {
         const items = (await sql`
@@ -260,10 +297,38 @@ export async function getOrders(): Promise<Order[]> {
           WHERE order_id = ${order.id}
           ORDER BY id ASC
         `) as OrderItem[]
-        return { ...order, items }
+
+        // For the admin page's simplified display, get details of the first item
+        const firstItem = items[0] || null
+        let product_display_name = "N/A"
+        let product_id = "N/A"
+        let quantity_ordered = 0
+        let quantity_in_stock = 0
+        let quantity_preorder = 0
+
+        if (firstItem) {
+          product_display_name = firstItem.product_display_name
+          product_id = firstItem.product_id
+          quantity_ordered = firstItem.quantity
+          // Fetch current stock/preorder from product_inventory table for display
+          const inventory = await getProductInventory(firstItem.product_id)
+          if (inventory) {
+            quantity_in_stock = inventory.stockQuantity
+            quantity_preorder = inventory.preorderQuantity
+          }
+        }
+
+        return {
+          ...order,
+          items,
+          product_display_name,
+          product_id,
+          quantity_ordered,
+          quantity_in_stock,
+          quantity_preorder,
+        }
       }),
     )
-
     return ordersWithItems
   } catch (error) {
     console.error("Error fetching orders:", error)
@@ -298,7 +363,34 @@ export async function getOrderById(orderId: number): Promise<Order | null> {
       ORDER BY id ASC
     `) as OrderItem[]
 
-    return { ...order, items }
+    // For getOrderById, we also need to populate the simplified fields for consistency
+    const firstItem = items[0] || null
+    let product_display_name = "N/A"
+    let product_id = "N/A"
+    let quantity_ordered = 0
+    let quantity_in_stock = 0
+    let quantity_preorder = 0
+
+    if (firstItem) {
+      product_display_name = firstItem.product_display_name
+      product_id = firstItem.product_id
+      quantity_ordered = firstItem.quantity
+      const inventory = await getProductInventory(firstItem.product_id)
+      if (inventory) {
+        quantity_in_stock = inventory.stockQuantity
+        quantity_preorder = inventory.preorderQuantity
+      }
+    }
+
+    return {
+      ...order,
+      items,
+      product_display_name,
+      product_id,
+      quantity_ordered,
+      quantity_in_stock,
+      quantity_preorder,
+    }
   } catch (error) {
     console.error(`Error fetching order with ID ${orderId}:`, error)
     throw new Error(`Failed to fetch order with ID ${orderId}.`)
@@ -311,81 +403,116 @@ export async function getOrderById(orderId: number): Promise<Order | null> {
  * @param orderData - The data for the order to be recorded.
  * @returns A success message or an error.
  */
-export async function recordOrder(orderData: {
-  items: Array<{ productId: string; quantity: number; price: number }>
+interface RecordOrderData {
+  items: {
+    productId: string
+    quantity: number
+    price: number
+  }[]
   totalAmount: number
   currency: string
   status: string
   customerEmail: string
-  paymentIntentId?: string // Optional: for Stripe payment intent ID
-  paypalOrderId?: string // Optional: for PayPal order ID
-  // Add any other relevant order details like shipping address, customer ID, etc.
-}) {
-  console.log("--- Recording Order ---")
-  console.log("Order Data:", JSON.stringify(orderData, null, 2))
-  console.log("-----------------------")
-
-  // Placeholder for actual database interaction
-  // Example:
-  // const newOrder = await sql`
-  //   INSERT INTO orders (
-  //     customer_email, customer_name, payment_status, total_amount, currency,
-  //     payment_id, order_type, order_status, shipping_status
-  //   ) VALUES (
-  //     ${orderData.customerEmail},
-  //     ${orderData.customerName || 'Guest'}, // Assuming customerName might be optional
-  //     ${orderData.status},
-  //     ${orderData.totalAmount},
-  //     ${orderData.currency},
-  //     ${orderData.paymentIntentId || orderData.paypalOrderId || null},
-  //     ${orderData.items.some(item => item.quantityPreorder > 0) ? 'preorder' : 'standard'}, // Determine order type
-  //     'new', // Initial order status
-  //     'pending' // Initial shipping status
-  //   ) RETURNING id
-  // `
-  // const orderId = newOrder[0].id;
-
-  // // Insert order items
-  // for (const item of orderData.items) {
-  //   await sql`
-  //     INSERT INTO order_items (
-  //       order_id, product_id, product_display_name, quantity, unit_price, currency
-  //     ) VALUES (
-  //       ${orderId},
-  //       ${item.productId},
-  //       ${await getProductDisplayName(item.productId)}, // Fetch display name
-  //       ${item.quantity},
-  //       ${item.price},
-  //       ${orderData.currency}
-  //     )
-  //   `
-  // }
-
-  // For now, just simulate success
-  return { success: true, message: "Order recorded successfully (simulated)" }
+  paymentIntentId?: string | null
+  paypalOrderId?: string | null
+  customerName?: string | null
+  shippingAddress?: string | null
+  phoneNumber?: string | null
+  notes?: string | null
+  orderType?: "standard" | "preorder" | "mixed" | "purchase" // Added "purchase"
+  orderStatus?: string
+  shippingStatus?: string
 }
 
-/**
- * Placeholder function to get available quantity of a product.
- * In a real application, this would query your product inventory.
- * @param productId - The ID of the product.
- * @returns The available quantity.
- */
-export async function getAvailableQuantity(productId: string): Promise<number> {
-  console.log(`Simulating fetching available quantity for product: ${productId}`)
-  // Return a dummy quantity for demonstration
-  return 100
-}
+export async function recordOrder(
+  data: RecordOrderData,
+): Promise<{ success: boolean; orderId?: number; message?: string }> {
+  const {
+    items,
+    totalAmount,
+    currency,
+    status,
+    customerEmail,
+    paymentIntentId,
+    paypalOrderId,
+    customerName,
+    shippingAddress,
+    phoneNumber,
+    notes,
+    orderType,
+    orderStatus,
+    shippingStatus,
+  } = data
 
-/**
- * Placeholder function to update the quantity of a product.
- * In a real application, this would update your product inventory.
- * @param productId - The ID of the product.
- * @param quantityChange - The amount to change the quantity by (positive for add, negative for subtract).
- * @returns True if successful, false otherwise.
- */
-export async function updateQuantity(productId: string, quantityChange: number): Promise<boolean> {
-  console.log(`Simulating updating quantity for product ${productId} by ${quantityChange}`)
-  // Simulate success
-  return true
+  if (!items || items.length === 0) {
+    return { success: false, message: "No items provided for the order." }
+  }
+
+  try {
+    // Start a transaction
+    await sql`BEGIN`
+
+    // Construct notes based on all items
+    const allProductNames = (await Promise.all(items.map((item) => getProductDisplayName(item.productId)))).join(", ")
+    const totalQuantityOrdered = items.reduce((sum, item) => sum + item.quantity, 0)
+    const detailedNotes =
+      `Payment completed. Session ID: ${paymentIntentId || paypalOrderId}. Items: ${allProductNames}. Total Quantity: ${totalQuantityOrdered}. ${notes || ""}`.trim()
+
+    // Insert into the main orders table
+    const orderResult = await sql`
+      INSERT INTO orders (
+        customer_email, customer_name, total_amount, currency, payment_status,
+        shipping_address, phone_number, notes, order_type, order_status, shipping_status,
+        payment_id, -- This will store either Stripe PaymentIntent ID or PayPal Order ID
+        created_at, updated_at
+      ) VALUES (
+        ${customerEmail}, ${customerName || null}, ${totalAmount}, ${currency}, ${status},
+        ${shippingAddress || null}, ${phoneNumber || null}, ${detailedNotes || null}, ${orderType || "standard"},
+        ${orderStatus || "new"}, ${shippingStatus || "pending"},
+        ${paymentIntentId || paypalOrderId || null},
+        CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+      )
+      RETURNING id
+    `
+    const orderId = orderResult[0].id
+
+    // Insert each item into the order_items table
+    for (const item of items) {
+      // Fetch product details to get stock/preorder quantities at the time of order
+      const productInventory = await getProductInventory(item.productId)
+      if (!productInventory) {
+        await sql`ROLLBACK`
+        return { success: false, message: `Product ${item.productId} not found during order recording.` }
+      }
+
+      let quantityFromStock = 0
+      let quantityPreorder = 0
+
+      // Determine how many were from stock and how many from preorder for this specific order item
+      if (productInventory.stockQuantity >= item.quantity) {
+        quantityFromStock = item.quantity
+        quantityPreorder = 0
+      } else {
+        quantityFromStock = productInventory.stockQuantity
+        quantityPreorder = item.quantity - productInventory.stockQuantity
+      }
+
+      await sql`
+        INSERT INTO order_items (
+          order_id, product_id, quantity, unit_price, currency,
+          quantity_from_stock, quantity_preorder, created_at, updated_at, product_display_name
+        ) VALUES (
+          ${orderId}, ${item.productId}, ${item.quantity}, ${item.price}, ${currency},
+          ${quantityFromStock}, ${quantityPreorder}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, ${productInventory.product_name}
+        )
+      `
+    }
+
+    await sql`COMMIT`
+    return { success: true, orderId: orderId, message: "Order recorded successfully." }
+  } catch (error) {
+    await sql`ROLLBACK`
+    console.error("Error recording order:", error)
+    return { success: false, message: "Failed to record order due to a database error." }
+  }
 }

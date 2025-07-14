@@ -1,8 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { neon } from "@neondatabase/serverless"
-import { sendOrderConfirmationEmail, sendEmail } from "@/lib/email" // Import sendEmail as well
-import { getProductDisplayName } from "@/lib/inventory" // Import the exported function
-import type { CartItem } from "@/lib/types" // Ensure CartItem is imported
+import { sendOrderConfirmationEmail } from "@/lib/email" // Import customer email sender
+import { sendVendorNotificationEmail } from "@/lib/email-vendor" // Import vendor email sender
+import { recordOrder, getProductDisplayName } from "@/lib/inventory" // Import recordOrder and getProductDisplayName
+import type { CartItem, OrderItemEmailData } from "@/lib/types" // Ensure CartItem and OrderItemEmailData are imported
+import type { RecordOrderData } from "@/lib/types"
 
 const PAYPAL_CLIENT_ID = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID!
 const PAYPAL_CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET!
@@ -31,162 +33,17 @@ async function getPayPalAccessToken() {
   return data.access_token
 }
 
-// MODIFIED: recordOrder now accepts an array of items
-async function recordOrder(orderData: {
-  payment_id: string
-  customer_email: string
-  customer_name: string
-  shipping_address: string
-  phone_number: string
-  notes: string
-  order_type: string
-  order_status: string
-  shipping_status: string
-  total_amount: number
-  currency: string
-  items: {
-    productId: string
-    quantity: number
-    price: number
-    currency: string
-    productDisplayName: string // Added for convenience in recording
-  }[]
-}) {
-  try {
-    console.log("💾 Recording order to database:", orderData.payment_id)
-    // Check if order already exists
-    const existingOrder = await sql`
-      SELECT id FROM orders WHERE payment_id = ${orderData.payment_id}
-    `
-    if (existingOrder.length > 0) {
-      console.log("⚠️ Order already exists, skipping database insert")
-      return existingOrder[0].id
-    }
-
-    // Construct notes based on all items
-    const allProductNames = orderData.items.map((item) => item.productDisplayName).join(", ")
-    const totalQuantityOrdered = orderData.items.reduce((sum, item) => sum + item.quantity, 0)
-    const detailedNotes =
-      `PayPal payment captured. Order ID: ${orderData.payment_id}. Items: ${allProductNames}. Total Quantity: ${totalQuantityOrdered}. ${orderData.notes || ""}`.trim()
-
-    // Insert into the main 'orders' table
-    const result = await sql`
-      INSERT INTO orders (
-        customer_email, customer_name, payment_status, payment_id,
-        total_amount, currency, shipping_address, phone_number, notes,
-        order_type, order_status, shipping_status
-      ) VALUES (
-        ${orderData.customer_email}, ${orderData.customer_name},
-        ${orderData.order_status}, ${orderData.payment_id}, ${orderData.total_amount},
-        ${orderData.currency}, ${orderData.shipping_address}, ${orderData.phone_number},
-        ${detailedNotes}, ${orderData.order_type}, ${orderData.order_status},
-        ${orderData.shipping_status}
-      ) RETURNING id
-    `
-    const orderId = result[0].id
-
-    // Insert each item into the 'order_items' table and update 'product_inventory'
-    for (const item of orderData.items) {
-      await sql`
-        INSERT INTO order_items (order_id, product_id, product_display_name, quantity, unit_price, currency)
-        VALUES (${orderId}, ${item.productId}, ${item.productDisplayName}, ${item.quantity}, ${item.price}, ${item.currency})
-      `
-      // Update individual product inventory
-      await sql`
-        UPDATE product_inventory
-        SET quantity_available = GREATEST(0, quantity_available - ${item.quantity}),
-            updated_at = CURRENT_TIMESTAMP
-        WHERE product_id = ${item.productId}
-      `
-    }
-
-    console.log("✅ Order recorded successfully with ID:", orderId)
-    return orderId
-  } catch (error) {
-    console.error("❌ Database error:", error)
-    throw error
-  }
-}
-
-// MODIFIED: sendPayPalOrderEmails now accepts an array of CartItem
-async function sendPayPalOrderEmails(orderData: any, cartItems: CartItem[]) {
-  try {
-    console.log("📧 Sending PayPal order emails for:", orderData.payment_id)
-
-    const itemsHtml = cartItems
-      .map(
-        (item) => `
-      <li>
-        <strong>${item.name}</strong> (${item.subtitle}) - ${item.selectedQuantity} x ${item.selectedPrice}
-      </li>
-    `,
-      )
-      .join("")
-
-    // Customer confirmation email
-    await sendOrderConfirmationEmail(
-      orderData.customer_email,
-      orderData.customer_name,
-      orderData.payment_id, // Using payment_id as order_id for email
-      cartItems
-        .map((item) => item.name)
-        .join(", "), // Product names for subject/summary
-      orderData.items.reduce((sum: number, item: any) => sum + item.quantity, 0), // Total quantity
-      orderData.total_amount,
-      orderData.currency,
-      orderData.payment_status,
-      "paid", // Initial shipping status
-    )
-
-    // Send vendor notification email
-    const vendorEmailSubject = `🎉 New PayPal Order: ${orderData.total_amount} ${orderData.currency} (${cartItems.length} items)`
-    const vendorEmailHtml = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <h1 style="color: #2c2824;">🎉 New PayPal Order Received!</h1>
-        <div style="background: #f8f3ea; padding: 20px; border-radius: 8px; margin: 20px 0;">
-          <h3>Order Information:</h3>
-          <p><strong>Payment ID:</strong> ${orderData.payment_id}</p>
-          <p><strong>Total Amount:</strong> ${orderData.total_amount} ${orderData.currency}</p>
-          <p><strong>Order Type:</strong> ${orderData.order_type}</p>
-          <p><strong>Payment Method:</strong> PayPal</p>
-          <p><strong>PayPal Mode:</strong> ${process.env.PAYPAL_MODE || "sandbox"}</p>
-          <h4>Items:</h4>
-          <ul>${itemsHtml}</ul>
-        </div>
-        <div style="background: #2c2824; color: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
-          <h3 style="margin-top: 0;">Customer Details:</h3>
-          <p><strong>Name:</strong> ${orderData.customer_name}</p>
-          <p><strong>Email:</strong> ${orderData.customer_email}</p>
-          <p><strong>Phone:</strong> ${orderData.phone_number || "Not provided"}</p>
-          <p><strong>Address:</strong> ${orderData.shipping_address || "Not provided"}</p>
-        </div>
-        <div style="background: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0;">
-          <h3 style="color: #2c2824; margin-top: 0;">Action Items:</h3>
-          <p>✅ Contact customer via WhatsApp within 24 hours</p>
-          <p>✅ Confirm order details and delivery preferences</p>
-          <p>✅ Prepare the order for delivery</p>
-          <p>✅ Update order status in admin panel</p>
-        </div>
-      </div>
-    `
-    await sendEmail({ to: "support@amariahco.com", subject: vendorEmailSubject, html: vendorEmailHtml })
-
-    console.log("✅ PayPal order emails sent successfully")
-  } catch (error) {
-    console.error("❌ Email sending failed:", error)
-    // Don't throw error here - we still want to return success even if email fails
-  }
-}
-
 export async function POST(request: NextRequest) {
   let requestBody: any = null
   try {
     requestBody = await request.json()
     const { orderID, customerInfo, cartItems: clientCartItems } = requestBody // Extract clientCartItems
+
     if (!orderID) {
       console.error("❌ No orderID provided")
       return NextResponse.json({ error: "Order ID is required" }, { status: 400 })
     }
+
     console.log("🏦 Starting PayPal capture process for order:", orderID)
     console.log("🌍 PayPal Mode:", process.env.PAYPAL_MODE || "sandbox")
     console.log("🔗 PayPal Base URL:", PAYPAL_BASE_URL)
@@ -201,8 +58,8 @@ export async function POST(request: NextRequest) {
         "Content-Type": "application/json",
       },
     })
-    console.log("📊 PayPal capture response status:", response.status)
 
+    console.log("📊 PayPal capture response status:", response.status)
     if (!response.ok) {
       const error = await response.json()
       console.error("❌ PayPal capture failed:", {
@@ -230,46 +87,92 @@ export async function POST(request: NextRequest) {
     })
 
     // Prepare items for database recording and email sending
-    const itemsForProcessing = await Promise.all(
+    const itemsForProcessing: OrderItemEmailData[] = await Promise.all(
       clientCartItems.map(async (item: CartItem) => {
         const productDisplayName = await getProductDisplayName(item.id)
-        // Extract numeric price from the selectedPrice string
         const priceMatch = item.selectedPrice.match(/[\d.]+/)
         const numericPrice = priceMatch ? Number.parseFloat(priceMatch[0]) : 0
 
         return {
-          productId: item.id,
+          product_id: item.id,
+          product_display_name: productDisplayName,
           quantity: item.selectedQuantity,
-          price: numericPrice,
+          unit_price: numericPrice,
           currency: item.selectedRegion === "UAE" ? "AED" : "GBP",
-          productDisplayName: productDisplayName,
         }
       }),
     )
 
-    const orderData = {
-      customer_email: customerInfo?.email || "",
-      customer_name: customerInfo?.name || "Customer",
-      payment_status: "completed",
-      payment_id: capture.id,
-      total_amount: Number.parseFloat(capture.amount.value), // Total amount from PayPal capture
-      currency: capture.amount.currency_code,
-      shipping_address: customerInfo?.address || "",
-      phone_number: customerInfo?.phone || "",
+    const customerName = customerInfo?.name || "Customer"
+    const customerEmail = customerInfo?.email || ""
+    const customerPhone = customerInfo?.phone || ""
+    const shippingAddress = customerInfo?.address || ""
+
+    const totalAmount = Number.parseFloat(capture.amount.value)
+    const currency = capture.amount.currency_code
+
+    const orderDataForRecord = {
+      customerEmail: customerEmail,
+      customerName: customerName,
+      paymentIntentId: capture.id, // Use capture ID as paymentIntentId for consistency
+      paypalOrderId: orderID, // Keep PayPal order ID for reference
+      totalAmount: totalAmount,
+      currency: currency,
+      status: "completed", // Payment status
+      shippingAddress: shippingAddress,
+      phoneNumber: customerPhone,
       notes: `PayPal payment captured. Order ID: ${orderID}. Capture Status: ${capture.status}.`,
-      order_type: "purchase",
-      order_status: "paid",
-      shipping_status: "paid", // Initial shipping status
-      items: itemsForProcessing, // Pass the processed items array
+      orderType: "purchase",
+      orderStatus: "paid", // Internal order status
+      shippingStatus: "paid", // Internal shipping status
+      items: itemsForProcessing.map((item) => ({
+        productId: item.product_id,
+        quantity: item.quantity,
+        price: item.unit_price,
+      })),
+    } as RecordOrderData
+
+    // Record order in database using the shared function
+    const recordResult = await recordOrder(orderDataForRecord)
+    const orderDbId = recordResult.orderId
+
+    if (!recordResult.success || !orderDbId) {
+      console.error("❌ Failed to record order in DB:", recordResult.message)
+      return NextResponse.json({ error: recordResult.message || "Failed to record order" }, { status: 500 })
     }
 
-    // Record order in database
-    await recordOrder(orderData)
+    console.log(`🎉 Order recorded with ID: ${orderDbId}`)
 
-    // Send email notifications - MODIFIED to pass cartItems
-    await sendPayPalOrderEmails(orderData, clientCartItems)
+    // Send customer email notification
+    await sendOrderConfirmationEmail({
+      customer_name: customerName,
+      customer_email: customerEmail,
+      order_id: orderDbId.toString(), // Use the DB order ID
+      items: itemsForProcessing,
+      total_amount: totalAmount,
+      currency: currency,
+      payment_status: "Confirmed",
+      shipping_status: "paid",
+    })
+    console.log("✅ Customer confirmation email sent.")
+
+    // Send vendor notification email
+    await sendVendorNotificationEmail({
+      order_id: orderDbId.toString(), // Use the DB order ID
+      customer_name: customerName,
+      customer_email: customerEmail,
+      payment_id: capture.id, // Pass PayPal capture ID
+      phone_number: customerPhone,
+      shipping_address: shippingAddress,
+      total_amount: totalAmount,
+      currency: currency,
+      items: itemsForProcessing,
+      payment_method: "PayPal",
+    })
+    console.log("✅ Vendor notification email sent.")
 
     console.log("🎉 PayPal order processing completed successfully!")
+
     return NextResponse.json({
       success: true,
       captureID: capture.id,

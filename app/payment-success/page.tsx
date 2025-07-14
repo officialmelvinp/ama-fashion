@@ -44,13 +44,64 @@ export default function PaymentSuccessPage() {
   const [paymentMethod, setPaymentMethod] = useState<"paypal" | "stripe" | null>(null)
 
   useEffect(() => {
-    // Get stored data
-    const storedCartItems = localStorage.getItem("cartItems") // Changed from selectedProduct
-    const storedCustomerInfo = localStorage.getItem("customerInfo")
+    let loadedItems: CartItemDisplay[] = []
+    const storedCartItems = localStorage.getItem("amariah_cart") // Corrected key
 
     if (storedCartItems) {
-      setCartItems(JSON.parse(storedCartItems)) // Changed from setProduct
+      try {
+        const parsedCart: CartItemDisplay[] = JSON.parse(storedCartItems)
+        // Basic validation for cart items
+        const isValidCart = parsedCart.every(
+          (item) =>
+            item.id &&
+            typeof item.selectedQuantity === "number" &&
+            item.selectedQuantity >= 0 &&
+            typeof item.selectedRegion === "string" &&
+            typeof item.selectedPrice === "string",
+        )
+        if (isValidCart) {
+          loadedItems = parsedCart
+        } else {
+          console.warn("Loaded cart from localStorage has an invalid structure. Clearing cart.")
+          localStorage.removeItem("amariah_cart")
+        }
+      } catch (e) {
+        console.error("Failed to parse cart from localStorage:", e)
+        localStorage.removeItem("amariah_cart")
+      }
     }
+
+    // If no items loaded from main cart, check for a single product from "Buy Now"
+    if (loadedItems.length === 0) {
+      const storedSingleProduct = localStorage.getItem("selectedProduct")
+      if (storedSingleProduct) {
+        try {
+          const parsedProduct: CartItemDisplay = JSON.parse(storedSingleProduct)
+          // Ensure it has the necessary CartItemDisplay properties
+          if (
+            parsedProduct.id &&
+            typeof parsedProduct.selectedQuantity === "number" &&
+            parsedProduct.selectedQuantity >= 0 &&
+            typeof parsedProduct.selectedRegion === "string" &&
+            typeof parsedProduct.selectedPrice === "string"
+          ) {
+            loadedItems = [parsedProduct] // Convert the single product into an array
+            localStorage.removeItem("selectedProduct") // Clear the single product from localStorage after loading
+            console.log("Loaded single product from 'Buy Now' into cartItems for display.")
+          } else {
+            console.warn("Loaded single product from localStorage has an invalid structure. Clearing it.")
+            localStorage.removeItem("selectedProduct")
+          }
+        } catch (e) {
+          console.error("Failed to parse single product from localStorage:", e)
+          localStorage.removeItem("selectedProduct")
+        }
+      }
+    }
+
+    setCartItems(loadedItems)
+
+    const storedCustomerInfo = localStorage.getItem("customerInfo")
     if (storedCustomerInfo) {
       setCustomerInfo(JSON.parse(storedCustomerInfo))
     }
@@ -86,13 +137,12 @@ export default function PaymentSuccessPage() {
             : null,
         }),
       })
-
       if (response.ok) {
         const result = await response.json()
         setProcessComplete(true)
         setOrderId(result.captureID || token)
         // Clear localStorage after successful payment
-        localStorage.removeItem("cartItems") // Changed from selectedProduct
+        localStorage.removeItem("amariah_cart") // Corrected key
         localStorage.removeItem("customerInfo")
       } else {
         console.error("Failed to capture PayPal payment")
@@ -122,16 +172,15 @@ export default function PaymentSuccessPage() {
                 address: `${customerInfo.address}, ${customerInfo.city}, ${customerInfo.country} ${customerInfo.postalCode}`,
               }
             : null,
-          cartItems: cartItems, // Pass cartItems instead of product
+          cartItems: cartItems, // Pass cartItems as you originally intended
         }),
       })
-
       if (response.ok) {
         const result = await response.json()
         setProcessComplete(true)
         setOrderId(result.orderId || sessionId)
         // Clear localStorage after successful payment
-        localStorage.removeItem("cartItems") // Changed from selectedProduct
+        localStorage.removeItem("amariah_cart") // Corrected key
         localStorage.removeItem("customerInfo")
       } else {
         console.error("Failed to verify Stripe session")

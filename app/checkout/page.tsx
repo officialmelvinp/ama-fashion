@@ -9,30 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import Header from "@/components/header"
-
-// IMPORTS:
-// Add CartItem to the type imports
-import type { CartItem } from "@/lib/types"
-
-type Product = {
-  id: string
-  name: string
-  subtitle: string
-  materials: string[]
-  description: string
-  priceAED: string
-  priceGBP: string
-  images: string[]
-  category: string
-  essences: string[]
-  materialLine?: string
-  colors?: string[]
-  selectedRegion?: "UAE" | "UK"
-  selectedPrice?: string
-  selectedQuantity?: number
-  stockLevel?: number
-  preOrderDate?: string
-}
+import type { CartItem, Product, Region } from "@/lib/types" // Ensure CartItem, Product, Region are imported
 
 type CheckoutForm = {
   firstName: string
@@ -47,12 +24,7 @@ type CheckoutForm = {
 }
 
 export default function CheckoutPage() {
-  // STATE MANAGEMENT:
-  // Replace 'product' state with 'cartItems' state
-  // Remove 'preOrderDate' state
   const [cartItems, setCartItems] = useState<CartItem[]>([])
-  // const [product, setProduct] = useState<Product | null>(null) // REMOVE THIS LINE
-  // const [preOrderDate, setPreOrderDate] = useState<string | null>(null) // REMOVE THIS LINE
   const [form, setForm] = useState<CheckoutForm>({
     firstName: "",
     lastName: "",
@@ -68,26 +40,77 @@ export default function CheckoutPage() {
   const [error, setError] = useState<string>("")
   const [paymentMethod, setPaymentMethod] = useState<"paypal" | "stripe">("stripe")
 
-  // USE EFFECT FOR LOADING CART:
-  // Modify the useEffect hook to load 'cartItems' from localStorage
-  // Remove the call to fetchPreOrderDate
   useEffect(() => {
-    const storedCartItems = localStorage.getItem("cartItems")
-    if (storedCartItems) {
-      const parsedItems: CartItem[] = JSON.parse(storedCartItems)
-      setCartItems(parsedItems)
-      // If you need pre-order dates for multiple items, you'd fetch them here
-      // For simplicity, we're removing the single preOrderDate state for now.
-    } else {
-      // If no items in cart, redirect to shop or show empty cart message
-      // For now, we'll just log and let the component render the "No Product Selected" message
-      // which will be updated to "No Items in Cart"
-      console.log("No items found in cart. Redirecting to shop or showing empty cart message.")
-    }
-  }, [])
+    let loadedItems: CartItem[] = []
+    const storedCartItems = localStorage.getItem("amariah_cart")
 
-  // REMOVE THE ENTIRE 'fetchPreOrderDate' FUNCTION:
-  // const fetchPreOrderDate = async (productId: string) => { ... }
+    if (storedCartItems) {
+      try {
+        const parsedCart: CartItem[] = JSON.parse(storedCartItems)
+        const isValidCart = parsedCart.every(
+          (item) =>
+            item.id &&
+            typeof item.selectedQuantity === "number" &&
+            item.selectedQuantity >= 0 &&
+            typeof item.selectedRegion === "string" &&
+            typeof item.selectedPrice === "string",
+        )
+        if (isValidCart) {
+          loadedItems = parsedCart
+        } else {
+          console.warn("Loaded cart from localStorage has an invalid structure. Clearing cart.")
+          localStorage.removeItem("amariah_cart")
+        }
+      } catch (e) {
+        console.error("Failed to parse cart from localStorage:", e)
+        localStorage.removeItem("amariah_cart")
+      }
+    }
+
+    // If no items loaded from main cart, check for a single product from "Buy Now"
+    if (loadedItems.length === 0) {
+      const storedSingleProduct = localStorage.getItem("selectedProduct")
+      if (storedSingleProduct) {
+        try {
+          const parsedProduct: Product & {
+            selectedQuantity?: number
+            selectedRegion?: Region
+            selectedPrice?: string
+          } = JSON.parse(storedSingleProduct)
+
+          // Ensure it has the necessary CartItem properties
+          if (
+            parsedProduct.id &&
+            typeof parsedProduct.selectedQuantity === "number" &&
+            parsedProduct.selectedQuantity >= 0 &&
+            typeof parsedProduct.selectedRegion === "string" &&
+            typeof parsedProduct.selectedPrice === "string"
+          ) {
+            // Convert the single product into a CartItem array
+            loadedItems = [
+              {
+                ...parsedProduct,
+                selectedQuantity: parsedProduct.selectedQuantity,
+                selectedRegion: parsedProduct.selectedRegion,
+                selectedPrice: parsedProduct.selectedPrice,
+              } as CartItem, // Cast to CartItem
+            ]
+            // Clear the single product from localStorage after loading
+            localStorage.removeItem("selectedProduct")
+            console.log("Loaded single product from 'Buy Now' into cartItems.")
+          } else {
+            console.warn("Loaded single product from localStorage has an invalid structure. Clearing it.")
+            localStorage.removeItem("selectedProduct")
+          }
+        } catch (e) {
+          console.error("Failed to parse single product from localStorage:", e)
+          localStorage.removeItem("selectedProduct")
+        }
+      }
+    }
+
+    setCartItems(loadedItems)
+  }, [])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -97,8 +120,6 @@ export default function CheckoutPage() {
     }))
   }
 
-  // PRICE EXTRACTION:
-  // Keep extractPrice as is, it's a helper for individual item prices.
   const extractPrice = (priceString: string) => {
     if (!priceString) return 0
     console.log("Extracting price from:", priceString)
@@ -117,8 +138,6 @@ export default function CheckoutPage() {
     return 0
   }
 
-  // CALCULATE TOTAL PRICE:
-  // Update calculateTotalPrice to sum prices for all items in the cart
   const calculateTotalPrice = () => {
     if (cartItems.length === 0) return 0
     const total = cartItems.reduce((sum, item) => {
@@ -129,13 +148,6 @@ export default function CheckoutPage() {
     return total
   }
 
-  // REMOVE THE ENTIRE 'getOrderBreakdown' FUNCTION:
-  // This function was for single product pre-order logic.
-  // For multiple items, this logic would be more complex and is typically handled on the backend.
-  // const getOrderBreakdown = () => { ... }
-
-  // HANDLE PAYPAL CHECKOUT:
-  // Modify handlePayPalCheckout to send cartItems
   const handlePayPalCheckout = async () => {
     if (cartItems.length === 0) return
     setIsLoading(true)
@@ -154,15 +166,7 @@ export default function CheckoutPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          cartItems: cartItems.map((item) => ({
-            id: item.id,
-            name: item.name,
-            subtitle: item.subtitle,
-            selectedQuantity: item.selectedQuantity,
-            selectedRegion: item.selectedRegion,
-            selectedPrice: item.selectedPrice,
-            description: item.description,
-          })),
+          cartItems: cartItems,
           totalPrice: totalPrice,
         }),
       })
@@ -175,6 +179,7 @@ export default function CheckoutPage() {
 
       const order = await response.json()
       console.log("✅ PayPal order created:", order)
+
       const approveLink = order.links?.find((link: { rel: string }) => link.rel === "approve")
       if (approveLink) {
         console.log("🚀 Redirecting to PayPal...")
@@ -190,53 +195,35 @@ export default function CheckoutPage() {
     }
   }
 
-  // HANDLE STRIPE CHECKOUT:
-  // Modify handleStripeCheckout to send cartItems
   const handleStripeCheckout = async () => {
     if (cartItems.length === 0) return
     setIsLoading(true)
     setError("")
     try {
       console.log("🚀 Starting Stripe checkout process for multiple items...")
-      // Determine currency from the first item in the cart, or default
       const region = cartItems[0]?.selectedRegion || "UAE"
       const currency = region === "UAE" ? "aed" : "gbp"
       const totalPrice = calculateTotalPrice()
 
-      // --- MODIFIED: Ensure productPriceInCents meets Stripe's minimum ---
-      // This logic needs to be applied per line item on the backend,
-      // or ensure your total cart value meets the minimum.
-      // For now, we'll just ensure the total is above minimum if it's AED.
       let totalPriceInCents = Math.round(totalPrice * 100)
       if (currency === "aed" && totalPriceInCents < 200) {
         console.warn("Adjusting total AED price to meet Stripe minimum (2 AED). Original:", totalPrice, "AED")
         totalPriceInCents = 200
       }
-      // --- END MODIFIED ---
 
       const customerData = {
         ...form,
-        // No longer sending single product quantity or breakdown here
-        // The backend will derive this from the items array
       }
       localStorage.setItem("customerInfo", JSON.stringify(customerData))
 
-      // Create Stripe checkout session
       const response = await fetch("/api/stripe/create-checkout", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          // Pass the entire cartItems array instead of single product details
-          cartItems: cartItems.map((item) => ({
-            id: item.id,
-            name: item.name,
-            price: extractPrice(item.selectedPrice), // Numeric price
-            quantity: item.selectedQuantity, // This is correct
-            currency: item.selectedRegion === "UAE" ? "aed" : "gbp",
-          })),
-          currency: currency, // Overall currency for the session
+          cartItems: cartItems,
+          currency: currency,
           customerInfo: customerData,
           success_url: `${window.location.origin}/payment-success`,
           cancel_url: `${window.location.origin}/cancel`,
@@ -244,7 +231,6 @@ export default function CheckoutPage() {
       })
 
       if (!response.ok) {
-        // MODIFIED: Improved error handling for non-JSON responses
         let errorDetail = "Failed to create Stripe checkout session"
         const contentType = response.headers.get("content-type")
         if (contentType && contentType.includes("application/json")) {
@@ -277,14 +263,11 @@ export default function CheckoutPage() {
     }
   }
 
-  // CONDITIONAL RENDERING FOR EMPTY CART:
-  // Update the check for an empty cart
   if (cartItems.length === 0) {
-    // MODIFIED CONDITION
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-serif mb-4">No Items in Cart</h1> {/* MODIFIED TEXT */}
+          <h1 className="text-2xl font-serif mb-4">No Items in Cart</h1>
           <Link href="/shop">
             <Button className="bg-[#2c2824] text-white">Return to Shop</Button>
           </Link>
@@ -293,72 +276,53 @@ export default function CheckoutPage() {
     )
   }
 
-  // DYNAMIC VALUES FOR DISPLAY:
-  // These values now derive from the cartItems array
   const totalPrice = calculateTotalPrice()
-  const selectedRegion = cartItems[0]?.selectedRegion || "UAE" // Use region from first item, or default
-
-  // REMOVE THESE LINES (they were for single product breakdown):
-  // const quantity = product.selectedQuantity || 1
-  // const unitPrice = extractPrice(product.selectedPrice || product.priceAED)
-  // const { inStock, preOrder } = getOrderBreakdown()
+  const selectedRegion = cartItems[0]?.selectedRegion || "UAE"
 
   return (
     <div className="min-h-screen bg-[#f8f3ea]">
-      {/* Navigation Header */}
       <Header bgColor="bg-white/90 backdrop-blur-sm" textColor="text-[#2c2824]" />
       <div className="container mx-auto py-12 px-4">
         <div className="max-w-6xl mx-auto">
           <h1 className="text-3xl md:text-4xl font-serif text-center mb-12 text-[#2c2824]">Complete Your Order</h1>
           <div className="grid lg:grid-cols-2 gap-12">
-            {/* ORDER SUMMARY UI:
-            // Replace the single product summary with a map over cartItems
-            // Remove preOrder related display logic from this section */}
             <div className="bg-white p-8 rounded-lg shadow-sm">
               <h2 className="text-xl font-serif mb-6 text-[#2c2824]">Order Summary</h2>
-              {cartItems.map(
-                (
-                  item: CartItem, // MAP OVER CART ITEMS
-                ) => (
-                  <div
-                    key={`${item.id}-${item.selectedRegion}`}
-                    className="flex gap-6 mb-6 border-b pb-4 last:border-b-0 last:pb-0"
-                  >
-                    <div className="relative w-24 h-32 flex-shrink-0">
-                      <Image
-                        src={item.images[0] || "/placeholder.svg"}
-                        alt={item.name}
-                        fill
-                        className="object-cover rounded"
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-serif text-lg text-[#2c2824] mb-2">
-                        {item.name} — {item.subtitle}
-                      </h3>
-                      <p className="text-sm text-[#2c2824]/80 mb-2">{item.materialLine}</p>
-                      {item.colors && (
-                        <p className="text-sm text-[#2c2824]/80 mb-2">Colors: {item.colors.join(" | ")}</p>
-                      )}
-                      <p className="text-sm italic text-[#2c2824]/90">{item.description}</p>
-                      {/* Quantity and Price Breakdown for each item */}
-                      <div className="pt-2 space-y-1">
-                        <div className="flex justify-between items-center">
-                          <span className="text-[#2c2824]">Unit Price:</span>
-                          <span className="text-[#2c2824]">{item.selectedPrice}</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-[#2c2824]">Quantity:</span>
-                          <span className="text-[#2c2824]">
-                            {item.selectedQuantity} piece{item.selectedQuantity > 1 ? "s" : ""}
-                          </span>
-                        </div>
+              {cartItems.map((item: CartItem) => (
+                <div
+                  key={`${item.id}-${item.selectedRegion}`}
+                  className="flex gap-6 mb-6 border-b pb-4 last:border-b-0 last:pb-0"
+                >
+                  <div className="relative w-24 h-32 flex-shrink-0">
+                    <Image
+                      src={item.images[0] || "/placeholder.svg"}
+                      alt={item.name}
+                      fill
+                      className="object-cover rounded"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-serif text-lg text-[#2c2824] mb-2">
+                      {item.name} — {item.subtitle}
+                    </h3>
+                    <p className="text-sm text-[#2c2824]/80 mb-2">{item.materialLine}</p>
+                    {item.colors && <p className="text-sm text-[#2c2824]/80 mb-2">Colors: {item.colors.join(" | ")}</p>}
+                    <p className="text-sm italic text-[#2c2824]/90">{item.description}</p>
+                    <div className="pt-2 space-y-1">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[#2c2824]">Unit Price:</span>
+                        <span className="text-[#2c2824]">{item.selectedPrice}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-[#2c2824]">Quantity:</span>
+                        <span className="text-[#2c2824]">
+                          {item.selectedQuantity} piece{item.selectedQuantity > 1 ? "s" : ""}
+                        </span>
                       </div>
                     </div>
                   </div>
-                ),
-              )}
-              {/* Total Price for the entire cart */}
+                </div>
+              ))}
               <div className="border-t pt-4 space-y-3">
                 <div className="flex justify-between items-center text-lg font-medium text-[#2c2824] pt-2">
                   <span>Total:</span>
@@ -368,10 +332,10 @@ export default function CheckoutPage() {
                 </div>
               </div>
             </div>
-            {/* Checkout Form */}
+
             <div className="bg-white p-8 rounded-lg shadow-sm">
               <h2 className="text-xl font-serif mb-6 text-[#2c2824]">Shipping Information</h2>
-              {/* Payment Method Selection */}
+
               <div className="mb-6">
                 <Label className="text-base font-medium mb-3 block">Choose Payment Method</Label>
                 <div className="grid grid-cols-1 gap-3">
@@ -415,13 +379,14 @@ export default function CheckoutPage() {
                   </button>
                 </div>
               </div>
-              {/* Error Display */}
+
               {error && (
                 <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
                   <p className="text-red-800 text-sm">{error}</p>
                   <p className="text-red-600 text-xs mt-2">Check the browser console (F12) for more details.</p>
                 </div>
               )}
+
               <form className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -562,9 +527,6 @@ export default function CheckoutPage() {
                 <div className="text-center text-sm text-[#2c2824]/60 mt-4">
                   <p>🔒 Secure payment powered by {paymentMethod === "paypal" ? "PayPal" : "Stripe"}</p>
                   <p>📱 You&apos;ll receive WhatsApp contact after payment for delivery coordination</p>
-                  {/* REMOVE THE ENTIRE 'Order Type Information' BLOCK (preOrder > 0 && ...)
-                  // This was for single product pre-order breakdown and is removed for multi-item simplicity.
-                  // {preOrder > 0 && ( ... )} */}
                   {paymentMethod === "stripe" && (
                     <div className="text-xs mt-2 space-y-1">
                       <p>💳 {selectedRegion === "UAE" ? "UAE" : "UK"} cards supported • No account required</p>

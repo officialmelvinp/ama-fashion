@@ -2,6 +2,7 @@ import { neon } from "@neondatabase/serverless"
 import { NextResponse } from "next/server"
 import type { Order } from "@/lib/types"
 import { sendOrderShippedEmail, sendOrderDeliveredEmail } from "@/lib/email"
+import { getOrderById } from "@/lib/inventory" // Corrected import path
 
 const sql = neon(process.env.DATABASE_URL!)
 
@@ -44,11 +45,19 @@ export async function GET(request: Request) {
   }
 }
 
+// Define OrderItemEmailData type
+interface OrderItemEmailData {
+  product_display_name: string
+  quantity: number
+  unit_price: number
+  currency: string
+}
+
 export async function PUT(request: Request) {
   try {
     const { orderId, action, trackingNumber, carrier, estimatedDelivery } = await request.json()
-    let updateData: any = {}
 
+    let updateData: any = {}
     if (action === "mark_shipped") {
       updateData = {
         shipping_status: "shipped",
@@ -86,64 +95,48 @@ export async function PUT(request: Request) {
       WHERE id = ${orderId}
     `
 
-    // NEW: Fetch the updated order with product_display_name for email sending
-    // MODIFIED: Cast total_amount and amount_paid to NUMERIC to ensure they are numbers
-    const updatedOrderResult = await sql`
-      SELECT
-        o.id, o.product_id, p.product_name AS product_display_name, o.customer_email, o.customer_name, o.quantity_ordered,
-        o.quantity_in_stock, o.quantity_preorder, o.payment_status, o.payment_id,
-        o.amount_paid::NUMERIC, o.currency, o.shipping_address, o.phone_number, o.notes, -- Cast amount_paid
-        o.order_type, o.order_status, o.total_amount::NUMERIC, o.shipping_status, -- Cast total_amount
-        o.tracking_number, o.shipping_carrier, o.shipped_date, o.delivered_date,
-        o.estimated_delivery_date, o.created_at, o.updated_at
-      FROM orders o
-      LEFT JOIN products p ON o.product_id = p.product_id
-      WHERE o.id = ${orderId}
-    `
+    // NEW: Fetch the updated order details using getOrderById, which includes the 'items' array
+    const order = await getOrderById(orderId)
 
-    if (updatedOrderResult.length === 0) {
+    if (!order) {
       return NextResponse.json({ success: false, error: "Order not found after update" }, { status: 404 })
     }
 
-    const order = updatedOrderResult[0] as Order // Cast to Order type for type safety
-
-    // Send email notification to customer using the centralized email utility
-    // MODIFIED: Construct the 'items' array from the single-item order details
-    const orderItemsForEmail = [
-      {
-        product_display_name: order.product_display_name || order.product_id,
-        quantity: order.quantity_ordered,
-        unit_price: order.amount_paid, // Assuming amount_paid is the unit price for a single item order
-        currency: order.currency,
-      },
-    ]
+    // MODIFIED: Construct the 'items' array for email using the 'items' property of the fetched order
+    // This 'items' array comes from the order_items table and is already correctly typed as OrderItem[]
+    const emailItems: OrderItemEmailData[] = order.items.map((item) => ({
+      product_display_name: item.product_display_name,
+      quantity: item.quantity,
+      unit_price: item.unit_price,
+      currency: item.currency,
+    }))
 
     if (action === "mark_shipped") {
       await sendOrderShippedEmail({
         customer_email: order.customer_email,
         customer_name: order.customer_name,
         order_id: order.id.toString(),
-        items: orderItemsForEmail, // Pass the constructed items array
-        total_amount: order.total_amount,
-        currency: order.currency,
+        items: emailItems, // Use the correctly constructed emailItems
+        total_amount: order.total_amount, // ADDED: total_amount
+        currency: order.currency, // ADDED: currency
         payment_status: order.payment_status,
         shipping_status: "shipped",
         tracking_number: order.tracking_number,
         shipping_carrier: order.shipping_carrier,
         estimated_delivery_date: order.estimated_delivery_date,
-        shipped_date: order.shipped_date,
+        shipped_date: order.shipped_date, // Use the updated shipped_date from the fetched order
       })
     } else if (action === "mark_delivered") {
       await sendOrderDeliveredEmail({
         customer_email: order.customer_email,
         customer_name: order.customer_name,
         order_id: order.id.toString(),
-        items: orderItemsForEmail, // Pass the constructed items array
-        total_amount: order.total_amount,
-        currency: order.currency,
+        items: emailItems, // Use the correctly constructed emailItems
+        total_amount: order.total_amount, // ADDED: total_amount
+        currency: order.currency, // ADDED: currency
         payment_status: order.payment_status,
         shipping_status: "delivered",
-        delivered_date: order.delivered_date,
+        delivered_date: order.delivered_date, // Use the updated delivered_date from the fetched order
       })
     }
 
