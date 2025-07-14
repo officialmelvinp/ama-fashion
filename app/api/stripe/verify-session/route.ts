@@ -1,9 +1,9 @@
 import { type NextRequest, NextResponse } from "next/server"
 import Stripe from "stripe"
-import { sendOrderConfirmationEmail } from "@/lib/email"
-import { sendVendorNotificationEmail } from "@/lib/email-vendor"
 import { recordOrder, getProductInventory } from "@/lib/inventory" // MODIFIED: Import getProductInventory
 import type { OrderItemEmailData, RecordOrderData } from "@/lib/types"
+import { sendOrderConfirmationEmail } from "@/lib/email"
+import { sendVendorNotificationEmail } from "@/lib/email-vendor"
 
 // Initialize Stripe client
 const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -93,14 +93,14 @@ export async function POST(request: NextRequest) {
     )
     console.log("STRIPE VERIFY SESSION: Items prepared:", itemsForProcessing)
 
-    const customerName = session.customer_details?.name || customerInfo?.name || "Customer"
+    const customerName = session.customer_details?.name ?? customerInfo?.name ?? null
     const customerEmail = session.customer_details?.email || customerInfo?.email || ""
-    const customerPhone = session.customer_details?.phone || customerInfo?.phone || ""
+    const customerPhone = session.customer_details?.phone ?? customerInfo?.phone ?? null
     const shippingAddress = session.customer_details?.address
       ? `${session.customer_details.address.line1 || ""}${session.customer_details.address.line2 ? ", " + session.customer_details.address.line2 : ""}${session.customer_details.address.city ? ", " + session.customer_details.address.city : ""}${session.customer_details.address.state ? ", " + session.customer_details.address.state : ""}${session.customer_details.address.postal_code ? ", " + session.customer_details.address.postal_code : ""}${session.customer_details.address.country ? ", " + session.customer_details.address.country : ""}`
           .trim()
           .replace(/^, /, "")
-      : customerInfo?.address || ""
+      : (customerInfo?.address ?? null)
 
     const paymentId =
       typeof session.payment_intent === "string"
@@ -160,7 +160,7 @@ export async function POST(request: NextRequest) {
       order_id: orderDbId.toString(),
       customer_name: customerName,
       customer_email: customerEmail,
-      phone_number: customerPhone, // Use customerPhone here
+      phone_number: customerPhone,
       shipping_address: shippingAddress,
       total_amount: totalAmount,
       currency: currency,
@@ -176,6 +176,23 @@ export async function POST(request: NextRequest) {
       success: true,
       orderId: orderDbId,
       message: "Stripe session verified and order processed!",
+      orderData: {
+        items: itemsForProcessing,
+        customerInfo: {
+          firstName: customerName?.split(" ")[0] || "",
+          lastName: customerName?.split(" ")[1] || "",
+          email: customerEmail,
+          phone: customerPhone,
+          address: shippingAddress,
+          city: "",
+          country: "",
+          postalCode: "",
+          notes: orderDataForRecord.notes,
+        },
+        totalAmount: totalAmount,
+        currency: currency,
+        paymentMethod: "Stripe",
+      },
     })
   } catch (error) {
     console.error("❌ STRIPE VERIFY SESSION: Error processing Stripe session:", error)

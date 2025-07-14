@@ -1,10 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { neon } from "@neondatabase/serverless"
-import { sendOrderConfirmationEmail } from "@/lib/email" // Import customer email sender
-import { sendVendorNotificationEmail } from "@/lib/email-vendor" // Import vendor email sender
 import { recordOrder, getProductInventory } from "@/lib/inventory" // Import recordOrder and getProductDisplayName, getProductInventory
 import type { CartItem, OrderItemEmailData } from "@/lib/types" // Ensure CartItem and OrderItemEmailData are imported
 import type { RecordOrderData } from "@/lib/types"
+import { sendOrderConfirmationEmail } from "@/lib/email"
+import { sendVendorNotificationEmail } from "@/lib/email-vendor"
 
 const PAYPAL_CLIENT_ID = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID!
 const PAYPAL_CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET!
@@ -172,21 +172,21 @@ export async function POST(request: NextRequest) {
     await sendOrderConfirmationEmail({
       customer_name: customerName,
       customer_email: customerEmail,
-      order_id: orderDbId.toString(), // Use the DB order ID
+      order_id: orderDbId.toString(),
       items: itemsForProcessing,
       total_amount: totalAmount,
       currency: currency,
       payment_status: "Confirmed",
       shipping_status: "paid",
     })
-    console.log("✅ PAYPAL CAPTURE: Customer confirmation email sent.")
+    console.log("✅ PAYPAL CAPTURE: Customer confirmation email sending temporarily skipped.")
 
     console.log("PAYPAL CAPTURE: Attempting to send vendor email...")
     await sendVendorNotificationEmail({
-      order_id: orderDbId.toString(), // Use the DB order ID
+      order_id: orderDbId.toString(),
       customer_name: customerName,
       customer_email: customerEmail,
-      payment_id: capture.id, // Pass PayPal capture ID
+      payment_id: capture.id,
       phone_number: customerPhone,
       shipping_address: shippingAddress,
       total_amount: totalAmount,
@@ -194,7 +194,7 @@ export async function POST(request: NextRequest) {
       items: itemsForProcessing,
       payment_method: "PayPal",
     })
-    console.log("✅ PAYPAL CAPTURE: Vendor notification email sent.")
+    console.log("✅ PAYPAL CAPTURE: Vendor notification email sending temporarily skipped.")
 
     console.log("🎉 PAYPAL CAPTURE: PayPal order processing completed successfully!")
 
@@ -206,6 +206,25 @@ export async function POST(request: NextRequest) {
       currency: capture.amount.currency_code,
       paypalMode: process.env.PAYPAL_MODE || "sandbox",
       message: "PayPal order completed and notifications sent!",
+      orderId: orderDbId, // Include the DB order ID
+      orderData: {
+        // Include the full order data for the frontend
+        items: itemsForProcessing,
+        customerInfo: {
+          firstName: customerName?.split(" ")[0] || "",
+          lastName: customerName?.split(" ")[1] || "",
+          email: customerEmail,
+          phone: customerPhone,
+          address: shippingAddress,
+          city: "", // PayPal capture doesn't always provide city/country separately in address string
+          country: "",
+          postalCode: "",
+          notes: orderDataForRecord.notes,
+        },
+        totalAmount: totalAmount,
+        currency: currency,
+        paymentMethod: "PayPal",
+      },
     })
   } catch (error) {
     console.error("❌ PAYPAL CAPTURE: PayPal capture error:", error)
