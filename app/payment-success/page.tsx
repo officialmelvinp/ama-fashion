@@ -6,118 +6,126 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import Header from "@/components/header"
 
-type CartItemDisplay = {
-  id: string
-  name: string
-  subtitle: string
-  images: string[]
-  selectedQuantity: number
-  selectedPrice: string
-  selectedRegion: "UAE" | "UK"
+// Define types for the data received from the API
+type OrderItemDisplay = {
+  product_id: string
+  product_display_name: string
+  quantity: number
+  unit_price: number
+  currency: string
 }
 
-type CustomerInfo = {
+type CustomerInfoDisplay = {
   firstName: string
   lastName: string
   email: string
-  phone: string
-  address: string
+  phone: string | null
+  address: string | null
   city: string
   country: string
   postalCode: string
-  notes: string
+  notes: string | null
+}
+
+type OrderDetailsFromAPI = {
+  items: OrderItemDisplay[]
+  customerInfo: CustomerInfoDisplay
+  totalAmount: number
+  currency: string
+  paymentMethod: "paypal" | "stripe"
 }
 
 export default function PaymentSuccessPage() {
   const searchParams = useSearchParams()
-  // PayPal redirects with 'token' (order ID) and 'PayerID'
-  const paypalToken = searchParams.get("token") // PayPal order ID
+  const paypalToken = searchParams.get("token")
   const payerId = searchParams.get("PayerID")
-  // Stripe redirects with 'session_id'
   const stripeSessionId = searchParams.get("session_id")
+  const isMockSimulation = searchParams.get("mock") === "true" // NEW: Check for mock parameter
 
-  const [cartItems, setCartItems] = useState<CartItemDisplay[]>([]) // Changed from product to cartItems
-  const [customerInfo, setCustomerInfo] = useState<CustomerInfo | null>(null)
+  const [orderDetails, setOrderDetails] = useState<OrderDetailsFromAPI | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
   const [processComplete, setProcessComplete] = useState(false)
   const [orderId, setOrderId] = useState<string | null>(null)
-  const [paymentMethod, setPaymentMethod] = useState<"paypal" | "stripe" | null>(null)
+  const [paymentMethodUsed, setPaymentMethodUsed] = useState<"paypal" | "stripe" | null>(null)
 
   useEffect(() => {
-    let loadedItems: CartItemDisplay[] = []
-    const storedCartItems = localStorage.getItem("amariah_cart") // Corrected key
-
-    if (storedCartItems) {
-      try {
-        const parsedCart: CartItemDisplay[] = JSON.parse(storedCartItems)
-        // Basic validation for cart items
-        const isValidCart = parsedCart.every(
-          (item) =>
-            item.id &&
-            typeof item.selectedQuantity === "number" &&
-            item.selectedQuantity >= 0 &&
-            typeof item.selectedRegion === "string" &&
-            typeof item.selectedPrice === "string",
-        )
-        if (isValidCart) {
-          loadedItems = parsedCart
-        } else {
-          console.warn("Loaded cart from localStorage has an invalid structure. Clearing cart.")
-          localStorage.removeItem("amariah_cart")
-        }
-      } catch (e) {
-        console.error("Failed to parse cart from localStorage:", e)
-        localStorage.removeItem("amariah_cart")
-      }
-    }
-
-    // If no items loaded from main cart, check for a single product from "Buy Now"
-    if (loadedItems.length === 0) {
-      const storedSingleProduct = localStorage.getItem("selectedProduct")
-      if (storedSingleProduct) {
-        try {
-          const parsedProduct: CartItemDisplay = JSON.parse(storedSingleProduct)
-          // Ensure it has the necessary CartItemDisplay properties
-          if (
-            parsedProduct.id &&
-            typeof parsedProduct.selectedQuantity === "number" &&
-            parsedProduct.selectedQuantity >= 0 &&
-            typeof parsedProduct.selectedRegion === "string" &&
-            typeof parsedProduct.selectedPrice === "string"
-          ) {
-            loadedItems = [parsedProduct] // Convert the single product into an array
-            localStorage.removeItem("selectedProduct") // Clear the single product from localStorage after loading
-            console.log("Loaded single product from 'Buy Now' into cartItems for display.")
-          } else {
-            console.warn("Loaded single product from localStorage has an invalid structure. Clearing it.")
-            localStorage.removeItem("selectedProduct")
+    // Only attempt to process if not already complete and a session/token is present
+    if (!processComplete) {
+      if (isMockSimulation) {
+        // NEW: Handle mock simulation
+        console.log("MOCK SIMULATION: Initiating mock payment success.")
+        simulateMockPayment()
+      } else if (paypalToken && payerId) {
+        setPaymentMethodUsed("paypal")
+        setOrderId(paypalToken)
+        // Load customerInfo and cartItems from localStorage to pass to API
+        let customerInfoFromStorage: CustomerInfoDisplay | null = null
+        const storedCustomerInfo = localStorage.getItem("customerInfo")
+        if (storedCustomerInfo) {
+          try {
+            customerInfoFromStorage = JSON.parse(storedCustomerInfo)
+          } catch (e) {
+            console.error("Failed to parse customerInfo from localStorage:", e)
           }
-        } catch (e) {
-          console.error("Failed to parse single product from localStorage:", e)
-          localStorage.removeItem("selectedProduct")
         }
+        let cartItemsFromStorage: any[] = [] // Use any[] as it's the raw data from localStorage
+        const storedCartItems = localStorage.getItem("amariah_cart")
+        if (storedCartItems) {
+          try {
+            cartItemsFromStorage = JSON.parse(storedCartItems)
+          } catch (e) {
+            console.error("Failed to parse cart from localStorage:", e)
+          }
+        }
+        capturePayPalPayment(paypalToken, customerInfoFromStorage, cartItemsFromStorage)
+      } else if (stripeSessionId) {
+        setPaymentMethodUsed("stripe")
+        // Load customerInfo and cartItems from localStorage to pass to API
+        let customerInfoFromStorage: CustomerInfoDisplay | null = null
+        const storedCustomerInfo = localStorage.getItem("customerInfo")
+        if (storedCustomerInfo) {
+          try {
+            customerInfoFromStorage = JSON.parse(storedCustomerInfo)
+          } catch (e) {
+            console.error("Failed to parse customerInfo from localStorage:", e)
+          }
+        }
+        let cartItemsFromStorage: any[] = [] // Use any[] as it's the raw data from localStorage
+        const storedCartItems = localStorage.getItem("amariah_cart")
+        if (storedCartItems) {
+          try {
+            cartItemsFromStorage = JSON.parse(storedCartItems)
+          } catch (e) {
+            console.error("Failed to parse cart from localStorage:", e)
+          }
+        }
+        verifyStripeSession(stripeSessionId, customerInfoFromStorage, cartItemsFromStorage)
       }
     }
+  }, [paypalToken, payerId, stripeSessionId, processComplete, isMockSimulation]) // Add isMockSimulation to dependencies
 
-    setCartItems(loadedItems)
-
-    const storedCustomerInfo = localStorage.getItem("customerInfo")
-    if (storedCustomerInfo) {
-      setCustomerInfo(JSON.parse(storedCustomerInfo))
+  const simulateMockPayment = async () => {
+    setIsProcessing(true)
+    try {
+      const response = await fetch("/api/mock-payment-success") // Call the new mock API
+      if (response.ok) {
+        const result = await response.json()
+        setProcessComplete(true)
+        setOrderId(result.orderId)
+        setOrderDetails(result.orderData)
+        setPaymentMethodUsed(result.orderData.paymentMethod) // Set payment method from mock data
+        // No need to clear localStorage for mock, as it wasn't used for the "payment"
+      } else {
+        console.error("Failed to fetch mock payment data.")
+      }
+    } catch (error) {
+      console.error("Error fetching mock payment data:", error)
+    } finally {
+      setIsProcessing(false)
     }
+  }
 
-    // Determine payment method and process accordingly
-    if (paypalToken && payerId && !processComplete) {
-      setPaymentMethod("paypal")
-      setOrderId(paypalToken)
-      capturePayPalPayment(paypalToken)
-    } else if (stripeSessionId && !processComplete) {
-      setPaymentMethod("stripe")
-      verifyStripeSession(stripeSessionId)
-    }
-  }, [paypalToken, payerId, stripeSessionId, processComplete])
-
-  const capturePayPalPayment = async (token: string) => {
+  const capturePayPalPayment = async (token: string, customerInfo: CustomerInfoDisplay | null, cartItems: any[]) => {
     setIsProcessing(true)
     try {
       const response = await fetch("/api/paypal/capture-order", {
@@ -127,34 +135,32 @@ export default function PaymentSuccessPage() {
         },
         body: JSON.stringify({
           orderID: token,
-          customerInfo: customerInfo
-            ? {
-                name: `${customerInfo.firstName} ${customerInfo.lastName}`,
-                email: customerInfo.email,
-                phone: customerInfo.phone,
-                address: `${customerInfo.address}, ${customerInfo.city}, ${customerInfo.country} ${customerInfo.postalCode}`,
-              }
-            : null,
+          customerInfo: customerInfo,
+          cartItems: cartItems, // Pass cartItems from localStorage to API
         }),
       })
       if (response.ok) {
         const result = await response.json()
         setProcessComplete(true)
-        setOrderId(result.captureID || token)
-        // Clear localStorage after successful payment
-        localStorage.removeItem("amariah_cart") // Corrected key
+        setOrderId(result.orderId || token) // Use orderId from API response
+        setOrderDetails(result.orderData) // Set full order details from API
+        localStorage.removeItem("amariah_cart")
         localStorage.removeItem("customerInfo")
+        localStorage.removeItem("selectedProduct") // Clear single product too
       } else {
-        console.error("Failed to capture PayPal payment")
+        const errorData = await response.json()
+        console.error("Failed to capture PayPal payment:", errorData)
+        // Optionally set an error state to display to the user
       }
     } catch (error) {
       console.error("Error capturing PayPal payment:", error)
+      // Optionally set an error state
     } finally {
       setIsProcessing(false)
     }
   }
 
-  const verifyStripeSession = async (sessionId: string) => {
+  const verifyStripeSession = async (sessionId: string, customerInfo: CustomerInfoDisplay | null, cartItems: any[]) => {
     setIsProcessing(true)
     try {
       const response = await fetch("/api/stripe/verify-session", {
@@ -164,37 +170,34 @@ export default function PaymentSuccessPage() {
         },
         body: JSON.stringify({
           sessionId,
-          customerInfo: customerInfo
-            ? {
-                name: `${customerInfo.firstName} ${customerInfo.lastName}`,
-                email: customerInfo.email,
-                phone: customerInfo.phone,
-                address: `${customerInfo.address}, ${customerInfo.city}, ${customerInfo.country} ${customerInfo.postalCode}`,
-              }
-            : null,
-          cartItems: cartItems, // Pass cartItems as you originally intended
+          customerInfo: customerInfo,
+          cartItems: cartItems, // Pass cartItems from localStorage to API
         }),
       })
       if (response.ok) {
         const result = await response.json()
         setProcessComplete(true)
-        setOrderId(result.orderId || sessionId)
-        // Clear localStorage after successful payment
-        localStorage.removeItem("amariah_cart") // Corrected key
+        setOrderId(result.orderId || sessionId) // Use orderId from API response
+        setOrderDetails(result.orderData) // Set full order details from API
+        localStorage.removeItem("amariah_cart")
         localStorage.removeItem("customerInfo")
+        localStorage.removeItem("selectedProduct") // Clear single product too
       } else {
-        console.error("Failed to verify Stripe session")
+        const errorData = await response.json()
+        console.error("Failed to verify Stripe session:", errorData)
+        // Optionally set an error state to display to the user
       }
     } catch (error) {
       console.error("Error verifying Stripe session:", error)
+      // Optionally set an error state
     } finally {
       setIsProcessing(false)
     }
   }
 
   const whatsappMessage =
-    customerInfo && orderId && cartItems.length > 0
-      ? `Hello! I just completed my order (Order: ${orderId}) for the following items: ${cartItems.map((item) => `${item.name} x${item.selectedQuantity}`).join(", ")}. Looking forward to delivery coordination. Thank you!`
+    orderDetails && orderId
+      ? `Hello! I just completed my order (Order: ${orderId}) for the following items: ${orderDetails.items.map((item) => `${item.product_display_name} x${item.quantity}`).join(", ")}. Looking forward to delivery coordination. Thank you!`
       : "Hello! I just completed my AMA order and would like to coordinate delivery. Thank you!"
   const whatsappUrl = `https://wa.me/+447707783963?text=${encodeURIComponent(whatsappMessage)}`
 
@@ -204,11 +207,33 @@ export default function PaymentSuccessPage() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2c2824] mx-auto mb-4"></div>
           <p className="text-lg text-[#2c2824]">
-            Processing your {paymentMethod === "paypal" ? "PayPal" : "Stripe"} payment...
+            Processing your {paymentMethodUsed === "paypal" ? "PayPal" : "Stripe"} payment...
           </p>
         </div>
       </div>
     )
+  }
+
+  // Display a message if order details are not available after processing
+  if (!orderDetails && processComplete) {
+    return (
+      <div className="min-h-screen bg-[#f8f3ea] flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-3xl md:text-4xl font-serif text-[#2c2824] mb-4">Order Not Found</h1>
+          <p className="text-lg text-[#2c2824]/80 mb-8">
+            We couldn't retrieve your order details. Please check your email for confirmation or contact support.
+          </p>
+          <Link href="/shop">
+            <Button className="bg-[#2c2824] text-white">Continue Shopping</Button>
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
+  // Only render the success page content if orderDetails are available
+  if (!orderDetails) {
+    return null // Or a loading spinner if you prefer
   }
 
   return (
@@ -225,8 +250,7 @@ export default function PaymentSuccessPage() {
           </div>
           <h1 className="text-3xl md:text-4xl font-serif text-[#2c2824] mb-4">Payment Successful!</h1>
           <p className="text-lg text-[#2c2824]/80 mb-8">
-            Thank you for your order. Your {paymentMethod === "paypal" ? "PayPal" : "Stripe"} payment has been processed
-            successfully.
+            Thank you for your order. Your {orderDetails.paymentMethod} payment has been processed successfully.
           </p>
           {orderId && (
             <div className="bg-white p-6 rounded-lg shadow-sm mb-8">
@@ -236,55 +260,49 @@ export default function PaymentSuccessPage() {
                   <strong>Order ID:</strong> {orderId}
                 </p>
                 <p>
-                  <strong>Payment Method:</strong> {paymentMethod === "paypal" ? "PayPal" : "Stripe"}
+                  <strong>Payment Method:</strong> {orderDetails.paymentMethod}
                 </p>
-                {payerId && (
-                  <p>
-                    <strong>Payer ID:</strong> {payerId}
-                  </p>
-                )}
-                {/* MODIFIED: Loop through cartItems instead of single product */}
-                {cartItems.length > 0 && (
+                {/* Display items from orderDetails */}
+                {orderDetails.items.length > 0 && (
                   <>
                     <h3 className="font-semibold mt-4 mb-2">Items Ordered:</h3>
-                    {cartItems.map((item) => (
-                      <div key={item.id} className="border-b pb-2 mb-2 last:border-b-0 last:pb-0">
+                    {orderDetails.items.map((item) => (
+                      <div key={item.product_id} className="border-b pb-2 mb-2 last:border-b-0 last:pb-0">
                         <p>
-                          <strong>Product:</strong> {item.name} — {item.subtitle}
+                          <strong>Product:</strong> {item.product_display_name}
                         </p>
                         <p>
-                          <strong>Quantity:</strong> {item.selectedQuantity}
+                          <strong>Quantity:</strong> {item.quantity}
                         </p>
                         <p>
-                          <strong>Price:</strong> {item.selectedPrice}
+                          <strong>Price:</strong> {item.unit_price.toFixed(2)} {item.currency}
                         </p>
                       </div>
                     ))}
-                    {/* Calculate and display total price for all items */}
                     <p className="font-bold text-lg mt-4">
-                      Total:{" "}
-                      {cartItems
-                        .reduce((sum, item) => {
-                          const priceMatch = item.selectedPrice.match(/[\d.]+/)
-                          const price = priceMatch ? Number.parseFloat(priceMatch[0]) : 0
-                          return sum + price * item.selectedQuantity
-                        }, 0)
-                        .toFixed(2)}{" "}
-                      {cartItems[0]?.selectedRegion === "UAE" ? "AED" : "GBP"}
+                      Total: {orderDetails.totalAmount.toFixed(2)} {orderDetails.currency}
                     </p>
                   </>
                 )}
-                {customerInfo && (
+                {orderDetails.customerInfo && (
                   <>
                     <p>
-                      <strong>Customer:</strong> {customerInfo.firstName} {customerInfo.lastName}
+                      <strong>Customer:</strong> {orderDetails.customerInfo.firstName}{" "}
+                      {orderDetails.customerInfo.lastName}
                     </p>
                     <p>
-                      <strong>Email:</strong> {customerInfo.email}
+                      <strong>Email:</strong> {orderDetails.customerInfo.email}
                     </p>
-                    <p>
-                      <strong>Phone:</strong> {customerInfo.phone}
-                    </p>
+                    {orderDetails.customerInfo.phone && (
+                      <p>
+                        <strong>Phone:</strong> {orderDetails.customerInfo.phone}
+                      </p>
+                    )}
+                    {orderDetails.customerInfo.address && (
+                      <p>
+                        <strong>Address:</strong> {orderDetails.customerInfo.address}
+                      </p>
+                    )}
                   </>
                 )}
               </div>

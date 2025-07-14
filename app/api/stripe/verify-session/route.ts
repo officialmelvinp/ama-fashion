@@ -1,174 +1,184 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { neon } from "@neondatabase/serverless"
-import type { CartItem, OrderItemEmailData } from "@/lib/types" // Import CartItem and OrderItemEmailData
-import { sendOrderConfirmationEmail } from "@/lib/email" // Import from lib/email.ts
-import { sendVendorNotificationEmail } from "@/lib/email-vendor" // Import the new vendor email utility
-import { getProductDisplayName, recordOrder } from "@/lib/inventory" // Import from lib/inventory.ts
+import Stripe from "stripe"
+import { sendOrderConfirmationEmail } from "@/lib/email"
+import { sendVendorNotificationEmail } from "@/lib/email-vendor"
+import { recordOrder, getProductInventory } from "@/lib/inventory" // MODIFIED: Import getProductInventory
+import type { OrderItemEmailData, RecordOrderData } from "@/lib/types"
 
-const sql = neon(process.env.DATABASE_URL!)
+// Initialize Stripe client
+const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: "2025-06-30.basil",
+})
 
 export async function POST(request: NextRequest) {
+  let requestBody: any = null
   try {
-    const { sessionId, customerInfo } = await request.json()
+    requestBody = await request.json()
+    const { sessionId, customerInfo } = requestBody
+
+    console.log("STRIPE VERIFY SESSION: Received request for session:", sessionId)
+    console.log("STRIPE VERIFY SESSION: Customer info received:", customerInfo)
+
     if (!sessionId) {
+      console.error("❌ STRIPE VERIFY SESSION: No sessionId provided.")
       return NextResponse.json({ error: "Session ID is required" }, { status: 400 })
     }
-    console.log("🔍 Verifying Stripe session:", sessionId)
-    console.log("👤 Customer info received:", customerInfo)
 
-    // Retrieve the session from Stripe
-    const response = await fetch(
-      `https://api.stripe.com/v1/checkout/sessions/${sessionId}?expand[]=line_items.data.price.product`,
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.STRIPE_SECRET_KEY!}`,
-        },
-      },
-    )
-    if (!response.ok) {
-      const error = await response.json()
-      console.error("❌ Stripe session verification failed:", error)
-      throw new Error(`Stripe verification failed: ${JSON.stringify(error)}`)
+    console.log("STRIPE VERIFY SESSION: Retrieving Stripe session...")
+    // MODIFIED: Use stripeClient to retrieve session
+    const session = await stripeClient.checkout.sessions.retrieve(sessionId, {
+      expand: ["line_items", "payment_intent"], // Expand line items and payment intent
+    })
+    console.log("✅ STRIPE VERIFY SESSION: Stripe session retrieved successfully.")
+    console.log("STRIPE VERIFY SESSION: Session status:", session.status)
+    console.log("STRIPE VERIFY SESSION: Session metadata:", session.metadata)
+
+    if (session.status !== "complete") {
+      console.warn("STRIPE VERIFY SESSION: Session is not complete. Status:", session.status)
+      return NextResponse.json({ error: "Stripe session not complete" }, { status: 400 })
     }
-    const session = await response.json()
-    console.log("✅ Stripe session verified successfully")
 
-    // Retrieve and parse full CartItem array from session metadata
+    // Retrieve and parse simplified cart items from session metadata
     const cartItemsJson = session.metadata?.cart_items_json
-    let cartItems: CartItem[] = []
+    let simplifiedCartItems: { id: string; qty: number; region: "UAE" | "UK" }[] = []
     if (cartItemsJson) {
       try {
-        cartItems = JSON.parse(cartItemsJson) as CartItem[]
-        console.log("Verify Session: Parsed full cart items from metadata:", cartItems)
+        simplifiedCartItems = JSON.parse(cartItemsJson)
+        console.log("STRIPE VERIFY SESSION: Parsed simplified cart items from metadata:", simplifiedCartItems)
       } catch (parseError) {
-        console.error("Error parsing cart_items_json from metadata:", parseError)
+        console.error("❌ STRIPE VERIFY SESSION: Error parsing cart_items_json from metadata:", parseError)
+        return NextResponse.json({ error: "Failed to parse cart items from metadata" }, { status: 400 })
       }
     }
 
-    if (cartItems.length === 0) {
-      console.warn("No cart items found in session metadata. This might indicate an issue.")
-      // It's better to return an error here if cart items are essential for order processing
+    if (simplifiedCartItems.length === 0) {
+      console.error(
+        "❌ STRIPE VERIFY SESSION: No simplified cart items found in session metadata. Cannot process order.",
+      )
       return NextResponse.json({ error: "No cart items found in session metadata" }, { status: 400 })
     }
 
-    // Prepare items for database recording and email sending
-    const itemsForProcessing = await Promise.all(
-      cartItems.map(async (item) => {
-        const productDisplayName = await getProductDisplayName(item.id)
-        // Safely extract numeric price from selectedPrice string
-        const priceMatch = item.selectedPrice.match(/[\d.]+/)
-        const price = priceMatch ? Number.parseFloat(priceMatch[0]) : 0
-        const currency = item.selectedRegion === "UAE" ? "AED" : "GBP"
+    console.log("STRIPE VERIFY SESSION: Preparing items for processing (fetching full product details from DB)...")
+    const itemsForProcessing: OrderItemEmailData[] = await Promise.all(
+      simplifiedCartItems.map(async (item) => {
+        const productInventory = await getProductInventory(item.id) // Fetch full product details
+        if (!productInventory) {
+          console.error(`❌ STRIPE VERIFY SESSION: Product inventory not found for ID: ${item.id}`)
+          throw new Error(`Product ${item.id} not found in inventory.`)
+        }
+
+        const productDisplayName = productInventory.product_name || item.id
+        const unitPrice = item.region === "UAE" ? productInventory.priceAED : productInventory.priceGBP
+        const currencyCode = item.region === "UAE" ? "AED" : "GBP"
+
+        if (unitPrice === null || unitPrice === undefined) {
+          console.error(
+            `❌ STRIPE VERIFY SESSION: Price not found for product ID: ${item.id} in region: ${item.region}`,
+          )
+          throw new Error(`Price not found for product ${item.id}.`)
+        }
+
+        console.log(
+          `STRIPE VERIFY SESSION: Processed item ${item.id}: Display Name: ${productDisplayName}, Quantity: ${item.qty}, Unit Price: ${unitPrice}, Currency: ${currencyCode}`,
+        )
 
         return {
-          productId: item.id,
-          quantity: item.selectedQuantity,
-          price: price,
-          currency: currency,
-          productDisplayName: productDisplayName,
+          product_id: item.id,
+          product_display_name: productDisplayName,
+          quantity: item.qty,
+          unit_price: unitPrice,
+          currency: currencyCode,
         }
       }),
     )
+    console.log("STRIPE VERIFY SESSION: Items prepared:", itemsForProcessing)
 
-    const customerName =
-      session.customer_details?.name ||
-      (customerInfo?.firstName && customerInfo?.lastName
-        ? `${customerInfo.firstName} ${customerInfo.lastName}`
-        : "Customer")
-    const customerPhone =
-      session.customer_details?.phone ||
-      customerInfo?.phone ||
-      (customerInfo?.firstName ? "Phone not provided during checkout" : "")
+    const customerName = session.customer_details?.name || customerInfo?.name || "Customer"
+    const customerEmail = session.customer_details?.email || customerInfo?.email || ""
+    const customerPhone = session.customer_details?.phone || customerInfo?.phone || ""
+    const shippingAddress = session.customer_details?.address
+      ? `${session.customer_details.address.line1 || ""}${session.customer_details.address.line2 ? ", " + session.customer_details.address.line2 : ""}${session.customer_details.address.city ? ", " + session.customer_details.address.city : ""}${session.customer_details.address.state ? ", " + session.customer_details.address.state : ""}${session.customer_details.address.postal_code ? ", " + session.customer_details.address.postal_code : ""}${session.customer_details.address.country ? ", " + session.customer_details.address.country : ""}`
+          .trim()
+          .replace(/^, /, "")
+      : customerInfo?.address || ""
 
-    const orderData = {
-      payment_id: session.payment_intent || session.id,
-      customer_email: session.customer_details?.email || customerInfo?.email || "",
-      customer_name: customerName,
-      shipping_address: session.customer_details?.address
-        ? `${session.customer_details.address.line1 || ""}${session.customer_details.address.line2 ? ", " + session.customer_details.address.line2 : ""}${session.customer_details.address.city ? ", " + session.customer_details.address.city : ""}${session.customer_details.address.state ? ", " + session.customer_details.address.state : ""}${session.customer_details.address.postal_code ? ", " + session.customer_details.address.postal_code : ""}${session.customer_details.address.country ? ", " + session.customer_details.address.country : ""}`
-            .trim()
-            .replace(/^, /, "") // Clean up leading comma if line1 is empty
-        : customerInfo?.address && customerInfo?.city && customerInfo?.country
-          ? `${customerInfo.address}, ${customerInfo.city}, ${customerInfo.country}${customerInfo.postalCode ? ", " + customerInfo.postalCode : ""}`
-          : "",
-      phone_number: customerPhone,
-      notes: `Stripe payment completed. Session ID: ${session.id}.`, // Notes will be detailed by recordOrder
-      order_type: "purchase",
-      order_status: "completed", // Use 'completed' for successful payments
-      shipping_status: "paid", // Start with "paid" status
-      total_amount: (session.amount_total ?? 0) / 100, // Convert from cents
-      currency: (session.currency ?? "GBP").toUpperCase(),
-      items: itemsForProcessing, // Pass the processed items array
-    }
-    console.log("Verify Session: Final orderData before DB/Email:", orderData)
-    console.log("💾 Recording order data:", orderData)
+    const paymentId =
+      typeof session.payment_intent === "string"
+        ? session.payment_intent
+        : (session.payment_intent as Stripe.PaymentIntent)?.id || session.id
 
-    // Record order in database using the imported recordOrder
-    const recordResult = await recordOrder({
-      paymentIntentId: orderData.payment_id,
-      customerEmail: orderData.customer_email,
-      customerName: orderData.customer_name,
-      shippingAddress: orderData.shipping_address,
-      phoneNumber: orderData.phone_number,
-      notes: orderData.notes,
-      orderType: orderData.order_type as "standard" | "preorder" | "mixed", // Cast to valid type
-      orderStatus: orderData.order_status,
-      shippingStatus: orderData.shipping_status,
-      totalAmount: orderData.total_amount,
-      currency: orderData.currency,
-      status: orderData.order_status, // Payment status
+    const totalAmount = (session.amount_total ?? 0) / 100
+    const currency = (session.currency ?? "GBP").toUpperCase()
+
+    const orderDataForRecord: RecordOrderData = {
       items: itemsForProcessing.map((item) => ({
-        productId: item.productId,
+        productId: item.product_id,
         quantity: item.quantity,
-        price: item.price,
+        price: item.unit_price,
       })),
-    })
-
-    if (!recordResult.success || !recordResult.orderId) {
-      throw new Error(recordResult.message || "Failed to record order in database.")
+      totalAmount: totalAmount,
+      currency: currency,
+      status: "completed",
+      customerEmail: customerEmail,
+      paymentIntentId: paymentId,
+      customerName: customerName,
+      shippingAddress: shippingAddress,
+      phoneNumber: customerPhone, // Use customerPhone here
+      notes: `Stripe payment verified via /api/stripe/verify-session. Session ID: ${session.id}.`,
+      orderType: "purchase",
+      orderStatus: "completed",
+      shippingStatus: "paid",
     }
-    const orderId = recordResult.orderId
+    console.log("STRIPE VERIFY SESSION: Order data prepared for recording:", orderDataForRecord)
 
-    // Prepare data for email functions from lib/email.ts
-    const emailItems: OrderItemEmailData[] = itemsForProcessing.map((item) => ({
-      product_display_name: item.productDisplayName,
-      quantity: item.quantity,
-      unit_price: item.price,
-      currency: item.currency,
-    }))
+    console.log("STRIPE VERIFY SESSION: Attempting to record order in DB...")
+    const recordResult = await recordOrder(orderDataForRecord)
+    const orderDbId = recordResult.orderId
 
-    // Send customer email
+    if (!recordResult.success || !orderDbId) {
+      console.error("❌ STRIPE VERIFY SESSION: Failed to record order in DB:", recordResult.message)
+      return NextResponse.json({ error: recordResult.message || "Failed to record order" }, { status: 500 })
+    }
+
+    console.log(`🎉 STRIPE VERIFY SESSION: Order recorded with ID: ${orderDbId}`)
+
+    console.log("STRIPE VERIFY SESSION: Attempting to send customer email...")
     await sendOrderConfirmationEmail({
-      customer_email: orderData.customer_email,
-      customer_name: orderData.customer_name,
-      order_id: orderId.toString(), // Use the actual order ID from DB
-      items: emailItems,
-      total_amount: orderData.total_amount,
-      currency: orderData.currency,
-      payment_status: orderData.order_status,
-      shipping_status: orderData.shipping_status,
+      customer_name: customerName,
+      customer_email: customerEmail,
+      order_id: orderDbId.toString(),
+      items: itemsForProcessing,
+      total_amount: totalAmount,
+      currency: currency,
+      payment_status: "Confirmed",
+      shipping_status: "Paid",
     })
+    console.log("✅ STRIPE VERIFY SESSION: Customer email sent successfully.")
 
-    // Send vendor email (assuming a separate utility for vendor emails)
+    console.log("STRIPE VERIFY SESSION: Attempting to send vendor email...")
     await sendVendorNotificationEmail({
-      order_id: orderId.toString(),
-      customer_name: orderData.customer_name,
-      customer_email: orderData.customer_email,
-      phone_number: orderData.phone_number,
-      shipping_address: orderData.shipping_address,
-      total_amount: orderData.total_amount,
-      currency: orderData.currency,
-      items: emailItems,
+      order_id: orderDbId.toString(),
+      customer_name: customerName,
+      customer_email: customerEmail,
+      phone_number: customerPhone, // Use customerPhone here
+      shipping_address: shippingAddress,
+      total_amount: totalAmount,
+      currency: currency,
+      items: itemsForProcessing,
       payment_method: "Stripe",
+      payment_id: paymentId,
     })
+    console.log("✅ STRIPE VERIFY SESSION: Vendor email sent successfully.")
+
+    console.log("🎉 STRIPE VERIFY SESSION: Stripe session verification and order processing completed successfully!")
 
     return NextResponse.json({
       success: true,
-      orderId: orderId, // Return the actual order ID from DB
-      message: "Stripe order processed and notifications sent!",
+      orderId: orderDbId,
+      message: "Stripe session verified and order processed!",
     })
   } catch (error) {
-    console.error("❌ Stripe session verification error:", error)
+    console.error("❌ STRIPE VERIFY SESSION: Error processing Stripe session:", error)
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Session verification failed" },
       { status: 500 },
