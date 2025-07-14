@@ -290,14 +290,19 @@ export async function getOrders(): Promise<Order[]> {
     // Fetch order items for each order and populate summary fields
     const ordersWithItems = await Promise.all(
       ordersData.map(async (order) => {
-        const items = (await sql`
+        const rawItems = await sql`
           SELECT
             id, order_id, product_id, product_display_name, quantity, unit_price, currency, created_at, updated_at,
-            quantity_from_stock, quantity_preorder -- ADDED
+            quantity_from_stock, quantity_preorder
           FROM order_items
           WHERE order_id = ${order.id}
           ORDER BY id ASC
-        `) as OrderItem[]
+        `
+        const items: OrderItem[] = rawItems.map((item: any) => ({
+          ...item,
+          unit_price: Number.parseFloat(item.unit_price), // Convert to number here
+          quantity: Number.parseInt(item.quantity), // Ensure quantity is also a number
+        }))
 
         // For the admin page's simplified display, get details of the first item
         const firstItem = items[0] || null
@@ -356,14 +361,19 @@ export async function getOrderById(orderId: number): Promise<Order | null> {
 
     const order = orders[0]
 
-    const items = (await sql`
+    const rawItemsById = await sql`
       SELECT
         id, order_id, product_id, product_display_name, quantity, unit_price, currency, created_at, updated_at,
-        quantity_from_stock, quantity_preorder -- ADDED
+        quantity_from_stock, quantity_preorder
       FROM order_items
       WHERE order_id = ${order.id}
       ORDER BY id ASC
-    `) as OrderItem[]
+    `
+    const items: OrderItem[] = rawItemsById.map((item: any) => ({
+      ...item,
+      unit_price: Number.parseFloat(item.unit_price), // Convert to number here
+      quantity: Number.parseInt(item.quantity), // Ensure quantity is also a number
+    }))
 
     // For getOrderById, we also need to populate the simplified fields for consistency
     const firstItem = items[0] || null
