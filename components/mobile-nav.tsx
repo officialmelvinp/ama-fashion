@@ -30,9 +30,9 @@ export default function MobileNav({ textColor = "text-white", className }: Mobil
           <span className="sr-only">Toggle navigation menu</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-black px-6 pt-32 pb-6 sm:max-w-sm sm:ring-1 sm:ring-white/10">
+      <DialogContent className="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-black px-6 pt-48 pb-6 sm:max-w-sm sm:ring-1 sm:ring-white/10">
         {" "}
-        {/* Increased pt-32 for more top space */}
+        {/* Increased pt-48 for even more top space */}
         <div className="flex items-center justify-end">
           <button type="button" className="-m-2.5 rounded-md p-2.5 text-white" onClick={closeMenu}>
             <span className="sr-only">Close menu</span>
@@ -42,8 +42,6 @@ export default function MobileNav({ textColor = "text-white", className }: Mobil
         <nav className="mt-6 flow-root">
           <div className="-my-6 divide-y divide-white/25">
             <div className="flex flex-col p-4 space-y-4">
-              {" "}
-              {/* This div provides the vertical spacing between links */}
               <Link
                 href="/"
                 className={cn(
