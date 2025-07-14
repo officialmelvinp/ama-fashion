@@ -292,7 +292,8 @@ export async function getOrders(): Promise<Order[]> {
       ordersData.map(async (order) => {
         const items = (await sql`
           SELECT
-            id, order_id, product_id, product_display_name, quantity, unit_price, currency, created_at, updated_at
+            id, order_id, product_id, product_display_name, quantity, unit_price, currency, created_at, updated_at,
+            quantity_from_stock, quantity_preorder -- ADDED
           FROM order_items
           WHERE order_id = ${order.id}
           ORDER BY id ASC
@@ -357,7 +358,8 @@ export async function getOrderById(orderId: number): Promise<Order | null> {
 
     const items = (await sql`
       SELECT
-        id, order_id, product_id, product_display_name, quantity, unit_price, currency, created_at, updated_at
+        id, order_id, product_id, product_display_name, quantity, unit_price, currency, created_at, updated_at,
+        quantity_from_stock, quantity_preorder -- ADDED
       FROM order_items
       WHERE order_id = ${order.id}
       ORDER BY id ASC
@@ -448,6 +450,29 @@ export async function recordOrder(
     return { success: false, message: "No items provided for the order." }
   }
 
+  // Determine the payment_id to use for idempotency check
+  const uniquePaymentId = paymentIntentId || paypalOrderId
+
+  // --- Idempotency Check ---
+  if (uniquePaymentId) {
+    try {
+      const existingOrder = await sql`
+        SELECT id FROM orders
+        WHERE payment_id = ${uniquePaymentId}
+      `
+      if (existingOrder.length > 0) {
+        console.log(
+          `Order with payment_id ${uniquePaymentId} already exists (ID: ${existingOrder[0].id}). Skipping duplicate record.`,
+        )
+        return { success: true, orderId: existingOrder[0].id, message: "Order already recorded." }
+      }
+    } catch (error) {
+      console.error(`Error checking for existing order with payment_id ${uniquePaymentId}:`, error)
+      // Continue to attempt recording, but log the issue
+    }
+  }
+  // --- End Idempotency Check ---
+
   try {
     // Start a transaction
     await sql`BEGIN`
@@ -461,17 +486,19 @@ export async function recordOrder(
     // Insert into the main orders table
     const orderResult = await sql`
       INSERT INTO orders (
-        product_id, -- ADDED THIS LINE
+        product_id,
         customer_email, customer_name, total_amount, currency, payment_status,
         shipping_address, phone_number, notes, order_type, order_status, shipping_status,
         payment_id, -- This will store either Stripe PaymentIntent ID or PayPal Order ID
+        amount_paid, -- ADDED: amount_paid column
         created_at, updated_at
       ) VALUES (
-        ${items[0].productId}, -- ADDED THIS LINE: Use the product_id of the first item
+        ${items[0].productId},
         ${customerEmail}, ${customerName || null}, ${totalAmount}, ${currency}, ${status},
         ${shippingAddress || null}, ${phoneNumber || null}, ${detailedNotes || null}, ${orderType || "standard"},
         ${orderStatus || "new"}, ${shippingStatus || "pending"},
         ${paymentIntentId || paypalOrderId || null},
+        ${totalAmount}, -- ADDED: Value for amount_paid
         CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
       )
       RETURNING id

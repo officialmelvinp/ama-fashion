@@ -40,6 +40,8 @@ export interface OrderItem {
   currency: string
   created_at: string
   updated_at: string
+  quantity_from_stock?: number // ADDED
+  quantity_preorder?: number // ADDED
 }
 
 export interface ProductInventory {
