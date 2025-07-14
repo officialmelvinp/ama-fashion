@@ -45,7 +45,8 @@ export function MobileNav({ textColor = "text-white" }: MobileNavProps) {
           </div>
           <div className="mt-6 flow-root">
             <div className="-my-6 divide-y divide-white/25">
-              <div className="flex flex-col p-4 space-y-4">
+              {/* Added pt-8 to push content down */}
+              <div className="flex flex-col p-4 space-y-4 pt-8">
                 <Link
                   href="/"
                   className={cn(
@@ -54,17 +55,37 @@ export function MobileNav({ textColor = "text-white" }: MobileNavProps) {
                   )}
                   onClick={() => setIsOpen(false)}
                 >
-                  Home
+                  HOME
                 </Link>
                 <Link
-                  href="/products"
+                  href="/shop"
                   className={cn(
                     `text-base tracking-widest hover:opacity-70 transition-opacity text-white`,
-                    pathname === "/products" ? "opacity-100" : "opacity-80",
+                    pathname === "/shop" ? "opacity-100" : "opacity-80",
                   )}
                   onClick={() => setIsOpen(false)}
                 >
-                  Products
+                  SHOP
+                </Link>
+                <Link
+                  href="/why-ama"
+                  className={cn(
+                    `text-base tracking-widest hover:opacity-70 transition-opacity text-white`,
+                    pathname === "/why-ama" ? "opacity-100" : "opacity-80",
+                  )}
+                  onClick={() => setIsOpen(false)}
+                >
+                  WHY AMA
+                </Link>
+                <Link
+                  href="/contact"
+                  className={cn(
+                    `text-base tracking-widest hover:opacity-70 transition-opacity text-white`,
+                    pathname === "/contact" ? "opacity-100" : "opacity-80",
+                  )}
+                  onClick={() => setIsOpen(false)}
+                >
+                  CONTACT
                 </Link>
                 <Link
                   href="/cart"
