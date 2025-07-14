@@ -461,11 +461,13 @@ export async function recordOrder(
     // Insert into the main orders table
     const orderResult = await sql`
       INSERT INTO orders (
+        product_id, -- ADDED THIS LINE
         customer_email, customer_name, total_amount, currency, payment_status,
         shipping_address, phone_number, notes, order_type, order_status, shipping_status,
         payment_id, -- This will store either Stripe PaymentIntent ID or PayPal Order ID
         created_at, updated_at
       ) VALUES (
+        ${items[0].productId}, -- ADDED THIS LINE: Use the product_id of the first item
         ${customerEmail}, ${customerName || null}, ${totalAmount}, ${currency}, ${status},
         ${shippingAddress || null}, ${phoneNumber || null}, ${detailedNotes || null}, ${orderType || "standard"},
         ${orderStatus || "new"}, ${shippingStatus || "pending"},
