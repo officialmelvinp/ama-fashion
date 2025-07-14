@@ -45,8 +45,8 @@ export function MobileNav({ textColor = "text-white" }: MobileNavProps) {
           </div>
           <div className="mt-6 flow-root">
             <div className="-my-6 divide-y divide-white/25">
-              {/* Added pt-8 to push content down */}
-              <div className="flex flex-col p-4 space-y-4 pt-8">
+              {/* Increased pt-8 to pt-10 for slightly more padding */}
+              <div className="flex flex-col p-4 space-y-4 pt-10">
                 <Link
                   href="/"
                   className={cn(
