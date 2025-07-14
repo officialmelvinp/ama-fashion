@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { MobileNav } from "./mobile-nav" // Ensure MobileNav is imported
+import MobileNav from "./mobile-nav" // Changed to default import
 import { useCart } from "@/hooks/use-cart"
 import { ShoppingCart } from "lucide-react"
 
@@ -24,7 +24,8 @@ export default function Header({ bgColor = "bg-transparent", textColor = "text-w
           AMA
         </Link>
 
-        <MobileNav textColor={textColor} />
+        {/* Added md:hidden to hide MobileNav on medium and larger screens */}
+        <MobileNav textColor={textColor} className="md:hidden" />
 
         <nav className="hidden md:flex items-center space-x-6 md:space-x-8">
           <Link
