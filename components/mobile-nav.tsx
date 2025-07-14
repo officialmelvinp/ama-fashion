@@ -7,10 +7,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
 import { Menu, X, ShoppingCart } from "lucide-react"
-import { useCart } from "@/hooks/use-cart" // Ensure this path is correct
-
-// siteConfig is not needed here as per user request to remove AMA logo
-// import { siteConfig } from "@/config/site"
+import { useCart } from "@/hooks/use-cart"
 
 interface MobileNavProps {
   textColor?: string
@@ -33,10 +30,10 @@ export default function MobileNav({ textColor = "text-white", className }: Mobil
           <span className="sr-only">Toggle navigation menu</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-black px-6 py-6 sm:max-w-sm sm:ring-1 sm:ring-white/10">
+      <DialogContent className="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-black px-6 pt-24 pb-6 sm:max-w-sm sm:ring-1 sm:ring-white/10">
+        {" "}
+        {/* Adjusted pt-24 for more top space */}
         <div className="flex items-center justify-end">
-          {" "}
-          {/* Adjusted to justify-end for close button */}
           <button type="button" className="-m-2.5 rounded-md p-2.5 text-white" onClick={closeMenu}>
             <span className="sr-only">Close menu</span>
             <X className="h-6 w-6" aria-hidden="true" />
@@ -44,9 +41,9 @@ export default function MobileNav({ textColor = "text-white", className }: Mobil
         </div>
         <nav className="mt-6 flow-root">
           <div className="-my-6 divide-y divide-white/25">
-            <div className="flex flex-col p-4 space-y-4 pt-16">
+            <div className="flex flex-col p-4 space-y-4">
               {" "}
-              {/* This div provides the vertical spacing */}
+              {/* Removed pt-16 here, relying on DialogContent's pt-24 */}
               <Link
                 href="/"
                 className={cn(
@@ -77,17 +74,6 @@ export default function MobileNav({ textColor = "text-white", className }: Mobil
               >
                 WHY AMA
               </Link>
-              {/* Removed Contact Us link as per user request */}
-              {/* <Link
-                href="/contact"
-                className={cn(
-                  `text-base tracking-widest hover:opacity-70 transition-opacity text-white`,
-                  pathname === "/contact" ? "opacity-100" : "opacity-80",
-                )}
-                onClick={closeMenu}
-              >
-                CONTACT
-              </Link> */}
               <Link
                 href="/cart"
                 className={cn(
@@ -96,7 +82,7 @@ export default function MobileNav({ textColor = "text-white", className }: Mobil
                 )}
                 onClick={closeMenu}
               >
-                <ShoppingCart className="h-6 w-6" /> {/* Changed icon size to match others */}
+                <ShoppingCart className="h-6 w-6" />
                 Cart
                 {totalCartItems > 0 && (
                   <span className="ml-1 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 bg-red-600 rounded-full">
