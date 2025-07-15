@@ -33,7 +33,7 @@ export default function MobileNav({ textColor = "text-white", className }: Mobil
         {" "}
         {/* Increased pt-48 for even more top space */}
         <div className="flex items-center justify-end">
-          <button type="button" className="-m-2.5 rounded-md p-2.5 text-white" onClick={closeMenu}>
+          <button type="button" className="-m-2.5 rounded-md p-2.5 text-red-500" onClick={closeMenu}>
             <span className="sr-only">Close menu</span>
             <X className="h-6 w-6" aria-hidden="true" />
           </button>
