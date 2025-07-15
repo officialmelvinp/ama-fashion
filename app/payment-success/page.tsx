@@ -255,7 +255,7 @@ export default function PaymentSuccessPage() {
           {orderId && (
             <div className="bg-white p-6 rounded-lg shadow-sm mb-8">
               <h2 className="font-serif text-xl text-[#2c2824] mb-4">Order Details</h2>
-              <div className="text-left space-y-2">
+              <div className="space-y-2">
                 <p>
                   <strong>Order ID:</strong> {orderId}
                 </p>
@@ -310,7 +310,7 @@ export default function PaymentSuccessPage() {
           )}
           <div className="bg-[#2c2824] text-white p-8 rounded-lg mb-8">
             <h2 className="font-serif text-2xl mb-4">Next Steps</h2>
-            <div className="space-y-4 text-left">
+            <div className="space-y-4">
               <div className="flex items-start gap-3">
                 <span className="text-2xl">📧</span>
                 <div>
@@ -333,7 +333,7 @@ export default function PaymentSuccessPage() {
                 <span className="text-2xl">🚚</span>
                 <div>
                   <h3 className="font-medium mb-1">Delivery</h3>
-                  <p className="text-sm opacity-90">We'll coordinate delivery details via WhatsApp within 24 hours.</p>
+                  <p className="text-sm opacity-90">We'll coordinate delivery details via email and WhatsApp within 24 hours.</p>
                 </div>
               </div>
             </div>

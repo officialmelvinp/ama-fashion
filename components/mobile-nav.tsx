@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
-import { Menu, X, ShoppingCart } from "lucide-react"
+import { Menu, X, ShoppingCart, Phone } from "lucide-react" // Import Phone icon
 import { useCart } from "@/hooks/use-cart"
 
 interface MobileNavProps {
@@ -19,7 +19,6 @@ export default function MobileNav({ textColor = "text-white", className }: Mobil
   const pathname = usePathname()
   const { getTotalItems } = useCart()
   const totalCartItems = getTotalItems()
-
   const closeMenu = () => setIsOpen(false)
 
   return (
@@ -71,6 +70,17 @@ export default function MobileNav({ textColor = "text-white", className }: Mobil
                 onClick={closeMenu}
               >
                 WHY AMA
+              </Link>
+              <Link
+                href="/contact" // New Contact Link
+                className={cn(
+                  `relative text-base tracking-widest hover:opacity-70 transition-opacity text-white flex items-center gap-2`,
+                  pathname === "/contact" ? "opacity-100" : "opacity-80",
+                )}
+                onClick={closeMenu}
+              >
+                <Phone className="h-6 w-6" /> {/* Phone icon */}
+                CONTACT
               </Link>
               <Link
                 href="/cart"

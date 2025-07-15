@@ -2,12 +2,16 @@
 
 import type React from "react"
 
+import { ThemeProvider } from "next-themes"
 import { CartProvider } from "@/context/cart-context"
-import { ThemeProvider } from "@/components/theme-provider"
 
-export function Providers({ children }: { children: React.ReactNode }) {
+interface ProvidersProps {
+  children: React.ReactNode
+}
+
+export function Providers({ children }: ProvidersProps) {
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+    <ThemeProvider attribute="class" defaultTheme="light">
       <CartProvider>{children}</CartProvider>
     </ThemeProvider>
   )
