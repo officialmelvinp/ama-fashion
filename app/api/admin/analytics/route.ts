@@ -3,27 +3,27 @@ import { NextResponse } from "next/server";
 
 export async function GET(req: Request) {
   try {
-    const sql = neon(process.env.DATABASE_URL!);
+    const db = neon(process.env.DATABASE_URL!);
     const { searchParams } = new URL(req.url);
     const period = searchParams.get("period") || "daily";
     const type = searchParams.get("type") || "revenue";
 
     if (type === "revenue") {
-      let dateTruncClause = "DATE_TRUNC('day', o.created_at)";
+      let dateTruncExpression = "DATE_TRUNC('day', o.created_at)";
       let dateFormat = "YYYY-MM-DD";
 
       if (period === "weekly") {
-        dateTruncClause = "DATE_TRUNC('week', o.created_at)";
+        dateTruncExpression = "DATE_TRUNC('week', o.created_at)";
         dateFormat = "YYYY-MM-DD";
       } else if (period === "monthly") {
-        dateTruncClause = "DATE_TRUNC('month', o.created_at)";
+        dateTruncExpression = "DATE_TRUNC('month', o.created_at)";
         dateFormat = "YYYY-MM";
       }
 
-      // ✅ Compose SQL string directly to avoid parameter issues
+      // Build the query string entirely
       const query = `
         SELECT
-          TO_CHAR(${dateTruncClause}, '${dateFormat}') AS date,
+          TO_CHAR(${dateTruncExpression}::timestamp, '${dateFormat}') AS date,
           SUM(oi.quantity * oi.unit_price) AS total_revenue
         FROM
           orders o
@@ -37,16 +37,18 @@ export async function GET(req: Request) {
           date ASC;
       `;
 
-      const revenueData = await sql(query);
+      const revenueData = await db(query);
 
-      const formattedData = revenueData.map((row: any) => ({
+      const formattedData = revenueData.map((row) => ({
         date: row.date,
         total_revenue: Number.parseFloat(row.total_revenue),
       }));
 
       return NextResponse.json(formattedData);
-    } else if (type === "top-products") {
-      const query = `
+    } 
+    
+    else if (type === "top-products") {
+      const topProductsData = await db`
         SELECT
           oi.product_display_name,
           SUM(oi.quantity) AS total_quantity_sold,
@@ -64,16 +66,37 @@ export async function GET(req: Request) {
         LIMIT 5;
       `;
 
-      const topProductsData = await sql(query);
-
-      const formattedData = topProductsData.map((row: any) => ({
+      const formattedData = topProductsData.map((row) => ({
         product_display_name: row.product_display_name,
         total_quantity_sold: Number.parseInt(row.total_quantity_sold),
         total_revenue_generated: Number.parseFloat(row.total_revenue_generated),
       }));
 
       return NextResponse.json(formattedData);
-    } else {
+    } 
+    
+    else if (type === "subscriber-growth") {
+      const subscriberGrowthData = await db`
+        SELECT
+          TO_CHAR(created_at, 'YYYY-MM') AS month,
+          COUNT(*) AS subscribers
+        FROM
+          subscribers
+        GROUP BY
+          month
+        ORDER BY
+          month ASC;
+      `;
+
+      const formattedData = subscriberGrowthData.map((row) => ({
+        month: row.month,
+        subscribers: Number.parseInt(row.subscribers),
+      }));
+
+      return NextResponse.json(formattedData);
+    } 
+    
+    else {
       return NextResponse.json(
         { error: "Invalid analytics type" },
         { status: 400 }
