@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import Header from "@/components/header"
-import type { CartItem, Product, Region } from "@/lib/types" // Ensure CartItem, Product, Region are imported
+import type { CartItem } from "@/lib/types"
+import { useCart } from "@/context/cart-context" // Import useCart from your context
 
 type CheckoutForm = {
   firstName: string
@@ -24,7 +25,9 @@ type CheckoutForm = {
 }
 
 export default function CheckoutPage() {
-  const [cartItems, setCartItems] = useState<CartItem[]>([])
+  // Use the cart items from the global CartContext
+  const { items: cartItems, clearCart } = useCart() // <--- MODIFIED: Use useCart hook
+
   const [form, setForm] = useState<CheckoutForm>({
     firstName: "",
     lastName: "",
@@ -40,77 +43,8 @@ export default function CheckoutPage() {
   const [error, setError] = useState<string>("")
   const [paymentMethod, setPaymentMethod] = useState<"paypal" | "stripe">("stripe")
 
-  useEffect(() => {
-    let loadedItems: CartItem[] = []
-    const storedCartItems = localStorage.getItem("amariah_cart")
-
-    if (storedCartItems) {
-      try {
-        const parsedCart: CartItem[] = JSON.parse(storedCartItems)
-        const isValidCart = parsedCart.every(
-          (item) =>
-            item.id &&
-            typeof item.selectedQuantity === "number" &&
-            item.selectedQuantity >= 0 &&
-            typeof item.selectedRegion === "string" &&
-            typeof item.selectedPrice === "string",
-        )
-        if (isValidCart) {
-          loadedItems = parsedCart
-        } else {
-          console.warn("Loaded cart from localStorage has an invalid structure. Clearing cart.")
-          localStorage.removeItem("amariah_cart")
-        }
-      } catch (e) {
-        console.error("Failed to parse cart from localStorage:", e)
-        localStorage.removeItem("amariah_cart")
-      }
-    }
-
-    // If no items loaded from main cart, check for a single product from "Buy Now"
-    if (loadedItems.length === 0) {
-      const storedSingleProduct = localStorage.getItem("selectedProduct")
-      if (storedSingleProduct) {
-        try {
-          const parsedProduct: Product & {
-            selectedQuantity?: number
-            selectedRegion?: Region
-            selectedPrice?: string
-          } = JSON.parse(storedSingleProduct)
-
-          // Ensure it has the necessary CartItem properties
-          if (
-            parsedProduct.id &&
-            typeof parsedProduct.selectedQuantity === "number" &&
-            parsedProduct.selectedQuantity >= 0 &&
-            typeof parsedProduct.selectedRegion === "string" &&
-            typeof parsedProduct.selectedPrice === "string"
-          ) {
-            // Convert the single product into a CartItem array
-            loadedItems = [
-              {
-                ...parsedProduct,
-                selectedQuantity: parsedProduct.selectedQuantity,
-                selectedRegion: parsedProduct.selectedRegion,
-                selectedPrice: parsedProduct.selectedPrice,
-              } as CartItem, // Cast to CartItem
-            ]
-            // Clear the single product from localStorage after loading
-            localStorage.removeItem("selectedProduct")
-            console.log("Loaded single product from 'Buy Now' into cartItems.")
-          } else {
-            console.warn("Loaded single product from localStorage has an invalid structure. Clearing it.")
-            localStorage.removeItem("selectedProduct")
-          }
-        } catch (e) {
-          console.error("Failed to parse single product from localStorage:", e)
-          localStorage.removeItem("selectedProduct")
-        }
-      }
-    }
-
-    setCartItems(loadedItems)
-  }, [])
+  // REMOVED: The local useEffect for loading cartItems from localStorage.
+  // The cartItems are now provided by the useCart hook, which gets them from CartProvider.
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -149,7 +83,14 @@ export default function CheckoutPage() {
   }
 
   const handlePayPalCheckout = async () => {
-    if (cartItems.length === 0) return
+    console.log("DEBUG: handlePayPalCheckout called.")
+    console.log("DEBUG: Current cartItems from useCart() BEFORE API call:", cartItems)
+    if (cartItems.length === 0) {
+      console.log("DEBUG: Cart is empty, preventing PayPal checkout API call.")
+      setError("Your cart is empty. Please add items before checking out.")
+      setIsLoading(false) // Ensure loading state is reset
+      return
+    }
     setIsLoading(true)
     setError("")
     try {
@@ -192,11 +133,19 @@ export default function CheckoutPage() {
       setError(error instanceof Error ? error.message : "PayPal checkout failed")
     } finally {
       setIsLoading(false)
+      clearCart() // Clear cart after successful initiation
     }
   }
 
   const handleStripeCheckout = async () => {
-    if (cartItems.length === 0) return
+    console.log("DEBUG: handleStripeCheckout called.")
+    console.log("DEBUG: Current cartItems from useCart() BEFORE API call:", cartItems)
+    if (cartItems.length === 0) {
+      console.log("DEBUG: Cart is empty, preventing Stripe checkout API call.")
+      setError("Your cart is empty. Please add items before checking out.")
+      setIsLoading(false) // Ensure loading state is reset
+      return
+    }
     setIsLoading(true)
     setError("")
     try {
@@ -252,6 +201,7 @@ export default function CheckoutPage() {
       setError(error instanceof Error ? error.message : "Stripe checkout failed")
     } finally {
       setIsLoading(false)
+      clearCart() // Clear cart after successful initiation
     }
   }
 
@@ -513,7 +463,8 @@ export default function CheckoutPage() {
                       !form.phone ||
                       !form.address ||
                       !form.city ||
-                      !form.country
+                      !form.country ||
+                      cartItems.length === 0 // Disable if cart is empty
                     }
                     className="w-full bg-[#2c2824] text-white hover:bg-[#2c2824]/90 py-3 text-lg"
                   >

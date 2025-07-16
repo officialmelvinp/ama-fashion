@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-// import { AdminNav } from "@/components/admin-nav" // Corrected: Named import
+import { useToast } from "@/hooks/use-toast" // Import useToast for notifications
 
 type InventoryItem = {
   id: number
@@ -29,6 +29,7 @@ export default function AdminInventoryPage() {
   const [priceInputs, setPriceInputs] = useState<{ [key: string]: { aed: string; gbp: string } }>({})
   const [preOrderInputs, setPreOrderInputs] = useState<{ [key: string]: string }>({})
   const router = useRouter()
+  const { toast } = useToast() // Initialize toast
 
   useEffect(() => {
     fetchInventory()
@@ -45,6 +46,11 @@ export default function AdminInventoryPage() {
       setInventory(data.inventory || [])
     } catch (error) {
       console.error("Failed to fetch inventory:", error)
+      toast({
+        title: "Error",
+        description: "Failed to load inventory.",
+        variant: "destructive",
+      })
     } finally {
       setLoading(false)
     }
@@ -60,12 +66,26 @@ export default function AdminInventoryPage() {
       })
       if (response.ok) {
         await fetchInventory()
+        toast({
+          title: "Stock Updated",
+          description: `Stock for ${productId} updated to ${newQuantity}.`,
+          variant: "default",
+        })
       } else {
-        alert("Failed to update stock")
+        const errorData = await response.json()
+        toast({
+          title: "Update Failed",
+          description: errorData.error || "Failed to update stock.",
+          variant: "destructive",
+        })
       }
     } catch (error) {
       console.error("Error updating stock:", error)
-      alert("Error updating stock")
+      toast({
+        title: "Error",
+        description: "Error updating stock.",
+        variant: "destructive",
+      })
     } finally {
       setUpdating(null)
     }
@@ -92,12 +112,26 @@ export default function AdminInventoryPage() {
           delete newInputs[productId]
           return newInputs
         })
+        toast({
+          title: "Prices Updated",
+          description: `Prices for ${productId} updated.`,
+          variant: "default",
+        })
       } else {
-        alert("Failed to update prices")
+        const errorData = await response.json()
+        toast({
+          title: "Update Failed",
+          description: errorData.error || "Failed to update prices.",
+          variant: "destructive",
+        })
       }
     } catch (error) {
       console.error("Error updating prices:", error)
-      alert("Error updating prices")
+      toast({
+        title: "Error",
+        description: "Error updating prices.",
+        variant: "destructive",
+      })
     } finally {
       setUpdating(null)
     }
@@ -123,12 +157,26 @@ export default function AdminInventoryPage() {
           delete newInputs[productId]
           return newInputs
         })
+        toast({
+          title: "Pre-Order Date Updated",
+          description: `Pre-order date for ${productId} updated.`,
+          variant: "default",
+        })
       } else {
-        alert("Failed to update pre-order date")
+        const errorData = await response.json()
+        toast({
+          title: "Update Failed",
+          description: errorData.error || "Failed to update pre-order date.",
+          variant: "destructive",
+        })
       }
     } catch (error) {
       console.error("Error updating pre-order date:", error)
-      alert("Error updating pre-order date")
+      toast({
+        title: "Error",
+        description: "Error updating pre-order date.",
+        variant: "destructive",
+      })
     } finally {
       setUpdating(null)
     }
@@ -209,15 +257,6 @@ export default function AdminInventoryPage() {
     })
   }
 
-  // const logout = async () => {
-  //   try {
-  //     await fetch("/api/admin/logout", { method: "POST" })
-  //   } catch (error) {
-  //     console.error("Logout error:", error)
-  //   }
-  //   window.location.href = "/admin/login"
-  // }
-
   if (loading) {
     return (
       <div className="flex min-h-screen w-full flex-col bg-muted/40">
@@ -257,14 +296,19 @@ export default function AdminInventoryPage() {
       {/* Navigation */}
       <div className="flex flex-col sm:gap-4 sm:py-4 sm:pl-14">
         <main className="flex-1 p-4 sm:px-6 sm:py-0 md:gap-8">
-          <div className="max-w-7xl mx-auto">
+          <div className="max-w-7xl mx-auto text-center md:text-left">
+            {" "}
+            {/* MODIFIED: Added text-center for mobile, md:text-left for desktop */}
             <div className="bg-white shadow-sm border-b mb-8">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex justify-between items-center py-4">
-                  <div>
+                <div className="flex flex-col items-center py-4 md:flex-row md:justify-between">
+                  {" "}
+                  {/* MODIFIED: Centered header content on mobile */}
+                  <div className="text-center md:text-left">
                     <h1 className="text-xl md:text-2xl font-serif text-[#2c2824]">Inventory Management</h1>
                     <p className="text-sm text-[#2c2824]/60">Manage your business</p>
                   </div>
+                  {/* <AdminNav onLogout={logout} showBackButton={false} /> */}
                 </div>
               </div>
             </div>
@@ -272,7 +316,10 @@ export default function AdminInventoryPage() {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-[#2c2824]/70">Total Products</CardTitle>
+                  <CardTitle className="text-sm font-medium text-[#2c2824]/70 text-center md:text-left">
+                    Total Products
+                  </CardTitle>{" "}
+                  {/* MODIFIED: Centered text on mobile */}
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-[#2c2824]">{inventory.length}</div>
@@ -280,7 +327,10 @@ export default function AdminInventoryPage() {
               </Card>
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-[#2c2824]/70">In Stock</CardTitle>
+                  <CardTitle className="text-sm font-medium text-[#2c2824]/70 text-center md:text-left">
+                    In Stock
+                  </CardTitle>{" "}
+                  {/* MODIFIED: Centered text on mobile */}
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-green-600">{inStockCount}</div>
@@ -288,7 +338,10 @@ export default function AdminInventoryPage() {
               </Card>
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-[#2c2824]/70">Sold Out</CardTitle>
+                  <CardTitle className="text-sm font-medium text-[#2c2824]/70 text-center md:text-left">
+                    Sold Out
+                  </CardTitle>{" "}
+                  {/* MODIFIED: Centered text on mobile */}
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-red-600">{soldOutCount}</div>
@@ -296,7 +349,10 @@ export default function AdminInventoryPage() {
               </Card>
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-[#2c2824]/70">Total Value (AED)</CardTitle>
+                  <CardTitle className="text-sm font-medium text-[#2c2824]/70 text-center md:text-left">
+                    Total Value (AED)
+                  </CardTitle>{" "}
+                  {/* MODIFIED: Centered text on mobile */}
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-blue-600">{totalValue.toFixed(0)}</div>
@@ -305,7 +361,9 @@ export default function AdminInventoryPage() {
             </div>
             {/* Inventory Table */}
             <Card>
-              <CardHeader>
+              <CardHeader className="text-center md:text-left">
+                {" "}
+                {/* MODIFIED: Centered text on mobile */}
                 <CardTitle className="text-[#2c2824]">Product Inventory & Pricing</CardTitle>
               </CardHeader>
               <CardContent>
@@ -325,18 +383,22 @@ export default function AdminInventoryPage() {
                     <tbody>
                       {inventory.map((item) => (
                         <tr key={item.id} className="border-b hover:bg-gray-50">
-                          <td className="p-4">
+                          <td className="p-4 text-center md:text-left">
+                            {" "}
+                            {/* MODIFIED: Centered text on mobile */}
                             <div className="font-mono text-sm font-medium">{item.product_id}</div>
                             <div className="text-xs text-gray-500">Total: {item.total_quantity}</div>
                           </td>
                           <td className="p-4">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 justify-center md:justify-start">
+                              {" "}
+                              {/* MODIFIED: Centered content on mobile */}
                               <Input
                                 type="number"
                                 min="0"
                                 value={item.quantity_available}
                                 onChange={(e) => handleQuantityChange(item.product_id, e.target.value)}
-                                className="w-20"
+                                className="w-20 text-center" // MODIFIED: Centered text in input
                                 disabled={updating === item.product_id}
                               />
                               {updating === item.product_id && (
@@ -344,41 +406,47 @@ export default function AdminInventoryPage() {
                               )}
                             </div>
                           </td>
-                          <td className="p-4">
+                          <td className="p-4 text-center md:text-left">
+                            {" "}
+                            {/* MODIFIED: Centered text on mobile */}
                             {editingPrices === item.product_id ? (
                               <Input
                                 type="number"
                                 step="0.01"
                                 value={priceInputs[item.product_id]?.aed || ""}
                                 onChange={(e) => handlePriceInputChange(item.product_id, "aed", e.target.value)}
-                                className="w-24"
+                                className="w-24 text-center" // MODIFIED: Centered text in input
                                 placeholder="AED"
                               />
                             ) : (
                               <div className="font-medium">{item.price_aed ? `${item.price_aed} AED` : "Not set"}</div>
                             )}
                           </td>
-                          <td className="p-4">
+                          <td className="p-4 text-center md:text-left">
+                            {" "}
+                            {/* MODIFIED: Centered text on mobile */}
                             {editingPrices === item.product_id ? (
                               <Input
                                 type="number"
                                 step="0.01"
                                 value={priceInputs[item.product_id]?.gbp || ""}
                                 onChange={(e) => handlePriceInputChange(item.product_id, "gbp", e.target.value)}
-                                className="w-24"
+                                className="w-24 text-center" // MODIFIED: Centered text in input
                                 placeholder="GBP"
                               />
                             ) : (
                               <div className="font-medium">{item.price_gbp ? `£${item.price_gbp}` : "Not set"}</div>
                             )}
                           </td>
-                          <td className="p-4">
+                          <td className="p-4 text-center md:text-left">
+                            {" "}
+                            {/* MODIFIED: Centered text on mobile */}
                             {editingPreOrder === item.product_id ? (
                               <Input
                                 type="date"
                                 value={preOrderInputs[item.product_id] || ""}
                                 onChange={(e) => handlePreOrderInputChange(item.product_id, e.target.value)}
-                                className="w-40"
+                                className="w-40 text-center" // MODIFIED: Centered text in input
                               />
                             ) : (
                               <div className="font-medium">
@@ -388,7 +456,9 @@ export default function AdminInventoryPage() {
                               </div>
                             )}
                           </td>
-                          <td className="p-4">
+                          <td className="p-4 text-center md:text-left">
+                            {" "}
+                            {/* MODIFIED: Centered text on mobile */}
                             <span
                               className={`px-2 py-1 rounded-full text-xs font-medium ${
                                 item.quantity_available > 0 ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
@@ -398,7 +468,9 @@ export default function AdminInventoryPage() {
                             </span>
                           </td>
                           <td className="p-4">
-                            <div className="flex gap-2 flex-wrap">
+                            <div className="flex flex-wrap gap-2 justify-center md:justify-start">
+                              {" "}
+                              {/* MODIFIED: Centered buttons on mobile */}
                               {editingPreOrder === item.product_id ? (
                                 <>
                                   <Button
@@ -483,6 +555,8 @@ export default function AdminInventoryPage() {
               </CardContent>
             </Card>
             <div className="mt-8 text-center">
+              {" "}
+              {/* MODIFIED: Centered button on mobile */}
               <Button
                 onClick={fetchInventory}
                 variant="outline"

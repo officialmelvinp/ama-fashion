@@ -187,6 +187,13 @@ export default function ContactPage() {
               </div>
 
               <div className="bg-white p-6 rounded-lg shadow-sm">
+              <h3 className="font-serif text-lg text-[#2c2824] mb-3">Do you offer ASOEBI customised orders?</h3>
+              <p className="text-[#2c2824] opacity-80 text-sm">
+                Yes! We offer Asoebi services on any fabric required. Contact us with your fabric and garment details.
+              </p>
+              </div>
+
+              <div className="bg-white p-6 rounded-lg shadow-sm">
                 <h3 className="font-serif text-lg text-[#2c2824] mb-3">Do you ship internationally?</h3>
                 <p className="text-[#2c2824] opacity-80 text-sm">
                   Currently, we serve UAE and UK. For international inquiries, please contact us to discuss options.

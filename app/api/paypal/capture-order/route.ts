@@ -1,10 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { neon } from "@neondatabase/serverless"
-import { recordOrder, getProductInventory } from "@/lib/inventory" // Import recordOrder and getProductDisplayName, getProductInventory
+import { sendOrderConfirmationEmail } from "@/lib/email" // Import customer email sender
+import { sendVendorNotificationEmail } from "@/lib/email-vendor" // Import vendor email sender
+import { recordOrder, getProductDisplayName } from "@/lib/inventory" // Import recordOrder and getProductDisplayName
 import type { CartItem, OrderItemEmailData } from "@/lib/types" // Ensure CartItem and OrderItemEmailData are imported
 import type { RecordOrderData } from "@/lib/types"
-import { sendOrderConfirmationEmail } from "@/lib/email"
-import { sendVendorNotificationEmail } from "@/lib/email-vendor"
 
 const PAYPAL_CLIENT_ID = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID!
 const PAYPAL_CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET!
@@ -37,23 +37,19 @@ export async function POST(request: NextRequest) {
   let requestBody: any = null
   try {
     requestBody = await request.json()
-    const { orderID, customerInfo, cartItems: clientCartItems } = requestBody
-
-    console.log("PAYPAL CAPTURE: Received request.")
-    console.log("PAYPAL CAPTURE: Request body:", requestBody)
+    const { orderID, customerInfo, cartItems: clientCartItems } = requestBody // Extract clientCartItems
 
     if (!orderID) {
-      console.error("❌ PAYPAL CAPTURE: No orderID provided")
+      console.error("❌ No orderID provided")
       return NextResponse.json({ error: "Order ID is required" }, { status: 400 })
     }
 
-    console.log("PAYPAL CAPTURE: Starting PayPal capture process for order:", orderID)
-    console.log("PAYPAL CAPTURE: PayPal Mode:", process.env.PAYPAL_MODE || "sandbox")
-    console.log("PAYPAL CAPTURE: PayPal Base URL:", PAYPAL_BASE_URL)
+    console.log("🏦 Starting PayPal capture process for order:", orderID)
+    console.log("🌍 PayPal Mode:", process.env.PAYPAL_MODE || "sandbox")
+    console.log("🔗 PayPal Base URL:", PAYPAL_BASE_URL)
 
     const accessToken = await getPayPalAccessToken()
-    console.log("PAYPAL CAPTURE: Access token obtained.")
-    console.log("PAYPAL CAPTURE: Attempting to capture PayPal order...")
+    console.log("📡 Attempting to capture PayPal order...")
 
     const response = await fetch(`${PAYPAL_BASE_URL}/v2/checkout/orders/${orderID}/capture`, {
       method: "POST",
@@ -63,10 +59,10 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    console.log("PAYPAL CAPTURE: PayPal capture response status:", response.status)
+    console.log("📊 PayPal capture response status:", response.status)
     if (!response.ok) {
       const error = await response.json()
-      console.error("❌ PAYPAL CAPTURE: PayPal capture failed:", {
+      console.error("❌ PayPal capture failed:", {
         status: response.status,
         error: error,
         orderID: orderID,
@@ -76,61 +72,41 @@ export async function POST(request: NextRequest) {
     }
 
     const captureData = await response.json()
-    console.log("✅ PAYPAL CAPTURE: PayPal order captured successfully!")
-    console.log("PAYPAL CAPTURE: Capture data:", JSON.stringify(captureData, null, 2))
+    console.log("✅ PayPal order captured successfully!")
+    console.log("📋 Capture data:", JSON.stringify(captureData, null, 2))
 
+    // Extract order information
     const purchaseUnit = captureData.purchase_units[0]
     const capture = purchaseUnit.payments.captures[0]
 
-    console.log("PAYPAL CAPTURE: Payment details:", {
+    console.log("💰 Payment details:", {
       captureId: capture.id,
       amount: capture.amount.value,
       currency: capture.amount.currency_code,
       status: capture.status,
     })
 
-    console.log(
-      "PAYPAL CAPTURE: Preparing items for processing (fetching full product details) from clientCartItems:",
-      clientCartItems,
-    )
+    // Prepare items for database recording and email sending
     const itemsForProcessing: OrderItemEmailData[] = await Promise.all(
       clientCartItems.map(async (item: CartItem) => {
-        const productInventory = await getProductInventory(item.id) // Fetch full product details
-        if (!productInventory) {
-          console.error(`❌ PAYPAL CAPTURE: Product inventory not found for ID: ${item.id}`)
-          throw new Error(`Product ${item.id} not found in inventory.`)
-        }
-
-        const productDisplayName = productInventory.product_name || item.id
-        const unitPrice = item.selectedRegion === "UAE" ? productInventory.priceAED : productInventory.priceGBP
-        const currencyCode = item.selectedRegion === "UAE" ? "AED" : "GBP"
-
-        if (unitPrice === null || unitPrice === undefined) {
-          console.error(
-            `❌ PAYPAL CAPTURE: Price not found for product ID: ${item.id} in region: ${item.selectedRegion}`,
-          )
-          throw new Error(`Price not found for product ${item.id}.`)
-        }
-
-        console.log(
-          `PAYPAL CAPTURE: Processed item ${item.id}: Display Name: ${productDisplayName}, Quantity: ${item.selectedQuantity}, Unit Price: ${unitPrice}, Currency: ${currencyCode}`,
-        )
+        const productDisplayName = await getProductDisplayName(item.id)
+        const priceMatch = item.selectedPrice.match(/[\d.]+/)
+        const numericPrice = priceMatch ? Number.parseFloat(priceMatch[0]) : 0
 
         return {
           product_id: item.id,
           product_display_name: productDisplayName,
           quantity: item.selectedQuantity,
-          unit_price: unitPrice,
-          currency: currencyCode,
+          unit_price: numericPrice,
+          currency: item.selectedRegion === "UAE" ? "AED" : "GBP",
         }
       }),
     )
-    console.log("PAYPAL CAPTURE: Items prepared:", itemsForProcessing)
 
-    const customerName = customerInfo?.name ?? null
+    const customerName = customerInfo?.name || "Customer"
     const customerEmail = customerInfo?.email || ""
-    const customerPhone = customerInfo?.phone ?? null
-    const shippingAddress = customerInfo?.address ?? null
+    const customerPhone = customerInfo?.phone || ""
+    const shippingAddress = customerInfo?.address || ""
 
     const totalAmount = Number.parseFloat(capture.amount.value)
     const currency = capture.amount.currency_code
@@ -155,38 +131,37 @@ export async function POST(request: NextRequest) {
         price: item.unit_price,
       })),
     } as RecordOrderData
-    console.log("PAYPAL CAPTURE: Order data prepared for recording:", orderDataForRecord)
 
-    console.log("PAYPAL CAPTURE: Attempting to record order in DB...")
+    // Record order in database using the shared function
     const recordResult = await recordOrder(orderDataForRecord)
     const orderDbId = recordResult.orderId
 
     if (!recordResult.success || !orderDbId) {
-      console.error("❌ PAYPAL CAPTURE: Failed to record order in DB:", recordResult.message)
+      console.error("❌ Failed to record order in DB:", recordResult.message)
       return NextResponse.json({ error: recordResult.message || "Failed to record order" }, { status: 500 })
     }
 
-    console.log(`🎉 PAYPAL CAPTURE: Order recorded with ID: ${orderDbId}`)
+    console.log(`🎉 Order recorded with ID: ${orderDbId}`)
 
-    console.log("PAYPAL CAPTURE: Attempting to send customer email...")
+    // Send customer email notification
     await sendOrderConfirmationEmail({
       customer_name: customerName,
       customer_email: customerEmail,
-      order_id: orderDbId.toString(),
+      order_id: orderDbId.toString(), // Use the DB order ID
       items: itemsForProcessing,
       total_amount: totalAmount,
       currency: currency,
       payment_status: "Confirmed",
       shipping_status: "paid",
     })
-    console.log("✅ PAYPAL CAPTURE: Customer confirmation email sending temporarily skipped.")
+    console.log("✅ Customer confirmation email sent.")
 
-    console.log("PAYPAL CAPTURE: Attempting to send vendor email...")
+    // Send vendor notification email
     await sendVendorNotificationEmail({
-      order_id: orderDbId.toString(),
+      order_id: orderDbId.toString(), // Use the DB order ID
       customer_name: customerName,
       customer_email: customerEmail,
-      payment_id: capture.id,
+      payment_id: capture.id, // Pass PayPal capture ID
       phone_number: customerPhone,
       shipping_address: shippingAddress,
       total_amount: totalAmount,
@@ -194,9 +169,9 @@ export async function POST(request: NextRequest) {
       items: itemsForProcessing,
       payment_method: "PayPal",
     })
-    console.log("✅ PAYPAL CAPTURE: Vendor notification email sending temporarily skipped.")
+    console.log("✅ Vendor notification email sent.")
 
-    console.log("🎉 PAYPAL CAPTURE: PayPal order processing completed successfully!")
+    console.log("🎉 PayPal order processing completed successfully!")
 
     return NextResponse.json({
       success: true,
@@ -206,28 +181,9 @@ export async function POST(request: NextRequest) {
       currency: capture.amount.currency_code,
       paypalMode: process.env.PAYPAL_MODE || "sandbox",
       message: "PayPal order completed and notifications sent!",
-      orderId: orderDbId, // Include the DB order ID
-      orderData: {
-        // Include the full order data for the frontend
-        items: itemsForProcessing,
-        customerInfo: {
-          firstName: customerName?.split(" ")[0] || "",
-          lastName: customerName?.split(" ")[1] || "",
-          email: customerEmail,
-          phone: customerPhone,
-          address: shippingAddress,
-          city: "", // PayPal capture doesn't always provide city/country separately in address string
-          country: "",
-          postalCode: "",
-          notes: orderDataForRecord.notes,
-        },
-        totalAmount: totalAmount,
-        currency: currency,
-        paymentMethod: "PayPal",
-      },
     })
   } catch (error) {
-    console.error("❌ PAYPAL CAPTURE: PayPal capture error:", error)
+    console.error("❌ PayPal capture error:", error)
     return NextResponse.json(
       {
         error: error instanceof Error ? error.message : "Capture failed",

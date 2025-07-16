@@ -185,13 +185,17 @@ export default function AdminOrdersPage() {
   }
 
   return (
-    <div className="container mx-auto py-8 px-4">
+    <div className="container mx-auto py-8 px-4 text-center md:text-left">
+      {" "}
+      {/* MODIFIED: Added text-center for mobile, md:text-left for desktop */}
       <div className="mb-8">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-6">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-[#2c2824]/70 flex items-center gap-2">
+              <CardTitle className="text-sm font-medium text-[#2c2824]/70 flex items-center gap-2 justify-center md:justify-start">
+                {" "}
+                {/* MODIFIED: Centered icon/text on mobile */}
                 <Package className="h-4 w-4" />
                 Total Orders
               </CardTitle>
@@ -202,7 +206,9 @@ export default function AdminOrdersPage() {
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-[#2c2824]/70 flex items-center gap-2">
+              <CardTitle className="text-sm font-medium text-[#2c2824]/70 flex items-center gap-2 justify-center md:justify-start">
+                {" "}
+                {/* MODIFIED: Centered icon/text on mobile */}
                 <CreditCard className="h-4 w-4" />
                 Paid Orders
               </CardTitle>
@@ -213,7 +219,9 @@ export default function AdminOrdersPage() {
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-[#2c2824]/70 flex items-center gap-2">
+              <CardTitle className="text-sm font-medium text-[#2c2824]/70 flex items-center gap-2 justify-center md:justify-start">
+                {" "}
+                {/* MODIFIED: Centered icon/text on mobile */}
                 <Truck className="h-4 w-4" />
                 Shipped
               </CardTitle>
@@ -224,7 +232,9 @@ export default function AdminOrdersPage() {
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-[#2c2824]/70 flex items-center gap-2">
+              <CardTitle className="text-sm font-medium text-[#2c2824]/70 flex items-center gap-2 justify-center md:justify-start">
+                {" "}
+                {/* MODIFIED: Centered icon/text on mobile */}
                 <CheckCircle className="h-4 w-4" />
                 Delivered
               </CardTitle>
@@ -235,7 +245,9 @@ export default function AdminOrdersPage() {
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-[#2c2824]/70 flex items-center gap-2">
+              <CardTitle className="text-sm font-medium text-[#2c2824]/70 flex items-center gap-2 justify-center md:justify-start">
+                {" "}
+                {/* MODIFIED: Centered icon/text on mobile */}
                 <Calendar className="h-4 w-4" />
                 Pre-Orders
               </CardTitle>
@@ -246,7 +258,8 @@ export default function AdminOrdersPage() {
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-[#2c2824]/70">Revenue</CardTitle>
+              <CardTitle className="text-sm font-medium text-[#2c2824]/70 text-center md:text-left">Revenue</CardTitle>{" "}
+              {/* MODIFIED: Centered text on mobile */}
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-[#2c2824]">{stats.totalRevenue.toFixed(0)} AED</div>
@@ -255,7 +268,9 @@ export default function AdminOrdersPage() {
         </div>
         {/* Filters - Only show if there are orders */}
         {orders.length > 0 && (
-          <div className="flex gap-4 mb-6">
+          <div className="flex flex-wrap justify-center gap-4 mb-6 md:justify-start">
+            {" "}
+            {/* MODIFIED: Added flex-wrap and justify-center for mobile, md:justify-start for desktop */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
@@ -295,7 +310,9 @@ export default function AdminOrdersPage() {
               </p>
               <div className="text-sm text-[#2c2824]/50">
                 <p>You'll be able to:</p>
-                <ul className="mt-2 space-y-1">
+                <ul className="mt-2 space-y-1 list-none p-0">
+                  {" "}
+                  {/* MODIFIED: Removed default list styling */}
                   <li>• Track order status and shipping</li>
                   <li>• Add tracking numbers</li>
                   <li>• Mark orders as shipped/delivered</li>
@@ -316,8 +333,12 @@ export default function AdminOrdersPage() {
           filteredOrders.map((order) => (
             <Card key={order.id}>
               <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div>
+                <div className="flex flex-col items-center md:flex-row md:justify-between md:items-start">
+                  {" "}
+                  {/* MODIFIED: Centered header content on mobile */}
+                  <div className="text-center md:text-left mb-2 md:mb-0">
+                    {" "}
+                    {/* MODIFIED: Centered text on mobile */}
                     <CardTitle className="text-lg text-[#2c2824]">Order #{order.id}</CardTitle>
                     <CardDescription>
                       {new Date(order.created_at).toLocaleDateString("en-US", {
@@ -333,7 +354,9 @@ export default function AdminOrdersPage() {
                       })}
                     </CardDescription>
                   </div>
-                  <div className="flex gap-2 flex-wrap">
+                  <div className="flex gap-2 flex-wrap justify-center md:justify-start">
+                    {" "}
+                    {/* MODIFIED: Centered badges on mobile */}
                     <Badge variant={order.payment_status === "completed" ? "default" : "destructive"}>
                       {order.payment_status}
                     </Badge>
@@ -345,7 +368,9 @@ export default function AdminOrdersPage() {
               <CardContent className="space-y-4">
                 <div className="grid md:grid-cols-2 gap-4">
                   {/* Customer Info */}
-                  <div>
+                  <div className="text-center md:text-left">
+                    {" "}
+                    {/* MODIFIED: Centered text on mobile */}
                     <h3 className="font-semibold mb-2 text-[#2c2824]">Customer Information</h3>
                     <div className="text-sm space-y-1">
                       <p>
@@ -365,7 +390,9 @@ export default function AdminOrdersPage() {
                     </div>
                   </div>
                   {/* Order Details */}
-                  <div>
+                  <div className="text-center md:text-left">
+                    {" "}
+                    {/* MODIFIED: Centered text on mobile */}
                     <h3 className="font-semibold mb-2 text-[#2c2824]">Order Details</h3>
                     <div className="text-sm space-y-1">
                       <p>
@@ -399,7 +426,9 @@ export default function AdminOrdersPage() {
                 </div>
                 {/* Shipping Information */}
                 {(order.tracking_number || order.shipped_date || order.delivered_date) && (
-                  <div>
+                  <div className="text-center md:text-left">
+                    {" "}
+                    {/* MODIFIED: Centered text on mobile */}
                     <h3 className="font-semibold mb-2 text-[#2c2824]">Shipping Information</h3>
                     <div className="text-sm space-y-1 bg-blue-50 p-3 rounded">
                       {order.tracking_number && (
@@ -432,13 +461,17 @@ export default function AdminOrdersPage() {
                   </div>
                 )}
                 {order.notes && (
-                  <div>
+                  <div className="text-center md:text-left">
+                    {" "}
+                    {/* MODIFIED: Centered text on mobile */}
                     <h3 className="font-semibold mb-2 text-[#2c2824]">Customer Notes</h3>
                     <p className="text-sm bg-gray-50 p-3 rounded">{order.notes}</p>
                   </div>
                 )}
                 {/* Shipping Actions */}
-                <div className="border-t pt-4">
+                <div className="border-t pt-4 text-center md:text-left">
+                  {" "}
+                  {/* MODIFIED: Centered text on mobile */}
                   <h3 className="font-semibold mb-3 text-[#2c2824]">Shipping Actions</h3>
                   {order.payment_status === "completed" && (
                     <div className="space-y-3">
@@ -468,7 +501,9 @@ export default function AdminOrdersPage() {
                                   }
                                 />
                               </div>
-                              <div className="flex gap-2">
+                              <div className="flex gap-2 justify-center md:justify-start">
+                                {" "}
+                                {/* MODIFIED: Centered buttons on mobile */}
                                 <Button
                                   onClick={() => updateOrderStatus(order.id, "mark_shipped")}
                                   disabled={isPending}
@@ -512,7 +547,9 @@ export default function AdminOrdersPage() {
                         </div>
                       )}
                       {order.shipping_status === "shipped" && (
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-col items-center gap-2 md:flex-row md:justify-start">
+                          {" "}
+                          {/* MODIFIED: Centered buttons on mobile */}
                           <Button
                             onClick={() => updateOrderStatus(order.id, "mark_delivered")}
                             disabled={isPending}
@@ -536,7 +573,9 @@ export default function AdminOrdersPage() {
                         </div>
                       )}
                       {order.shipping_status === "delivered" && (
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-col items-center gap-2 md:flex-row md:justify-start">
+                          {" "}
+                          {/* MODIFIED: Centered content on mobile */}
                           <div className="flex items-center text-green-600">
                             <CheckCircle className="h-4 w-4 mr-2" />
                             <span className="font-medium">Order Completed</span>
