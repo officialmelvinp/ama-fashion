@@ -1,57 +1,32 @@
 import { neon } from "@neondatabase/serverless"
 import { NextResponse } from "next/server"
-import type { Order, OrderItemEmailData } from "@/lib/types" // Ensure OrderItemEmailData is imported
+import type { OrderItemEmailData } from "@/lib/types" // Ensure OrderItemEmailData is imported
 import { sendOrderShippedEmail, sendOrderDeliveredEmail } from "@/lib/email"
-import { getOrderById } from "@/lib/inventory" // Corrected import path
+import { getOrderById, getOrders } from "@/lib/inventory" // Corrected import path to include getOrders
 
 const sql = neon(process.env.DATABASE_URL!)
 
-// Helper function to get product display name from the database
-async function getProductDisplayName(productId: string): Promise<string> {
-  try {
-    const result = await sql`
-      SELECT product_name FROM product WHERE product_id = ${productId}
-    `
-    if (result.length > 0) {
-      return result[0].product_name // Corrected to product_name
-    }
-    console.warn(`Product display name not found for ID: ${productId}. Using fallback.`)
-    return `AMA Fashion Item (${productId})` // Fallback if not found
-  } catch (error) {
-    console.error(`Error fetching product display name for ${productId}:`, error)
-    return `AMA Fashion Item (${productId})` // Fallback on error
-  }
-}
+// REMOVED: The duplicate getProductDisplayName helper function from here.
+// It is now handled internally by getOrders and getOrderById in lib/inventory.ts.
 
 export async function GET(request: Request) {
   try {
-    // MODIFIED: Cast total_amount and amount_paid to NUMERIC to ensure they are numbers
-    const orders = (await sql`
-      SELECT
-        o.id, o.product_id, p.product_name AS product_display_name, o.customer_email, o.customer_name, o.quantity_ordered,
-        o.quantity_in_stock, o.quantity_preorder, o.payment_status, o.payment_id,
-        o.amount_paid::NUMERIC, o.currency, o.shipping_address, o.phone_number, o.notes, -- Cast amount_paid
-        o.order_type, o.order_status, o.total_amount::NUMERIC, o.shipping_status, -- Cast total_amount
-        o.tracking_number, o.shipping_carrier, o.shipped_date, o.delivered_date,
-        o.estimated_delivery_date, o.created_at, o.updated_at
-      FROM orders o
-      LEFT JOIN product p ON o.product_id = p.product_id
-      ORDER BY o.created_at DESC
-    `) as Order[]
+    // MODIFIED: Use the getOrders function from lib/inventory to fetch all orders.
+    // This function already handles fetching order items and populating summary fields
+    // for display on the admin page, including product_display_name and quantities.
+    const orders = await getOrders()
     return NextResponse.json({ orders }, { status: 200 })
   } catch (error) {
-    console.error(error)
-    return NextResponse.json({ error }, { status: 500 })
+    console.error("Error fetching orders from API route:", error)
+    return NextResponse.json({ error: "Failed to fetch orders" }, { status: 500 })
   }
 }
-
-// REMOVED: The duplicate OrderItemEmailData interface definition from here.
-// It is now correctly imported from lib/types.ts.
 
 export async function PUT(request: Request) {
   try {
     const { orderId, action, trackingNumber, carrier, estimatedDelivery } = await request.json()
     let updateData: any = {}
+
     if (action === "mark_shipped") {
       updateData = {
         shipping_status: "shipped",
@@ -66,7 +41,8 @@ export async function PUT(request: Request) {
         delivered_date: new Date().toISOString(),
       }
     }
-    // Update the order
+
+    // Update the order in the database
     await sql`
       UPDATE orders
       SET
@@ -87,20 +63,23 @@ export async function PUT(request: Request) {
         }
       WHERE id = ${orderId}
     `
-    // NEW: Fetch the updated order details using getOrderById, which includes the 'items' array
+
+    // Fetch the updated order details using getOrderById, which includes the 'items' array
     const order = await getOrderById(orderId)
     if (!order) {
       return NextResponse.json({ success: false, error: "Order not found after update" }, { status: 404 })
     }
-    // MODIFIED: Construct the 'items' array for email using the 'items' property of the fetched order
-    // This 'items' array comes from the order_items table and is already correctly typed as OrderItem[]
+
+    // Construct the 'items' array for email using the 'items' property of the fetched order.
+    // This 'items' array comes from the order_items table and is already correctly typed as OrderItem[].
     const emailItems: OrderItemEmailData[] = order.items.map((item) => ({
-      product_id: item.product_id, // Now correctly included from lib/types.ts
+      product_id: item.product_id, // Correctly included from lib/types.ts
       product_display_name: item.product_display_name,
       quantity: item.quantity,
       unit_price: item.unit_price,
       currency: item.currency,
     }))
+
     if (action === "mark_shipped") {
       await sendOrderShippedEmail({
         customer_email: order.customer_email,
@@ -109,7 +88,6 @@ export async function PUT(request: Request) {
         items: emailItems,
         total_amount: order.total_amount,
         currency: order.currency,
-        // REMOVED: payment_status and shipping_status as they are not part of OrderShippedEmailData
         tracking_number: order.tracking_number,
         shipping_carrier: order.shipping_carrier,
         estimated_delivery_date: order.estimated_delivery_date,
@@ -123,10 +101,10 @@ export async function PUT(request: Request) {
         items: emailItems,
         total_amount: order.total_amount,
         currency: order.currency,
-        // REMOVED: payment_status and shipping_status as they are not part of OrderDeliveredEmailData
         delivered_date: order.delivered_date,
       })
     }
+
     return NextResponse.json({
       success: true,
       message: `Order ${action === "mark_shipped" ? "marked as shipped" : "marked as delivered"}`,

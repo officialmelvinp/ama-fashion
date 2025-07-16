@@ -37,6 +37,7 @@ export function AdminNav({ onLogout, showBackButton }: AdminNavProps) {
   const router = useRouter()
 
   const handleLogout = async () => {
+    console.log("Logout button clicked")
     try {
       const response = await fetch("/api/admin/logout", { method: "POST" })
       if (response.ok) {
@@ -96,6 +97,7 @@ export function AdminNav({ onLogout, showBackButton }: AdminNavProps) {
                       ? "text-foreground"
                       : "text-muted-foreground hover:text-foreground",
                   )}
+                  onClick={() => console.log("Navigating to Dashboard")}
                 >
                   <Home className="h-5 w-5" />
                   Dashboard
@@ -301,3 +303,6 @@ export function AdminNav({ onLogout, showBackButton }: AdminNavProps) {
     </TooltipProvider>
   )
 }
+
+
+// ####
