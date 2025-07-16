@@ -103,6 +103,9 @@ export default function AdminDashboard() {
     }
   }
 
+  // The logout function is now handled by the AdminLayout (app/admin/layout.tsx)
+  // No need for a local logout function here.
+
   if (loading) {
     return (
       <div className="text-center py-8">

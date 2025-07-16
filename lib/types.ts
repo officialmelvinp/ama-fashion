@@ -193,3 +193,19 @@ export interface RecordOrderData {
   orderStatus?: string
   shippingStatus?: string
 }
+
+export enum OrderStatus {
+  Pending = "pending",
+  Processing = "processing",
+  Completed = "completed",
+  Cancelled = "cancelled",
+  Refunded = "refunded",
+}
+
+export enum PaymentStatus {
+  Pending = "pending",
+  Processing = "processing", // Added for clarity
+  Completed = "completed",
+  Failed = "failed",
+  Refunded = "refunded",
+}

@@ -8,22 +8,29 @@ export async function GET(req: Request) {
     const period = searchParams.get("period") || "daily";
     const type = searchParams.get("type") || "revenue";
 
+    console.log(`[ANALYTICS API] Request received: type=${type}, period=${period}`);
+
     if (type === "revenue") {
-      let dateTruncExpression = "DATE_TRUNC('day', o.created_at)";
-      let dateFormat = "YYYY-MM-DD";
+      let dateTruncFunction: string;
+      let dateFormatString: string;
 
       if (period === "weekly") {
-        dateTruncExpression = "DATE_TRUNC('week', o.created_at)";
-        dateFormat = "YYYY-MM-DD";
+        dateTruncFunction = "DATE_TRUNC('week', o.created_at)";
+        dateFormatString = "YYYY-MM-DD";
       } else if (period === "monthly") {
-        dateTruncExpression = "DATE_TRUNC('month', o.created_at)";
-        dateFormat = "YYYY-MM";
+        dateTruncFunction = "DATE_TRUNC('month', o.created_at)";
+        dateFormatString = "YYYY-MM";
+      } else {
+        dateTruncFunction = "DATE_TRUNC('day', o.created_at)";
+        dateFormatString = "YYYY-MM-DD";
       }
 
-      // Build the query string entirely
+      // Construct the full TO_CHAR expression as a string
+      const selectDateExpression = `TO_CHAR(${dateTruncFunction}::timestamp, '${dateFormatString}')`;
+
       const query = `
         SELECT
-          TO_CHAR(${dateTruncExpression}::timestamp, '${dateFormat}') AS date,
+          ${selectDateExpression} AS date,
           SUM(oi.quantity * oi.unit_price) AS total_revenue
         FROM
           orders o
@@ -37,17 +44,20 @@ export async function GET(req: Request) {
           date ASC;
       `;
 
+      console.log(`[ANALYTICS API] Executing revenue query for period: ${period}`);
       const revenueData = await db(query);
+      console.log("[ANALYTICS API] Raw revenue data from DB:", revenueData);
 
       const formattedData = revenueData.map((row) => ({
         date: row.date,
         total_revenue: Number.parseFloat(row.total_revenue),
       }));
 
+      console.log("[ANALYTICS API] Formatted revenue data:", formattedData);
       return NextResponse.json(formattedData);
-    } 
-    
-    else if (type === "top-products") {
+
+    } else if (type === "top-products") {
+      console.log("[ANALYTICS API] Executing top products query.");
       const topProductsData = await db`
         SELECT
           oi.product_display_name,
@@ -65,6 +75,7 @@ export async function GET(req: Request) {
           total_quantity_sold DESC
         LIMIT 5;
       `;
+      console.log("[ANALYTICS API] Raw top products data from DB:", topProductsData);
 
       const formattedData = topProductsData.map((row) => ({
         product_display_name: row.product_display_name,
@@ -72,38 +83,18 @@ export async function GET(req: Request) {
         total_revenue_generated: Number.parseFloat(row.total_revenue_generated),
       }));
 
+      console.log("[ANALYTICS API] Formatted top products data:", formattedData);
       return NextResponse.json(formattedData);
-    } 
-    
-    else if (type === "subscriber-growth") {
-      const subscriberGrowthData = await db`
-        SELECT
-          TO_CHAR(created_at, 'YYYY-MM') AS month,
-          COUNT(*) AS subscribers
-        FROM
-          subscribers
-        GROUP BY
-          month
-        ORDER BY
-          month ASC;
-      `;
 
-      const formattedData = subscriberGrowthData.map((row) => ({
-        month: row.month,
-        subscribers: Number.parseInt(row.subscribers),
-      }));
-
-      return NextResponse.json(formattedData);
-    } 
-    
-    else {
+    } else {
+      console.warn(`[ANALYTICS API] Invalid analytics type: ${type}`);
       return NextResponse.json(
         { error: "Invalid analytics type" },
         { status: 400 }
       );
     }
   } catch (error) {
-    console.error("Error fetching analytics data:", error);
+    console.error("[ANALYTICS API] Error fetching analytics data:", error);
     return NextResponse.json(
       { error: "Failed to fetch analytics data" },
       { status: 500 }
