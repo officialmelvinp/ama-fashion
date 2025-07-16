@@ -1,22 +1,10 @@
 "use client"
 
 import type * as React from "react"
-import { useState, Suspense } from "react" // Import useState
+import { useState, Suspense } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import {
-  Bell,
-  Home,
-  LineChart,
-  Package,
-  Package2,
-  ShoppingCart,
-  Search,
-  CircleUser,
-  Users,
-  LogOut,
-  Menu,
-} from "lucide-react"
+import { Bell, Home, LineChart, Package, Package2, ShoppingCart, Search, CircleUser, Users, Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -29,15 +17,15 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { AdminNav } from "@/components/admin-nav"
+import { AdminNav, MobileAdminNav } from "@/components/admin-nav"
 import { useToast } from "@/hooks/use-toast"
-import { TooltipProvider } from "@/components/ui/tooltip" // Moved TooltipProvider here
+import { TooltipProvider } from "@/components/ui/tooltip"
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
   const { toast } = useToast()
-  const [openMobileSheet, setOpenMobileSheet] = useState(false) // State to control mobile sheet
+  const [openMobileSheet, setOpenMobileSheet] = useState(false)
 
   const handleLogout = async () => {
     try {
@@ -47,9 +35,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           title: "Logged out",
           description: "You have been successfully logged out.",
         })
-        router.push("/admin/login") // Redirect to login page
+        router.push("/admin/login")
       } else {
-        const errorData = await response.json()
+        // Read the response body as text first to avoid "body stream already read" error
+        const responseText = await response.text()
+        let errorData: any
+        try {
+          // Attempt to parse the text as JSON
+          errorData = JSON.parse(responseText)
+        } catch (jsonParseError) {
+          // If parsing fails, use the raw text as the message
+          errorData = { message: responseText }
+        }
         throw new Error(errorData.message || "Logout failed")
       }
     } catch (error: any) {
@@ -89,8 +86,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <Suspense fallback={<div>Loading...</div>}>
       <TooltipProvider>
-        {" "}
-        {/* TooltipProvider wraps the entire layout */}
         <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
           {/* Desktop Sidebar */}
           <div className="hidden border-r bg-muted/40 md:block">
@@ -107,7 +102,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </div>
               <div className="flex-1">
                 <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
-                  <AdminNav navItems={navItems} isCollapsed={false} />
+                  <AdminNav navItems={navItems} isCollapsed={false} onLogout={handleLogout} />
                 </nav>
               </div>
               <div className="mt-auto p-4">
@@ -138,26 +133,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     <span className="sr-only">Toggle navigation menu</span>
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="right" className="flex flex-col">
-                  {" "}
-                  {/* Changed to right */}
+                <SheetContent side="left" className="flex flex-col">
                   <nav className="grid gap-2 text-lg font-medium">
                     <Link href="#" className="flex items-center gap-2 text-lg font-semibold">
                       <Package2 className="h-6 w-6" />
                       <span className="sr-only">AMA Fashion</span>
                     </Link>
-                    <AdminNav
+                    <MobileAdminNav
                       navItems={navItems}
                       isCollapsed={false}
-                      onLinkClick={() => setOpenMobileSheet(false)} // Close sheet on link click
+                      onLinkClick={() => setOpenMobileSheet(false)}
+                      onLogout={handleLogout}
                     />
                   </nav>
-                  <div className="mt-auto">
-                    <Button variant="secondary" className="w-full" onClick={handleLogout}>
-                      <LogOut className="mr-2 h-4 w-4" />
-                      Logout
-                    </Button>
-                  </div>
                 </SheetContent>
               </Sheet>
 
@@ -186,9 +174,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <DropdownMenuContent align="end">
                   <DropdownMenuLabel>My Account</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem>Settings</DropdownMenuItem>
-                  <DropdownMenuItem>Support</DropdownMenuItem>
-                  <DropdownMenuSeparator />
+                  {/* Removed Settings and Support DropdownMenuItems */}
                   <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

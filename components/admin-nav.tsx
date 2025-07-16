@@ -1,60 +1,92 @@
 "use client"
 
 import type React from "react"
-import Link from "next/link"
-import { cn } from "@/lib/utils"
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip"
 
-interface NavItem {
-  href: string
-  icon: React.ElementType
-  label: string
-  active: boolean
-  badge?: number
-}
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { LogOut } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { SheetClose } from "@/components/ui/sheet"
 
 interface AdminNavProps {
-  navItems: NavItem[]
-  isCollapsed: boolean // True for desktop sidebar (icon-only), false for mobile sheet or expanded desktop
-  onLinkClick?: () => void // Optional callback for mobile sheet to close on link click
+  onLogout: () => void
+  isCollapsed?: boolean // Made optional as it's not always passed
+  navItems: { href: string; icon: React.ElementType; label: string; active: boolean; badge?: number }[]
 }
 
-export function AdminNav({ navItems, isCollapsed, onLinkClick }: AdminNavProps) {
+export function AdminNav({ onLogout, isCollapsed, navItems }: AdminNavProps) {
+  const pathname = usePathname()
+
   return (
-    <TooltipProvider>
-      {" "}
-      {/* Added TooltipProvider here */}
-      <>
-        {navItems.map((item) => (
-          <Tooltip key={item.href}>
-            <TooltipTrigger asChild>
-              <Link
-                href={item.href}
-                className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
-                  item.active && "bg-muted text-primary",
-                  isCollapsed && "h-9 w-9 items-center justify-center", // Styles for collapsed sidebar icons
-                )}
-                onClick={onLinkClick} // This will now trigger the sheet close
-              >
-                <item.icon className={cn("h-4 w-4", isCollapsed && "h-5 w-5")} />
-                {!isCollapsed && (
-                  <>
-                    {item.label}
-                    {item.badge && (
-                      <span className="ml-auto flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-medium text-primary-foreground">
-                        {item.badge}
-                      </span>
-                    )}
-                  </>
-                )}
-                <span className="sr-only">{item.label}</span>
-              </Link>
-            </TooltipTrigger>
-            {isCollapsed && <TooltipContent side="right">{item.label}</TooltipContent>}
-          </Tooltip>
-        ))}
-      </>
-    </TooltipProvider>
+    <div className="hidden border-r bg-gray-100/40 md:block dark:bg-gray-800/40">
+      <div className="flex h-full max-h-screen flex-col gap-2">
+        <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
+          <Link href="/admin" className="flex items-center gap-2 font-semibold" prefetch={false}>
+            <span className="text-[#2c2824] font-serif text-xl">Admin Panel</span>
+          </Link>
+        </div>
+        <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
+          {navItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-[#2c2824] ${
+                pathname === item.href
+                  ? "bg-gray-200 text-[#2c2824] dark:bg-gray-800 dark:text-gray-50"
+                  : "text-gray-500 dark:text-gray-400"
+              }`}
+              prefetch={false}
+            >
+              <item.icon className="h-4 w-4" />
+              {item.label}
+            </Link>
+          ))}
+        </nav>
+        <div className="mt-auto p-4">
+          <Button onClick={onLogout} variant="ghost" className="w-full justify-start text-red-500 hover:text-red-600">
+            <LogOut className="mr-3 h-4 w-4" />
+            Logout
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export function MobileAdminNav({ onLogout, onLinkClick, navItems }: AdminNavProps & { onLinkClick?: () => void }) {
+  const pathname = usePathname()
+
+  const handleLinkClick = () => {
+    if (onLinkClick) {
+      onLinkClick()
+    }
+  }
+
+  return (
+    <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
+      {navItems.map((item) => (
+        <SheetClose asChild key={item.href}>
+          <Link
+            href={item.href}
+            className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-[#2c2824] ${
+              pathname === item.href
+                ? "bg-gray-200 text-[#2c2824] dark:bg-gray-800 dark:text-gray-50"
+                : "text-gray-500 dark:text-gray-400"
+            }`}
+            prefetch={false}
+            onClick={handleLinkClick}
+          >
+            <item.icon className="h-4 w-4" />
+            {item.label}
+          </Link>
+        </SheetClose>
+      ))}
+      <SheetClose asChild>
+        <Button onClick={onLogout} variant="ghost" className="w-full justify-start text-red-500 hover:text-red-600">
+          <LogOut className="mr-3 h-4 w-4" />
+          Logout
+        </Button>
+      </SheetClose>
+    </nav>
   )
 }
