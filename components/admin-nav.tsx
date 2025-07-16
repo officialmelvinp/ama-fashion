@@ -1,6 +1,6 @@
 "use client"
 
-import { Home, LineChart, LogOut, Package, Package2, ShoppingCart, Users, Users2 } from "lucide-react"
+import { Home, LineChart, LogOut, Package, Package2, ShoppingCart, Users } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
 import { TooltipProvider } from "@/components/ui/tooltip"
 
@@ -143,18 +143,6 @@ export function AdminNav({ onLogout, showBackButton }: AdminNavProps) {
               </SheetClose>
               <SheetClose asChild>
                 <Link
-                  href="/admin/customers"
-                  className={cn(
-                    "flex items-center gap-4 px-2.5",
-                    pathname === "/admin/customers" ? "text-foreground" : "text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  <Users2 className="h-5 w-5" />
-                  Customers
-                </Link>
-              </SheetClose>
-              <SheetClose asChild>
-                <Link
                   href="/admin/analytics"
                   className={cn(
                     "flex items-center gap-4 px-2.5",
@@ -253,21 +241,6 @@ export function AdminNav({ onLogout, showBackButton }: AdminNavProps) {
           <Tooltip>
             <TooltipTrigger asChild>
               <Link
-                href="/admin/customers"
-                className={cn(
-                  "flex h-9 w-9 items-center justify-center rounded-lg transition-colors hover:text-foreground md:h-8 md:w-8",
-                  pathname === "/admin/customers" ? "bg-accent text-accent-foreground" : "text-muted-foreground",
-                )}
-              >
-                <Users2 className="h-5 w-5" />
-                <span className="sr-only">Customers</span>
-              </Link>
-            </TooltipTrigger>
-            <TooltipContent side="right">Customers</TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Link
                 href="/admin/analytics"
                 className={cn(
                   "flex h-9 w-9 items-center justify-center rounded-lg transition-colors hover:text-foreground md:h-8 md:w-8",
@@ -303,6 +276,3 @@ export function AdminNav({ onLogout, showBackButton }: AdminNavProps) {
     </TooltipProvider>
   )
 }
-
-
-// ####

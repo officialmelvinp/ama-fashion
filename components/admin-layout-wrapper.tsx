@@ -1,20 +1,9 @@
 "use client"
+
 import Link from "next/link"
 import type React from "react"
-
 import { usePathname } from "next/navigation"
-import {
-  Package2,
-  Home,
-  ShoppingCart,
-  Package,
-  Users,
-  LineChart,
-  Settings,
-  LogOut,
-  Users2,
-  CircleUser,
-} from "lucide-react"
+import { Package2, Home, ShoppingCart, Package, Users, LineChart, LogOut, CircleUser } from "lucide-react" // Removed Users2
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
@@ -134,21 +123,7 @@ export function AdminLayoutWrapper({ children }: AdminLayoutWrapperProps) {
               </TooltipTrigger>
               <TooltipContent side="right">Subscribers</TooltipContent>
             </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Link
-                  href="/admin/customers"
-                  className={cn(
-                    "flex h-9 w-9 items-center justify-center rounded-lg transition-colors hover:text-foreground md:h-8 md:w-8",
-                    pathname === "/admin/customers" ? "bg-accent text-accent-foreground" : "text-muted-foreground",
-                  )}
-                >
-                  <Users2 className="h-5 w-5" />
-                  <span className="sr-only">Customers</span>
-                </Link>
-              </TooltipTrigger>
-              <TooltipContent side="right">Customers</TooltipContent>
-            </Tooltip>
+            {/* Removed Customers Link from Desktop Sidebar */}
             <Tooltip>
               <TooltipTrigger asChild>
                 <Link
@@ -170,21 +145,6 @@ export function AdminLayoutWrapper({ children }: AdminLayoutWrapperProps) {
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Link
-                  href="/admin/settings"
-                  className={cn(
-                    "flex h-9 w-9 items-center justify-center rounded-lg transition-colors hover:text-foreground md:h-8 md:w-8",
-                    pathname === "/admin/settings" ? "bg-accent text-accent-foreground" : "text-muted-foreground",
-                  )}
-                >
-                  <Settings className="h-5 w-5" />
-                  <span className="sr-only">Settings</span>
-                </Link>
-              </TooltipTrigger>
-              <TooltipContent side="right">Settings</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
                   size="icon"
@@ -200,7 +160,6 @@ export function AdminLayoutWrapper({ children }: AdminLayoutWrapperProps) {
           </TooltipProvider>
         </nav>
       </aside>
-
       {/* Main Content Area */}
       <div className="flex flex-col flex-1 sm:pl-14 bg-muted/40">
         {" "}
@@ -267,16 +226,7 @@ export function AdminLayoutWrapper({ children }: AdminLayoutWrapperProps) {
                   <Users className="h-5 w-5" />
                   Subscribers
                 </Link>
-                <Link
-                  href="/admin/customers"
-                  className={cn(
-                    "flex items-center gap-4 px-2.5",
-                    pathname === "/admin/customers" ? "text-foreground" : "text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  <Users2 className="h-5 w-5" />
-                  Customers
-                </Link>
+                {/* Removed Customers Link from Mobile Sheet */}
                 <Link
                   href="/admin/analytics"
                   className={cn(
@@ -286,16 +236,6 @@ export function AdminLayoutWrapper({ children }: AdminLayoutWrapperProps) {
                 >
                   <LineChart className="h-5 w-5" />
                   Analytics
-                </Link>
-                <Link
-                  href="/admin/settings"
-                  className={cn(
-                    "flex items-center gap-4 px-2.5",
-                    pathname === "/admin/settings" ? "text-foreground" : "text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  <Settings className="h-5 w-5" />
-                  Settings
                 </Link>
                 <Button
                   variant="ghost"
@@ -319,7 +259,6 @@ export function AdminLayoutWrapper({ children }: AdminLayoutWrapperProps) {
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Settings</DropdownMenuItem>
               <DropdownMenuItem>Support</DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
