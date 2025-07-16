@@ -1,6 +1,6 @@
 import type React from "react"
-import { AdminLayoutWrapper } from "@/components/admin-layout-wrapper"
+import { AdminNav } from "@/components/admin-nav"
 
 export default function AdminRootLayout({ children }: { children: React.ReactNode }) {
-  return <AdminLayoutWrapper>{children}</AdminLayoutWrapper>
+  return <AdminNav showBackButton={false}>{children}</AdminNav>
 }
