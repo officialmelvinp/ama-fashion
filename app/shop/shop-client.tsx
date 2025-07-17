@@ -1,5 +1,4 @@
 "use client"
-
 import { useState, useEffect } from "react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
@@ -378,9 +377,7 @@ export default function ShopPageClient() {
   >({})
   const [loading, setLoading] = useState(true)
   const [productQuantities, setProductQuantities] = useState<Record<string, number>>({})
-
   const { addItem } = useCart() // NEW: Initialize useCart hook
-
   // ============= FETCH PRODUCTS WITH STOCK LEVELS =============
   useEffect(() => {
     const fetchProductsWithStock = async () => {
@@ -407,7 +404,6 @@ export default function ShopPageClient() {
     }
     fetchProductsWithStock()
   }, [])
-
   // ============= HANDLE URL HASH FROM HOMEPAGE =============
   useEffect(() => {
     const hash = window.location.hash.replace("#", "")
@@ -433,7 +429,6 @@ export default function ShopPageClient() {
       }
     }
   }, [])
-
   // ============= FILTER LOGIC - SHOW ALL PRODUCTS WITH STOCK INFO =============
   const getFilteredProducts = () => {
     // Show ALL products, but with stock information AND DYNAMIC PRICES
@@ -467,7 +462,6 @@ export default function ShopPageClient() {
     return productsWithStock
   }
   const filteredProducts = getFilteredProducts()
-
   // ============= DYNAMIC GRID LAYOUT LOGIC =============
   const getGridClasses = () => {
     if (activeFilter === "the-manifested-set") {
@@ -490,7 +484,6 @@ export default function ShopPageClient() {
     }
     return "aspect-[3/4] h-[75vh] lg:h-[85vh]"
   }
-
   // ============= EVENT HANDLERS =============
   const handleCollectionFilter = (collection: string) => {
     setActiveFilter(collection)
@@ -500,14 +493,12 @@ export default function ShopPageClient() {
       window.history.pushState(null, "", `#${collection}`)
     }
   }
-
   const handleQuantityChange = (productId: string, quantity: number) => {
     setProductQuantities((prev) => ({
       ...prev,
       [productId]: quantity,
     }))
   }
-
   const handleAddToCart = (product: Product) => {
     const quantity = productQuantities[product.id] || 1
     const price = selectedRegion === "UAE" ? product.priceAED : product.priceGBP
@@ -517,21 +508,17 @@ export default function ShopPageClient() {
       console.error("Cannot add to cart: Invalid quantity or price.")
     }
   }
-
   const handleBuyNow = (product: Product) => {
     const quantity = productQuantities[product.id] || 1
-    const productWithDetails = {
-      ...product,
-      selectedRegion,
-      selectedPrice: selectedRegion === "UAE" ? product.priceAED : product.priceGBP,
-      selectedQuantity: quantity,
-      stockLevel: product.stockLevel || 0,
-    }
-    localStorage.setItem("selectedProduct", JSON.stringify(productWithDetails))
-    localStorage.setItem("selectedRegion", selectedRegion) // This might be redundant if productWithDetails contains it
-    window.location.href = "/checkout"
-  }
+    const price = selectedRegion === "UAE" ? product.priceAED : product.priceGBP // This line was added
 
+    if (quantity > 0 && price) {
+      addItem(product, quantity, selectedRegion, price) // This line replaces localStorage.setItem
+      window.location.href = "/checkout"
+    } else {
+      console.error("Cannot buy now: Invalid quantity or price.")
+    }
+  }
   // ============= HELPER FUNCTIONS =============
   const getDescriptionParts = (description: string) => {
     const parts = description.split(". ")
@@ -546,7 +533,6 @@ export default function ShopPageClient() {
       secondPart: "",
     }
   }
-
   const getButtonText = (product: Product) => {
     const quantity = productQuantities[product.id] || 1
     const stockLevel = product.stockLevel || 0
@@ -558,7 +544,6 @@ export default function ShopPageClient() {
       return "Buy Now + Pre-Order"
     }
   }
-
   const getStockDisplay = (stockLevel: number) => {
     if (stockLevel === 0) {
       return "Pre-order available"
@@ -570,10 +555,8 @@ export default function ShopPageClient() {
       return "In stock"
     }
   }
-
   // Generate structured data for all visible products
   const productSchemas = filteredProducts.map((product) => generateProductSchema(product))
-
   // Show loading state
   if (loading) {
     return (
@@ -587,7 +570,6 @@ export default function ShopPageClient() {
       </div>
     )
   }
-
   // ============= RENDER UI =============
   return (
     <div className="min-h-screen">
@@ -718,7 +700,6 @@ export default function ShopPageClient() {
             const stockLevel = product.stockLevel || 0
             const isAvailable = product.isAvailable || false // Use the isAvailable from fetched stock
             const currentQuantity = productQuantities[product.id] || 1
-
             return (
               <article key={product.id} className={getProductContainerClasses()} id={product.category}>
                 <div className={`relative ${getImageAspectRatio()} overflow-hidden mb-2 group`}>
