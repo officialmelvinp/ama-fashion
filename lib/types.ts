@@ -1,4 +1,5 @@
 // This file defines common types used across the application.
+
 // NEW: Define Region type for consistency
 export type Region = "UAE" | "UK"
 
@@ -16,7 +17,6 @@ export interface Product {
   category?: string | null // Made optional and nullable to match DB
   materials: string[] // Ensured string[] for JSONB
   essences: string[] // Ensured string[] for JSONB
-  // colors: string[] // Removed - This was the source of the error!
   product_code?: string | null // Changed from 'productCode' to 'product_code' and made optional/nullable
   quantity_available: number // Matches DB column
   total_quantity?: number | null // Matches DB column, made optional/nullable
@@ -24,9 +24,6 @@ export interface Product {
   status: ProductStatus // Matches DB column, using enum
   created_at: string
   updated_at: string
-  // Removed client-side only properties like selectedColor, materialLine, stockLevel, isAvailable
-  // as they are not part of the core Product data from the database.
-  // stockLevel and isAvailable will be part of ProductWithStock or derived at runtime.
 }
 
 export interface CartItem {
@@ -259,4 +256,15 @@ export type AdminUser = {
   id: string
   email: string
   created_at: string
+}
+
+// NEW: Type for items sent to PayPal API routes
+export interface PayPalRequestItem {
+  productId: string
+  quantity: number
+  price: number
+  name: string
+  currency: string
+  image?: string // Optional, if passed
+  region: Region // Added region for consistency
 }

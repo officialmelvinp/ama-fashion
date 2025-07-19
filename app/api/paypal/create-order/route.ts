@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { neon } from "@neondatabase/serverless"
-import type { CartItem } from "@/lib/types" // Import CartItem type
+import type { PayPalRequestItem } from "@/lib/types" // Import the new type
 
 const PAYPAL_CLIENT_ID = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID!
 const PAYPAL_CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET!
@@ -18,25 +18,35 @@ async function getPayPalAccessToken() {
     },
     body: "grant_type=client_credentials",
   })
+
   if (!response.ok) {
     const error = await response.text()
     throw new Error(`PayPal auth failed: ${response.status} - ${error}`)
   }
+
   const data = await response.json()
   return data.access_token
 }
 
-// Helper to extract numeric price from string (e.g., "100 AED" or "£75 GBP")
-const extractNumericPrice = (priceString: string): number => {
-  if (!priceString) return 0
-  const match = priceString.match(/[\d.]+/)
-  return match ? Number.parseFloat(match[0]) : 0
-}
-
 export async function POST(request: NextRequest) {
   try {
-    const { cartItems, totalPrice } = (await request.json()) as { cartItems: CartItem[]; totalPrice: number }
-    console.log("🏦 Creating PayPal order for:", { cartItems, totalPrice })
+    const { cartItems, customerInfo, region } = (await request.json()) as {
+      cartItems: PayPalRequestItem[] // Use the new type here
+      customerInfo: {
+        firstName: string
+        lastName: string
+        email: string
+        phone: string
+        address: string
+        city: string
+        country: string
+        postalCode: string
+        notes: string
+      }
+      region: string
+    }
+
+    console.log("🏦 Creating PayPal order for:", { cartItems, customerInfo, region })
 
     if (!cartItems || cartItems.length === 0) {
       return NextResponse.json({ error: "Cart is empty" }, { status: 400 })
@@ -48,24 +58,27 @@ export async function POST(request: NextRequest) {
     const AED_TO_USD_RATE = 0.27
     const GBP_TO_USD_RATE = 1.25 // Assuming a conversion rate for GBP to USD
 
-    const paypalItems = cartItems.map((item: CartItem) => {
-      const unitPrice = extractNumericPrice(item.selectedPrice)
+    const paypalItems = cartItems.map((item: PayPalRequestItem) => {
+      const unitPrice = item.price // Directly use item.price
       let convertedUnitPrice = 0
-      if (item.selectedRegion === "UAE") {
+
+      if (item.currency === "AED") {
         convertedUnitPrice = unitPrice * AED_TO_USD_RATE
-      } else if (item.selectedRegion === "UK") {
+      } else if (item.currency === "GBP") {
         convertedUnitPrice = unitPrice * GBP_TO_USD_RATE
+      } else {
+        convertedUnitPrice = unitPrice // Assume USD if no conversion needed or unknown
       }
 
       return {
-        name: `${item.name} - ${item.subtitle}`,
-        quantity: item.selectedQuantity.toString(),
+        name: item.name, // Use item.name directly
+        quantity: item.quantity.toString(), // Corrected: use item.quantity
         unit_amount: {
           currency_code: "USD",
           value: convertedUnitPrice.toFixed(2),
         },
-        description: item.description,
-        sku: item.id, // Use product ID as SKU
+        description: item.name, // Use name as description if no specific description is passed
+        sku: item.productId, // Use product ID as SKU
       }
     })
 
@@ -75,7 +88,6 @@ export async function POST(request: NextRequest) {
     }, 0)
 
     // Ensure the total amount passed to PayPal matches the sum of item amounts
-    // This is crucial for PayPal's validation.
     const finalTotalAmount = totalConvertedAmount.toFixed(2)
 
     const orderData = {
@@ -106,7 +118,9 @@ export async function POST(request: NextRequest) {
         cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/checkout`,
       },
     }
+
     console.log("📦 Creating order with data:", JSON.stringify(orderData, null, 2))
+
     const response = await fetch(`${PAYPAL_BASE_URL}/v2/checkout/orders`, {
       method: "POST",
       headers: {
@@ -115,12 +129,15 @@ export async function POST(request: NextRequest) {
       },
       body: JSON.stringify(orderData),
     })
+
     console.log("📡 PayPal response status:", response.status)
+
     if (!response.ok) {
       const error = await response.json()
       console.error("❌ PayPal order creation failed:", error)
       throw new Error(`Order creation failed: ${JSON.stringify(error)}`)
     }
+
     const order = await response.json()
     console.log("✅ PayPal order created successfully:", order.id)
     return NextResponse.json(order)

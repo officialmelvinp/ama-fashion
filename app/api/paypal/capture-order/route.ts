@@ -3,8 +3,14 @@ import { neon } from "@neondatabase/serverless"
 import { sendOrderConfirmationEmail } from "@/lib/email" // Import customer email sender
 import { sendVendorNotificationEmail } from "@/lib/email-vendor" // Import vendor email sender
 import { recordOrder, getProductDisplayName } from "@/lib/inventory" // Import recordOrder and getProductDisplayName
-import type { CartItem, OrderItemEmailData } from "@/lib/types" // Ensure CartItem and OrderItemEmailData are imported
-import type { RecordOrderData } from "@/lib/types"
+import {
+  type OrderItemEmailData,
+  type RecordOrderData,
+  type PayPalRequestItem, // Import the new type
+  PaymentStatus, // Import enums for consistency
+  OrderStatus,
+  ShippingStatus,
+} from "@/lib/types"
 
 const PAYPAL_CLIENT_ID = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID!
 const PAYPAL_CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET!
@@ -23,11 +29,13 @@ async function getPayPalAccessToken() {
     },
     body: "grant_type=client_credentials",
   })
+
   if (!response.ok) {
     const errorText = await response.text()
     console.error("❌ PayPal auth failed:", response.status, errorText)
     throw new Error(`PayPal auth failed: ${response.status} - ${errorText}`)
   }
+
   const data = await response.json()
   console.log("✅ PayPal access token obtained successfully")
   return data.access_token
@@ -37,7 +45,20 @@ export async function POST(request: NextRequest) {
   let requestBody: any = null
   try {
     requestBody = await request.json()
-    const { orderID, customerInfo, cartItems: clientCartItems } = requestBody // Extract clientCartItems
+    const {
+      orderID,
+      customerInfo,
+      cartItems: clientCartItems, // This will be PayPalRequestItem[]
+    } = requestBody as {
+      orderID: string
+      customerInfo: {
+        name: string
+        email: string
+        phone: string
+        address: string
+      }
+      cartItems: PayPalRequestItem[] // Use the new type here
+    }
 
     if (!orderID) {
       console.error("❌ No orderID provided")
@@ -60,6 +81,7 @@ export async function POST(request: NextRequest) {
     })
 
     console.log("📊 PayPal capture response status:", response.status)
+
     if (!response.ok) {
       const error = await response.json()
       console.error("❌ PayPal capture failed:", {
@@ -88,17 +110,15 @@ export async function POST(request: NextRequest) {
 
     // Prepare items for database recording and email sending
     const itemsForProcessing: OrderItemEmailData[] = await Promise.all(
-      clientCartItems.map(async (item: CartItem) => {
-        const productDisplayName = await getProductDisplayName(item.id)
-        const priceMatch = item.selectedPrice.match(/[\d.]+/)
-        const numericPrice = priceMatch ? Number.parseFloat(priceMatch[0]) : 0
-
+      clientCartItems.map(async (item: PayPalRequestItem) => {
+        // Use PayPalRequestItem properties directly
+        const productDisplayName = await getProductDisplayName(item.productId) // Use item.productId
         return {
-          product_id: item.id,
+          product_id: item.productId, // Use item.productId
           product_display_name: productDisplayName,
-          quantity: item.selectedQuantity,
-          unit_price: numericPrice,
-          currency: item.selectedRegion === "UAE" ? "AED" : "GBP",
+          quantity: item.quantity, // Use item.quantity
+          unit_price: item.price, // Use item.price
+          currency: item.currency, // Use item.currency
         }
       }),
     )
@@ -107,7 +127,6 @@ export async function POST(request: NextRequest) {
     const customerEmail = customerInfo?.email || ""
     const customerPhone = customerInfo?.phone || ""
     const shippingAddress = customerInfo?.address || ""
-
     const totalAmount = Number.parseFloat(capture.amount.value)
     const currency = capture.amount.currency_code
 
@@ -118,13 +137,13 @@ export async function POST(request: NextRequest) {
       paypalOrderId: orderID, // Keep PayPal order ID for reference
       totalAmount: totalAmount,
       currency: currency,
-      status: "completed", // Payment status
+      status: PaymentStatus.Completed, // Use enum
       shippingAddress: shippingAddress,
       phoneNumber: customerPhone,
       notes: `PayPal payment captured. Order ID: ${orderID}. Capture Status: ${capture.status}.`,
       orderType: "purchase",
-      orderStatus: "paid", // Internal order status
-      shippingStatus: "paid", // Internal shipping status
+      orderStatus: OrderStatus.Completed, // Use enum
+      shippingStatus: ShippingStatus.Paid, // Use enum: Start with "Paid"
       items: itemsForProcessing.map((item) => ({
         productId: item.product_id,
         quantity: item.quantity,
@@ -152,7 +171,7 @@ export async function POST(request: NextRequest) {
       total_amount: totalAmount,
       currency: currency,
       payment_status: "Confirmed",
-      shipping_status: "paid",
+      shipping_status: "Paid", // String for email template
     })
     console.log("✅ Customer confirmation email sent.")
 
@@ -181,6 +200,7 @@ export async function POST(request: NextRequest) {
       currency: capture.amount.currency_code,
       paypalMode: process.env.PAYPAL_MODE || "sandbox",
       message: "PayPal order completed and notifications sent!",
+      orderId: orderDbId, // Return the DB order ID
     })
   } catch (error) {
     console.error("❌ PayPal capture error:", error)

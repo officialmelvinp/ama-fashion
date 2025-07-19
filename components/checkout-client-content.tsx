@@ -14,7 +14,7 @@ import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
 import Header from "@/components/header"
 import { useCart } from "@/context/cart-context"
-import type { CartItem, Region } from "@/context/cart-context"
+import type { CartItem, Region } from "@/lib/types" // Changed from "@/context/cart-context" to "@/lib/types"
 
 interface CheckoutForm {
   firstName: string
@@ -90,6 +90,7 @@ export default function CheckoutClientContent() {
             name: item.name,
             image: item.image_urls?.[0],
             currency: item.selectedPrice.currency,
+            region: item.selectedRegion, // Ensure region is passed
           })),
           customerInfo: {
             firstName: form.firstName,
@@ -141,10 +142,11 @@ export default function CheckoutClientContent() {
         body: JSON.stringify({
           cartItems: regionalCartItems.map((item) => ({
             productId: item.id,
-            quantity: item.selectedQuantity,
-            price: item.selectedPrice.amount,
+            quantity: item.selectedQuantity, // This is the correct property name from CartItem
+            price: item.selectedPrice.amount, // This is the correct property name from CartItem
             name: item.name,
             currency: item.selectedPrice.currency,
+            region: item.selectedRegion, // Pass region for consistency
           })),
           customerInfo: {
             firstName: form.firstName,
@@ -166,12 +168,14 @@ export default function CheckoutClientContent() {
         throw new Error(errorData.message || "Failed to create PayPal order.")
       }
 
-      const { orderID } = await response.json()
-      if (orderID) {
+      const { id: orderID, links } = await response.json() // PayPal returns 'id' for order ID
+      const approvalLink = links.find((link: any) => link.rel === "approve")?.href
+
+      if (approvalLink) {
         // Redirect to PayPal for approval
-        window.location.href = `https://www.paypal.com/checkoutnow?token=${orderID}`
+        window.location.href = approvalLink
       } else {
-        throw new Error("No PayPal Order ID received.")
+        throw new Error("No PayPal approval link received.")
       }
     } catch (error: any) {
       console.error("PayPal checkout error:", error)
@@ -185,7 +189,7 @@ export default function CheckoutClientContent() {
     }
   }
 
-  const handleCheckout = () => {
+  const handleInitiateCheckout = () => {
     if (paymentMethod === "paypal") {
       handlePayPalCheckout()
     } else {
@@ -224,7 +228,7 @@ export default function CheckoutClientContent() {
                 >
                   <div className="relative w-24 h-32 flex-shrink-0">
                     <Image
-                      src={item.image_urls?.[0] || "/placeholder.svg"}
+                      src={item.image_urls?.[0] || "/placeholder.svg?height=64&width=64"}
                       alt={item.name}
                       fill
                       className="object-cover rounded"
@@ -232,7 +236,7 @@ export default function CheckoutClientContent() {
                   </div>
                   <div className="flex-1 text-center sm:text-left">
                     <h3 className="font-serif text-lg text-[#2c2824] mb-2">
-                      {item.name} — {item.subtitle}
+                      {item.name} {item.subtitle ? `— ${item.subtitle}` : ""}
                     </h3>
                     {item.materials && item.materials.length > 0 && (
                       <p className="text-sm text-[#2c2824]/80 mb-2">Materials: {item.materials.join(" | ")}</p>
@@ -437,9 +441,9 @@ export default function CheckoutClientContent() {
                 <div className="pt-6">
                   <Button
                     type="button" // Explicitly set type to "button"
-                    onClick={handleCheckout}
+                    onClick={handleInitiateCheckout}
                     disabled={
-                      isLoading ||
+                      isProcessing ||
                       !form.firstName ||
                       !form.lastName ||
                       !form.email ||
@@ -451,7 +455,7 @@ export default function CheckoutClientContent() {
                     }
                     className="w-full bg-[#2c2824] text-white hover:bg-[#2c2824]/90 py-3 text-lg"
                   >
-                    {isLoading
+                    {isProcessing
                       ? "Processing..."
                       : paymentMethod === "paypal"
                         ? "Continue to PayPal"

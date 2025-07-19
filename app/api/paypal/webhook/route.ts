@@ -3,7 +3,13 @@ import { neon } from "@neondatabase/serverless"
 import { sendOrderConfirmationEmail } from "@/lib/email" // Import customer email sender
 import { sendVendorNotificationEmail } from "@/lib/email-vendor" // Import vendor email sender
 import { recordOrder, getProductDisplayName } from "@/lib/inventory" // Import recordOrder and getProductDisplayName
-import type { OrderItemEmailData, RecordOrderData } from "@/lib/types" // Import CartItem and OrderItemEmailData types
+import {
+  type OrderItemEmailData,
+  type RecordOrderData,
+  PaymentStatus, // Import enums for consistency
+  OrderStatus,
+  ShippingStatus,
+} from "@/lib/types"
 
 const sql = neon(process.env.DATABASE_URL!)
 
@@ -23,6 +29,7 @@ async function getPayPalAccessToken() {
     },
     body: "grant_type=client_credentials",
   })
+
   if (!response.ok) {
     throw new Error(`PayPal auth failed: ${response.status}`)
   }
@@ -42,6 +49,7 @@ async function verifyPayPalWebhook(headers: any, body: string) {
       webhook_id: PAYPAL_WEBHOOK_ID,
       webhook_event: JSON.parse(body),
     }
+
     const response = await fetch(`${PAYPAL_BASE_URL}/v1/notifications/verify-webhook-signature`, {
       method: "POST",
       headers: {
@@ -50,6 +58,7 @@ async function verifyPayPalWebhook(headers: any, body: string) {
       },
       body: JSON.stringify(verificationData),
     })
+
     const result = await response.json()
     return result.verification_status === "SUCCESS"
   } catch (error) {
@@ -73,13 +82,11 @@ async function handlePaymentCaptureCompleted(event: any) {
       currency,
     })
 
-    // Check if order already exists using the shared recordOrder function's internal check
-    // We don't need to explicitly check here, recordOrder will handle it.
-
     // Extract line items from the webhook event
     const paypalLineItems = resource.purchase_units?.[0]?.items || []
+
     if (paypalLineItems.length === 0) {
-      console.warn("No line items found in PayPal webhook event. Cannot process order details.")
+      console.warn("No line items found in PayPal webhook event. Attempting fallback for order details.")
       // Fallback for single item if no line items are present
       const fallbackProductId = resource.purchase_units?.[0]?.reference_id || "unknown-product-id-webhook"
       const fallbackProductDisplayName = await getProductDisplayName(fallbackProductId)
@@ -128,11 +135,11 @@ async function handlePaymentCaptureCompleted(event: any) {
       phoneNumber: phoneNumber,
       notes: `PayPal webhook payment. Order ID: ${orderId}.`,
       orderType: "purchase",
-      orderStatus: "completed", // Use 'completed' for successful payments
-      shippingStatus: "paid", // Start with "paid" status
+      orderStatus: OrderStatus.Completed, // Use 'Completed' for successful payments
+      shippingStatus: ShippingStatus.Paid, // Start with "Paid" status
       totalAmount: amount,
       currency: currency,
-      status: "completed",
+      status: PaymentStatus.Completed, // Use enum
       items: itemsForProcessing.map((item) => ({
         productId: item.product_id,
         quantity: item.quantity,
@@ -159,7 +166,7 @@ async function handlePaymentCaptureCompleted(event: any) {
       total_amount: amount,
       currency: currency,
       payment_status: "Confirmed",
-      shipping_status: "paid",
+      shipping_status: "Paid",
     })
     console.log("✅ Customer confirmation email sent from webhook.")
 
@@ -201,7 +208,7 @@ async function handlePaymentCaptureRefunded(event: any) {
     // Update order status in DB
     await sql`
       UPDATE orders
-      SET order_status = 'refunded',
+      SET order_status = ${OrderStatus.Refunded},
           notes = CONCAT(notes, ' | Refunded: ${refundAmount} ${currency}')
       WHERE payment_id = ${captureId}
     `
@@ -216,8 +223,7 @@ async function handlePaymentCaptureRefunded(event: any) {
       total_amount: refundAmount,
       currency: currency,
       items: [], // No specific items for refund notification
-      payment_method: "PayPal Refund", // Add payment_method
-      // notes: `Refund processed for capture ID: ${captureId}. Amount: ${refundAmount} ${currency}.`, // This is not part of the type
+      payment_method: "PayPal Refund",
     })
     console.log("✅ PayPal refund webhook processed and vendor email sent.")
   } catch (error) {
