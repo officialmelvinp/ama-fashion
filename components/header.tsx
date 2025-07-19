@@ -1,10 +1,9 @@
 "use client"
-
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import MobileNav from "./mobile-nav" // Changed to default import
-import { useCart } from "@/hooks/use-cart"
+import MobileNav from "./mobile-nav"
+import { useCart } from "@/context/cart-context" // Corrected import path
 import { ShoppingCart } from "lucide-react"
 
 interface HeaderProps {
@@ -14,19 +13,16 @@ interface HeaderProps {
 
 export default function Header({ bgColor = "bg-transparent", textColor = "text-white" }: HeaderProps) {
   const pathname = usePathname()
-  const { getTotalItems } = useCart()
-  const totalCartItems = getTotalItems()
-
+  const { calculateTotalItems } = useCart() // Changed from getTotalItems
+  const totalCartItems = calculateTotalItems()
   return (
     <header className={`absolute top-0 left-0 right-0 z-50 w-full py-6 px-4 md:px-8 ${bgColor}`}>
       <div className="container mx-auto flex items-center justify-between max-w-7xl">
         <Link href="/" className={`text-2xl md:text-3xl font-serif tracking-wider ${textColor}`}>
           AMA
         </Link>
-
         {/* Added md:hidden to hide MobileNav on medium and larger screens */}
         <MobileNav textColor={textColor} className="md:hidden" />
-
         <nav className="hidden md:flex items-center space-x-6 md:space-x-8">
           <Link
             href="/"

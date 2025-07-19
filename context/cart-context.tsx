@@ -1,177 +1,170 @@
 "use client"
 
 import type React from "react"
-import { createContext, useState, useEffect, useCallback, useContext } from "react"
-import type { CartItem, Product, Region } from "@/lib/types" // Correctly import CartItem, Product, Region
-import { useToast } from "@/hooks/use-toast"
+import { createContext, useState, useContext, useCallback, useMemo, useEffect } from "react"
+import type { ProductStatus } from "@/lib/types"
 
-interface CartContextType {
-  items: CartItem[]
-  addItem: (product: Product, quantity: number, region: Region, price: string) => void
-  removeItem: (productId: string) => void
-  updateItemQuantity: (productId: string, quantity: number) => void
-  clearCart: () => void
-  getTotalItems: () => number
-  getTotalPrice: () => number
+export type Region = "UAE" | "UK"
+
+export interface CartItem {
+  id: string
+  name: string
+  subtitle?: string | null
+  image_urls: string[] | null // Corrected: Use image_urls as per Product type
+  selectedPrice: {
+    currency: string
+    amount: number
+  }
+  selectedQuantity: number
+  category: string | null
+  selectedRegion: Region
+  product_code: string | null
+  price_aed: number | null
+  price_gbp: number | null
+  description: string | null
+  materials: string[] | null
+  essences: string[] | null
+  quantity_available: number | null
+  total_quantity: number | null
+  pre_order_date: string | null
+  status: ProductStatus
+  created_at: string
+  updated_at: string
 }
 
-const CartContext = createContext<CartContextType | undefined>(undefined)
+interface CartContextType {
+  cart: CartItem[]
+  addToCart: (item: CartItem) => void
+  removeFromCart: (productId: string, region: Region) => void
+  updateQuantity: (productId: string, quantity: number, region: Region) => void
+  clearCart: () => void
+  calculateTotal: (region: Region) => { amount: number; currency: string }
+  calculateTotalItems: (region?: Region) => number
+}
 
-const CART_STORAGE_KEY = "amariah_cart"
+const CartContext = createContext<CartContextType>({
+  cart: [],
+  addToCart: () => {},
+  removeFromCart: () => {},
+  updateQuantity: () => {},
+  clearCart: () => {},
+  calculateTotal: () => ({ amount: 0, currency: "AED" }),
+  calculateTotalItems: () => 0,
+})
 
-export function CartProvider({ children }: { children: React.ReactNode }) {
-  const { toast } = useToast()
-  const [items, setItems] = useState<CartItem[]>([])
-  const [isLoaded, setIsLoaded] = useState(false)
+export const useCart = () => useContext(CartContext)
+
+export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [cart, setCart] = useState<CartItem[]>([])
 
   // Load cart from localStorage on initial mount
   useEffect(() => {
-    try {
-      const storedCart = localStorage.getItem(CART_STORAGE_KEY)
+    if (typeof window !== "undefined") {
+      const storedCart = localStorage.getItem("ama_cart")
       if (storedCart) {
-        const parsedCart: CartItem[] = JSON.parse(storedCart)
-
-        // Validate loaded items: ensure they have selectedPrice, selectedQuantity, selectedRegion
-        const isValidCart = parsedCart.every(
-          (item) =>
-            item.id &&
-            typeof item.selectedQuantity === "number" && // Use selectedQuantity
-            item.selectedQuantity >= 0 &&
-            typeof item.selectedRegion === "string" &&
-            typeof item.selectedPrice === "string",
-        )
-
-        if (isValidCart) {
-          setItems(parsedCart)
-        } else {
-          console.warn("Loaded cart from localStorage has an invalid structure. Clearing cart.")
-          localStorage.removeItem(CART_STORAGE_KEY)
-          setItems([]) // Clear items in state as well
-        }
+        setCart(JSON.parse(storedCart))
       }
-    } catch (error) {
-      console.error("Failed to load or parse cart from localStorage:", error)
-      localStorage.removeItem(CART_STORAGE_KEY)
-      setItems([]) // Clear items in state on parse error
-    } finally {
-      setIsLoaded(true)
     }
   }, [])
 
-  // Save cart to localStorage whenever items change (after initial load)
+  // Save cart to localStorage whenever it changes
   useEffect(() => {
-    if (isLoaded) {
-      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items))
+    if (typeof window !== "undefined") {
+      localStorage.setItem("ama_cart", JSON.stringify(cart))
     }
-  }, [items, isLoaded])
+  }, [cart])
 
-  const addItem = useCallback(
-    (product: Product, quantity: number, region: Region, price: string) => {
-      setItems((prevItems) => {
-        const existingItemIndex = prevItems.findIndex(
-          (item) => item.id === product.id && item.selectedRegion === region,
-        )
+  const addToCart = useCallback((item: CartItem) => {
+    setCart((prevCart) => {
+      const existingItemIndex = prevCart.findIndex(
+        (cartItem) => cartItem.id === item.id && cartItem.selectedRegion === item.selectedRegion,
+      )
 
-        if (existingItemIndex > -1) {
-          const updatedItems = [...prevItems]
-          updatedItems[existingItemIndex].selectedQuantity += quantity // Use selectedQuantity
-          toast({
-            title: "Cart Updated",
-            description: `${product.name} quantity updated in cart.`,
-            variant: "default",
-          })
-          return updatedItems
-        } else {
-          const newItem: CartItem = {
-            ...product,
-            selectedQuantity: quantity, // Use selectedQuantity
-            selectedRegion: region,
-            selectedPrice: price,
-          }
-          toast({
-            title: "Item Added to Cart",
-            description: `${product.name} has been added to your cart.`,
-            variant: "default",
-          })
-          return [...prevItems, newItem]
+      if (existingItemIndex > -1) {
+        const updatedCart = [...prevCart]
+        const existingItem = updatedCart[existingItemIndex]
+        let newQuantity = existingItem.selectedQuantity + item.selectedQuantity
+        const maxAllowedQuantity = item.total_quantity !== null ? item.total_quantity : 99
+        if (newQuantity > maxAllowedQuantity) {
+          newQuantity = maxAllowedQuantity
         }
-      })
-    },
-    [toast],
-  )
+        updatedCart[existingItemIndex] = {
+          ...existingItem,
+          selectedQuantity: newQuantity,
+        }
+        return updatedCart
+      } else {
+        let newQuantity = item.selectedQuantity
+        const maxAllowedQuantity = item.total_quantity !== null ? item.total_quantity : 99
+        if (newQuantity > maxAllowedQuantity) {
+          newQuantity = maxAllowedQuantity
+        }
+        return [...prevCart, { ...item, selectedQuantity: newQuantity }]
+      }
+    })
+  }, [])
 
-  const removeItem = useCallback(
-    (productId: string) => {
-      setItems((prevItems) => {
-        const updatedItems = prevItems.filter((item) => item.id !== productId)
-        toast({
-          title: "Item Removed",
-          description: "Product removed from your cart.",
-          variant: "default",
-        })
-        return updatedItems
-      })
-    },
-    [toast],
-  )
+  const removeFromCart = useCallback((productId: string, region: Region) => {
+    setCart((prevCart) => prevCart.filter((item) => !(item.id === productId && item.selectedRegion === region)))
+  }, [])
 
-  const updateItemQuantity = useCallback(
-    (productId: string, quantity: number) => {
-      setItems((prevItems) => {
-        const updatedItems = prevItems.map(
-          (item) => (item.id === productId ? { ...item, selectedQuantity: quantity } : item), // Use selectedQuantity
-        )
-        const filteredItems = updatedItems.filter((item) => item.selectedQuantity > 0) // Use selectedQuantity
-        toast({
-          title: "Cart Updated",
-          description: "Item quantity adjusted.",
-          variant: "default",
-        })
-        return filteredItems
-      })
-    },
-    [toast],
-  )
+  const updateQuantity = useCallback((productId: string, quantity: number, region: Region) => {
+    setCart((prevCart) => {
+      const updatedCart = prevCart.map((item) =>
+        item.id === productId && item.selectedRegion === region
+          ? {
+              ...item,
+              selectedQuantity: quantity,
+            }
+          : item,
+      )
+      return updatedCart.filter((item) => item.selectedQuantity > 0)
+    })
+  }, [])
 
   const clearCart = useCallback(() => {
-    setItems([])
-    toast({
-      title: "Cart Cleared",
-      description: "Your shopping cart is now empty.",
-      variant: "default",
-    })
-  }, [toast])
+    setCart([])
+  }, [])
 
-  const getTotalItems = useCallback(() => {
-    return items.reduce((total, item) => total + item.selectedQuantity, 0) // Use selectedQuantity
-  }, [items])
+  const calculateTotal = useCallback(
+    (region: Region) => {
+      let totalAmount = 0
+      const currency = region === "UAE" ? "AED" : "GBP"
+      const regionalCart = cart.filter((item) => item.selectedRegion === region)
+      if (regionalCart.length > 0) {
+        totalAmount = regionalCart.reduce((sum, item) => {
+          return sum + item.selectedPrice.amount * item.selectedQuantity
+        }, 0)
+      }
+      return { amount: totalAmount, currency }
+    },
+    [cart],
+  )
 
-  const getTotalPrice = useCallback(() => {
-    return items.reduce((total, item) => {
-      const priceMatch = item.selectedPrice.match(/[\d.]+/)
-      const price = priceMatch ? Number.parseFloat(priceMatch[0]) : 0
-      return total + price * item.selectedQuantity // Use selectedQuantity
-    }, 0)
-  }, [items])
+  const calculateTotalItems = useCallback(
+    (region?: Region) => {
+      if (region) {
+        return cart
+          .filter((item) => item.selectedRegion === region)
+          .reduce((sum, item) => sum + item.selectedQuantity, 0)
+      }
+      return cart.reduce((sum, item) => sum + item.selectedQuantity, 0)
+    },
+    [cart],
+  )
 
-  const value = {
-    items,
-    addItem,
-    removeItem,
-    updateItemQuantity,
-    clearCart,
-    getTotalItems,
-    getTotalPrice,
-  }
+  const contextValue = useMemo(
+    () => ({
+      cart,
+      addToCart,
+      removeFromCart,
+      updateQuantity,
+      clearCart,
+      calculateTotal,
+      calculateTotalItems,
+    }),
+    [cart, addToCart, removeFromCart, updateQuantity, clearCart, calculateTotal, calculateTotalItems],
+  )
 
-  return <CartContext.Provider value={value}>{children}</CartContext.Provider>
-}
-
-// This is your new useCart hook, which simply consumes the context
-export function useCart() {
-  const context = useContext(CartContext)
-  if (context === undefined) {
-    throw new Error("useCart must be used within a CartProvider")
-  }
-  return context
+  return <CartContext.Provider value={contextValue}>{children}</CartContext.Provider>
 }

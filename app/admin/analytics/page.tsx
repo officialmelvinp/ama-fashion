@@ -1,5 +1,4 @@
 "use client"
-
 import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
@@ -152,7 +151,6 @@ export default function AdminAnalyticsPage() {
   return (
     <div className="flex flex-col gap-6 p-6 md:p-8">
       <h1 className="text-3xl font-bold">Analytics Dashboard</h1>
-
       {/* Revenue Chart */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -201,7 +199,6 @@ export default function AdminAnalyticsPage() {
           )}
         </CardContent>
       </Card>
-
       {/* Top Products Chart */}
       <Card>
         <CardHeader>

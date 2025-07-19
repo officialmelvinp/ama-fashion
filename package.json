@@ -11,12 +11,15 @@
   "dependencies": {
     "@headlessui/react": "^2.2.4",
     "@heroicons/react": "^2.2.0",
-    "@neondatabase/serverless": "^0.10.4",
+    "@lucia-auth/adapter-postgresql": "^3.1.2",
+    "@neondatabase/serverless": "^0.9.5",
+    "@prisma/client": "^6.12.0",
     "@radix-ui/react-accordion": "^1.1.2",
     "@radix-ui/react-alert-dialog": "^1.0.5",
     "@radix-ui/react-avatar": "^1.0.4",
     "@radix-ui/react-dropdown-menu": "^2.0.6",
     "@radix-ui/react-label": "^2.0.2",
+    "@radix-ui/react-select": "^2.2.5",
     "@radix-ui/react-slot": "^1.0.2",
     "@radix-ui/react-tabs": "^1.1.12",
     "@radix-ui/react-toast": "^1.1.5",
@@ -28,6 +31,7 @@
     "autoprefixer": "^10.4.21",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
+    "lucia": "^3.2.2",
     "lucide-react": "^0.513.0",
     "next": "15.3.3",
     "next-themes": "^0.4.6",
@@ -39,17 +43,21 @@
     "sonner": "^2.0.5",
     "stripe": "^18.2.1",
     "tailwind-merge": "^1.14.0",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@types/node": "^20",
     "@types/nodemailer": "^6.4.14",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "dotenv-cli": "^8.0.0",
     "eslint": "^8",
     "eslint-config-next": "15.3.3",
     "postcss": "^8.5.4",
+    "prisma": "^6.12.0",
     "tailwindcss": "^3.4.17",
+    "tsx": "^4.20.3",
     "typescript": "^5"
   }
 }

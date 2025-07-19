@@ -1,140 +1,149 @@
 "use client"
-
-import Link from "next/link"
-import Image from "next/image"
+import { useCart } from "@/context/cart-context"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
+import Image from "next/image"
+import Link from "next/link"
+import { formatPrice } from "@/lib/utils"
+import { QuantitySelector } from "@/components/quantity-selector"
+import { XCircle } from "lucide-react"
 import Header from "@/components/header"
-import { useCart } from "@/hooks/use-cart"
-import { ShoppingCart, Trash2 } from "lucide-react"
-import type { CartItem } from "@/lib/types" // Import CartItem type
+import { useMemo, useState } from "react"
+import type { Region } from "@/context/cart-context" // Import Region type
 
 export default function CartPage() {
-  const { items, removeItem, updateItemQuantity, clearCart, getTotalItems, getTotalPrice } = useCart()
+  const { cart, removeFromCart, updateQuantity, calculateTotal, calculateTotalItems, clearCart } = useCart() // Added clearCart
+  const [selectedRegion, setSelectedRegion] = useState<Region>("UAE") // Default to UAE
 
-  const handleQuantityChange = (productId: string, newQuantity: number) => {
-    if (newQuantity <= 0) {
-      removeItem(productId) // Remove if quantity is 0 or less
-    } else {
-      updateItemQuantity(productId, newQuantity)
-    }
-  }
-
-  const handleProceedToCheckout = () => {
-    // Store the entire cart in localStorage for the checkout page to pick up
-    // The checkout page will need to be updated to handle multiple items
-    localStorage.setItem("cartItems", JSON.stringify(items))
-    window.location.href = "/checkout"
-  }
-
-  const totalItems = getTotalItems()
-  const totalPrice = getTotalPrice()
+  const regionalCartItems = useMemo(
+    () => cart.filter((item) => item.selectedRegion === selectedRegion),
+    [cart, selectedRegion],
+  )
+  const { amount: cartTotalAmount, currency: cartTotalCurrency } = useMemo(
+    () => calculateTotal(selectedRegion),
+    [calculateTotal, selectedRegion],
+  )
+  const totalItems = useMemo(() => calculateTotalItems(selectedRegion), [calculateTotalItems, selectedRegion])
 
   return (
-    <div className="min-h-screen bg-[#f8f3ea]">
+    <div className="min-h-screen flex flex-col">
       <Header bgColor="bg-white/90 backdrop-blur-sm" textColor="text-[#2c2824]" />
-      <div className="container mx-auto pt-24 pb-12 px-4">
-        <h1 className="text-3xl md:text-4xl font-serif text-center mb-12 text-[#2c2824]">Your Shopping Cart</h1>
+      <main className="flex-1 container mx-auto py-8 px-4 md:px-6 pt-24">
+        <h1 className="text-3xl font-bold text-center mb-8 text-[#2c2824]">Your Shopping Cart</h1>
 
-        {totalItems === 0 ? (
-          <Card className="max-w-2xl mx-auto text-center py-16">
-            <CardContent>
-              <ShoppingCart className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-              <h2 className="text-xl font-semibold text-[#2c2824] mb-2">Your cart is empty</h2>
-              <p className="text-[#2c2824]/60 mb-6">Looks like you haven't added anything to your cart yet.</p>
-              <Link href="/shop">
-                <Button className="bg-[#2c2824] text-white hover:bg-[#2c2824]/90">Start Shopping</Button>
-              </Link>
-            </CardContent>
-          </Card>
+        <div className="flex justify-center mb-6 gap-4">
+          <Button
+            variant={selectedRegion === "UAE" ? "default" : "outline"}
+            onClick={() => setSelectedRegion("UAE")}
+            className={selectedRegion === "UAE" ? "bg-[#2c2824] text-white" : "text-[#2c2824] border-[#2c2824]"}
+          >
+            🇦🇪 UAE Cart
+          </Button>
+          <Button
+            variant={selectedRegion === "UK" ? "default" : "outline"}
+            onClick={() => setSelectedRegion("UK")}
+            className={selectedRegion === "UK" ? "bg-[#2c2824] text-white" : "text-[#2c2824] border-[#2c2824]"}
+          >
+            🇬🇧 UK Cart
+          </Button>
+        </div>
+
+        {regionalCartItems.length === 0 ? (
+          <div className="text-center py-16">
+            <XCircle className="mx-auto h-16 w-16 text-gray-400 mb-4" />
+            <p className="text-xl text-gray-600 mb-6">Your cart for {selectedRegion} is empty.</p>
+            <Link href="/shop">
+              <Button className="bg-[#2c2824] hover:bg-[#2c2824]/90 text-white px-8 py-3 text-lg">
+                Continue Shopping
+              </Button>
+            </Link>
+          </div>
         ) : (
-          <div className="grid lg:grid-cols-3 gap-8">
-            {/* Cart Items List */}
-            <div className="lg:col-span-2 space-y-6">
-              {items.map((item: CartItem) => (
-                <Card key={`${item.id}-${item.selectedRegion}`} className="flex items-center p-4 shadow-sm">
-                  <div className="relative w-24 h-24 flex-shrink-0 mr-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2 space-y-4">
+              {regionalCartItems.map((item) => (
+                <Card
+                  key={`${item.id}-${item.selectedRegion}`}
+                  className="flex flex-col sm:flex-row items-center p-4 shadow-sm"
+                >
+                  <div className="relative w-32 h-32 flex-shrink-0 mb-4 sm:mb-0 sm:mr-4">
                     <Image
-                      src={item.images[0] || "/placeholder.svg"}
+                      src={item.image_urls?.[0] || "/placeholder.svg"} // Fixed: Use image_urls
                       alt={item.name}
                       fill
-                      className="object-cover rounded"
+                      style={{ objectFit: "cover" }}
+                      className="rounded-md"
                     />
                   </div>
-                  <div className="flex-1">
-                    <h2 className="font-serif text-lg text-[#2c2824]">{item.name}</h2>
-                    <p className="text-sm text-[#2c2824]/80 mb-2">
-                      {item.subtitle} • {item.selectedRegion}
+                  <div className="flex-1 text-center sm:text-left">
+                    <h2 className="text-lg font-semibold text-[#2c2824]">{item.name}</h2>
+                    {item.subtitle && <p className="text-sm text-gray-600">{item.subtitle}</p>}
+                    <p className="text-md font-medium text-[#2c2824]">
+                      {formatPrice(item.selectedPrice.amount, item.selectedPrice.currency)}
                     </p>
-                    <p className="font-medium text-[#2c2824]">{item.selectedPrice}</p>
+                    {item.pre_order_date && (
+                      <p className="text-xs text-orange-600 mt-1">
+                        Pre-order: ETA {new Date(item.pre_order_date).toLocaleDateString()}
+                      </p>
+                    )}
                   </div>
-                  <div className="flex items-center gap-2 ml-auto">
-                    <Input
-                      type="number"
-                      min="1"
+                  <div className="flex items-center justify-center sm:justify-end mt-4 sm:mt-0 sm:ml-auto">
+                    <QuantitySelector
+                      productId={item.id}
                       value={item.selectedQuantity}
-                      onChange={(e) => handleQuantityChange(item.id, Number(e.target.value))}
-                      className="w-20 text-center"
+                      onQuantityChange={(productId, newQuantity) =>
+                        updateQuantity(productId, newQuantity, item.selectedRegion)
+                      } // Fixed: Pass region
+                      maxQuantity={item.total_quantity || 99} // Use total_quantity as max if available, else a high number
+                      isPreOrderable={
+                        item.status === "pre-order" || (item.status === "out-of-stock" && item.pre_order_date !== null)
+                      }
+                      stockLevel={item.quantity_available ?? 0} // Fixed: Provide fallback for null
                     />
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => removeItem(item.id)}
-                      aria-label={`Remove ${item.name}`}
+                      onClick={() => removeFromCart(item.id, item.selectedRegion)} // Fixed: Pass region
+                      className="ml-2 text-red-500 hover:text-red-700"
+                      aria-label={`Remove ${item.name} from cart`}
                     >
-                      <Trash2 className="h-5 w-5 text-red-500" />
+                      <XCircle className="h-5 w-5" />
                     </Button>
                   </div>
                 </Card>
               ))}
             </div>
-
-            {/* Cart Summary */}
-            <div className="lg:col-span-1">
-              <Card className="p-6 shadow-sm">
-                <CardHeader className="p-0 mb-4">
-                  <CardTitle className="text-xl font-serif text-[#2c2824]">Order Summary</CardTitle>
-                </CardHeader>
-                <CardContent className="p-0 space-y-3 mb-6">
-                  <div className="flex justify-between text-[#2c2824]">
-                    <span>Total Items:</span>
-                    <span>{totalItems}</span>
-                  </div>
-                  <div className="flex justify-between text-lg font-semibold text-[#2c2824]">
-                    <span>Subtotal:</span>
-                    <span>
-                      {totalPrice.toFixed(2)}{" "}
-                      {items.length > 0 ? (items[0].selectedRegion === "UAE" ? "AED" : "GBP") : ""}
-                    </span>
-                  </div>
-                  <p className="text-sm text-[#2c2824]/60">Shipping calculated at checkout.</p>
-                </CardContent>
-                <CardFooter className="p-0 flex flex-col gap-4">
-                  <Button
-                    onClick={handleProceedToCheckout}
-                    className="w-full bg-[#2c2824] text-white hover:bg-[#2c2824]/90 py-3 text-lg"
-                  >
+            <Card className="lg:col-span-1 h-fit sticky top-24">
+              <CardHeader>
+                <CardTitle className="text-[#2c2824]">Order Summary</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="flex justify-between text-sm text-gray-700">
+                  <span>Total Items:</span>
+                  <span>{totalItems}</span>
+                </div>
+                <div className="flex justify-between text-lg font-semibold text-[#2c2824]">
+                  <span>Subtotal:</span>
+                  <span>{formatPrice(cartTotalAmount, cartTotalCurrency)}</span>
+                </div>
+                <p className="text-xs text-gray-500">Shipping calculated at checkout.</p>
+              </CardContent>
+              <CardFooter className="flex flex-col gap-2">
+                <Link href={`/checkout?region=${selectedRegion}`} className="w-full">
+                  <Button className="w-full bg-[#2c2824] hover:bg-[#2c2824]/90 text-white py-2">
                     Proceed to Checkout
                   </Button>
-                  <Button
-                    variant="outline"
-                    onClick={clearCart}
-                    className="w-full py-3 text-lg bg-transparent border-[#2c2824] text-[#2c2824] hover:bg-[#2c2824]/5"
-                  >
-                    Clear Cart
+                </Link>
+                <Link href="/shop" className="w-full">
+                  <Button variant="outline" className="w-full text-[#2c2824] border-[#2c2824] py-2 bg-transparent">
+                    Continue Shopping
                   </Button>
-                  <Link href="/shop" className="w-full">
-                    <Button variant="link" className="w-full text-[#2c2824]/80 hover:text-[#2c2824]">
-                      Continue Shopping
-                    </Button>
-                  </Link>
-                </CardFooter>
-              </Card>
-            </div>
+                </Link>
+              </CardFooter>
+            </Card>
           </div>
         )}
-      </div>
+      </main>
     </div>
   )
 }

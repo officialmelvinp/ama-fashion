@@ -1,34 +1,27 @@
+import { neon } from "@neondatabase/serverless"
 import { NextResponse } from "next/server"
-import { getAllProductsWithStock } from "@/lib/inventory"
+import type { Product } from "@/lib/types"
 
-export async function GET() {
+const sql = neon(process.env.DATABASE_URL!)
+
+export async function GET(request: Request) {
   try {
-    const productsWithStock = await getAllProductsWithStock()
+    // Execute the query. We explicitly cast the result to 'any' first,
+    // then to 'Product[]' to bypass the problematic type inference.
+    const products: Product[] = (await sql`
+      SELECT * FROM products WHERE status IN ('active', 'pre-order', 'out-of-stock') ORDER BY name ASC;
+    `) as any as Product[]
 
-    // Create a map for easy lookup
-    const stockMap = productsWithStock.reduce(
-      (acc, product) => {
-        acc[product.productId] = {
-          stockLevel: product.stockLevel,
-          isAvailable: product.isAvailable,
-          priceAED: product.priceAED,
-          priceGBP: product.priceGBP,
-        }
-        return acc
-      },
-      {} as Record<string, any>,
-    )
+    // Explicitly convert price fields to numbers as they might come as strings from Postgres NUMERIC type
+    const productsWithParsedPrices = products.map((product) => ({
+      ...product,
+      price_aed: product.price_aed !== null ? Number.parseFloat(product.price_aed.toString()) : null,
+      price_gbp: product.price_gbp !== null ? Number.parseFloat(product.price_gbp.toString()) : null,
+    }))
 
-    // Also return the old format for backward compatibility
-    const availableProducts = productsWithStock.filter((p) => p.isAvailable).map((p) => p.productId)
-
-    return NextResponse.json({
-      success: true,
-      availableProducts, // Old format
-      productsWithStock: stockMap, // New enhanced format
-    })
+    return NextResponse.json({ success: true, productsWithStock: productsWithParsedPrices }, { status: 200 })
   } catch (error) {
-    console.error("Error fetching inventory:", error)
-    return NextResponse.json({ success: false, error: "Failed to fetch inventory" }, { status: 500 })
+    console.error("Error fetching available products:", error)
+    return NextResponse.json({ success: false, error: "Failed to fetch available products" }, { status: 500 })
   }
 }

@@ -1,95 +1,94 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useCallback, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Minus, Plus } from "lucide-react"
+import { MinusIcon, PlusIcon } from "lucide-react"
 
 interface QuantitySelectorProps {
+  productId: string
+  value: number // The current quantity, controlled by the parent
   stockLevel: number
-  onQuantityChange: (quantity: number) => void
-  initialQuantity?: number
-  maxQuantity?: number
+  onQuantityChange: (productId: string, quantity: number) => void
+  maxQuantity?: number // Overall maximum quantity allowed by the selector (e.g., 99 for UI limit)
+  isPreOrderable?: boolean // If true, allows quantity to exceed stockLevel up to maxQuantity
+  disabled?: boolean // Disable the entire selector
 }
 
 export function QuantitySelector({
+  productId,
+  value, // Use value prop directly
   stockLevel,
   onQuantityChange,
-  initialQuantity = 1,
-  maxQuantity = 999,
+  maxQuantity = 99, // Default UI max
+  isPreOrderable = false,
+  disabled = false,
 }: QuantitySelectorProps) {
-  const [quantity, setQuantity] = useState(initialQuantity)
-
-  const handleQuantityChange = (newQuantity: number) => {
-    const validQuantity = Math.max(1, Math.min(newQuantity, maxQuantity))
-    setQuantity(validQuantity)
-    onQuantityChange(validQuantity)
-  }
-
-  const increment = () => handleQuantityChange(quantity + 1)
-  const decrement = () => handleQuantityChange(quantity - 1)
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = Number.parseInt(e.target.value) || 1
-    handleQuantityChange(value)
-  }
-
-  const getOrderTypeText = () => {
-    if (quantity <= stockLevel) {
-      return `${quantity} piece${quantity > 1 ? "s" : ""} available`
-    } else {
-      const inStock = stockLevel
-      const preOrder = quantity - stockLevel
-      return `${inStock} in stock + ${preOrder} pre-order`
+  // Calculate the effective maximum quantity based on stock and pre-order status
+  const effectiveMax = useMemo(() => {
+    if (isPreOrderable) {
+      return maxQuantity // If pre-orderable, allow up to the UI max
     }
-  }
+    return Math.max(0, stockLevel) // Otherwise, limit to available stock
+  }, [isPreOrderable, stockLevel, maxQuantity])
+
+  const handleDecrement = useCallback(() => {
+    const newQty = Math.max(1, value - 1) // Minimum quantity is 1
+    onQuantityChange(productId, newQty)
+  }, [value, onQuantityChange, productId])
+
+  const handleIncrement = useCallback(() => {
+    const newQty = Math.min(effectiveMax, value + 1) // Max quantity is effectiveMax
+    onQuantityChange(productId, newQty)
+  }, [value, effectiveMax, onQuantityChange, productId])
+
+  const handleInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      let parsedValue = Number.parseInt(e.target.value, 10)
+      if (isNaN(parsedValue) || parsedValue < 1) {
+        parsedValue = 1 // Default to 1 if invalid or less than 1
+      }
+      const newQty = Math.min(effectiveMax, parsedValue) // Clamp to effectiveMax
+      onQuantityChange(productId, newQty)
+    },
+    [effectiveMax, onQuantityChange, productId],
+  )
+
+  const isDecrementDisabled = disabled || value <= 1
+  const isIncrementDisabled = disabled || value >= effectiveMax
 
   return (
-    <div className="space-y-3 flex flex-col items-center">
-      <div className="flex items-center justify-center gap-3">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={decrement}
-          disabled={quantity <= 1}
-          className="h-8 w-8 p-0 bg-transparent"
-        >
-          <Minus className="h-4 w-4" />
-        </Button>
-
-        <Input
-          type="number"
-          min="1"
-          max={maxQuantity}
-          value={quantity}
-          onChange={handleInputChange}
-          className="w-20 text-center"
-        />
-
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={increment}
-          disabled={quantity >= maxQuantity}
-          className="h-8 w-8 p-0"
-        >
-          <Plus className="h-4 w-4" />
-        </Button>
-      </div>
-
-      <div className="text-sm text-gray-600 text-center">
-        <p className="font-medium">{getOrderTypeText()}</p>
-        {stockLevel > 0 && (
-          <p className="text-xs mt-1">
-            {stockLevel} piece{stockLevel > 1 ? "s" : ""} in stock
-            {quantity > stockLevel && " • Rest will be pre-ordered"}
-          </p>
-        )}
-        {stockLevel === 0 && <p className="text-xs mt-1 text-orange-600">All pieces will be pre-ordered</p>}
-      </div>
+    <div className="flex items-center gap-2">
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={handleDecrement}
+        disabled={isDecrementDisabled}
+        aria-label="Decrease quantity"
+      >
+        <MinusIcon className="h-4 w-4" />
+      </Button>
+      <Input
+        type="number"
+        value={value} // Use value prop directly
+        onChange={handleInputChange}
+        className="w-16 text-center"
+        min={1}
+        max={effectiveMax}
+        disabled={disabled}
+        aria-live="polite"
+        aria-atomic="true"
+      />
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={handleIncrement}
+        disabled={isIncrementDisabled}
+        aria-label="Increase quantity"
+      >
+        <PlusIcon className="h-4 w-4" />
+      </Button>
     </div>
   )
 }

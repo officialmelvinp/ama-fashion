@@ -1,21 +1,42 @@
 import { type NextRequest, NextResponse } from "next/server"
 import Stripe from "stripe"
-import type { CartItem } from "@/lib/types" // Ensure CartItem is imported
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-06-30.basil",
 })
 
+// Define the expected structure of cart items coming from the frontend
+interface IncomingCheckoutItem {
+  productId: string
+  quantity: number
+  price: number // This is the direct price amount
+  name: string
+  image?: string // Optional, as it might be undefined
+  currency: string // This is the direct currency code
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const { cartItems, customerInfo } = (await request.json()) as {
-      cartItems: CartItem[] // Use the CartItem type
-      customerInfo: any // Define a more specific type for customerInfo if available
+    const { cartItems, customerInfo, region } = (await request.json()) as {
+      cartItems: IncomingCheckoutItem[] // Use the new IncomingCheckoutItem type
+      customerInfo: {
+        firstName: string
+        lastName: string
+        email: string
+        phone: string
+        address: string
+        city: string
+        country: string
+        postalCode: string
+        notes: string
+      }
+      region: "UAE" | "UK"
     }
 
     console.log("Received parameters for Stripe checkout:", {
       cartItems,
       customerInfo,
+      region,
     })
 
     if (!cartItems || cartItems.length === 0) {
@@ -24,24 +45,24 @@ export async function POST(request: NextRequest) {
     }
 
     // Prepare line items for Stripe
-    const lineItems = cartItems.map((item: CartItem) => {
-      const priceNumeric = Number.parseFloat(item.selectedPrice.match(/[\d.]+/)?.[0] || "0")
-      const currency = item.selectedRegion === "UAE" ? "aed" : "gbp"
+    const lineItems = cartItems.map((item: IncomingCheckoutItem) => {
+      const priceNumeric = item.price // Access the 'price' property directly
+      const currency = item.currency.toLowerCase() // Access the 'currency' property directly and convert to lowercase for Stripe
 
       // Ensure quantity is a number and greater than 0
-      if (typeof item.selectedQuantity !== "number" || item.selectedQuantity <= 0) {
-        console.error(`Invalid quantity for item ${item.name}: ${item.selectedQuantity}`)
+      if (typeof item.quantity !== "number" || item.quantity <= 0) {
+        console.error(`Invalid quantity for item ${item.name}: ${item.quantity}`)
         throw new Error(`Quantity for item ${item.name} is invalid or missing.`)
       }
 
       // Construct absolute image URL
       const imageUrl =
-        item.images && item.images.length > 0
-          ? `${request.nextUrl.origin}${item.images[0]}` // Convert relative path to absolute URL
+        item.image && item.image.length > 0
+          ? `${request.nextUrl.origin}${item.image}` // Use the direct image URL
           : undefined // Or provide a default placeholder URL if no image
 
       console.log(
-        `Processing item: ${item.name}, quantity: ${item.selectedQuantity}, unitAmountInCents: ${Math.round(
+        `Processing item: ${item.name}, quantity: ${item.quantity}, unitAmountInCents: ${Math.round(
           priceNumeric * 100,
         )}, imageUrl: ${imageUrl}`,
       )
@@ -51,25 +72,24 @@ export async function POST(request: NextRequest) {
           currency: currency,
           product_data: {
             name: item.name,
-            description: item.subtitle,
+            description: item.name, // Using name as description for simplicity, adjust if subtitle is needed
             images: imageUrl ? [imageUrl] : [], // Use the absolute URL
             metadata: {
-              internal_product_id: item.id, // Store your internal product ID
+              internal_product_id: item.productId, // Store your internal product ID
             },
           },
           unit_amount: Math.round(priceNumeric * 100), // Convert to cents
         },
-        quantity: item.selectedQuantity,
+        quantity: item.quantity,
       }
     })
 
-    // --- MODIFIED: Simplify cart_items_json in metadata ---
+    // Simplify cartItems for metadata storage
     const simplifiedCartItems = cartItems.map((item) => ({
-      id: item.id,
-      qty: item.selectedQuantity,
-      region: item.selectedRegion,
+      id: item.productId,
+      qty: item.quantity,
+      region: region, // Use the region passed in the request body
     }))
-    // --- END MODIFIED ---
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],

@@ -1,4 +1,6 @@
 // SEO Configuration and Utilities for AMA Fashion
+import type { Product } from "./types" // Import Product type
+
 export const siteConfig = {
   name: "Amariah Manifested Art",
   shortName: "AMA",
@@ -16,7 +18,6 @@ export const siteConfig = {
     "conscious luxury fashion",
     "minimalist African design",
     "spiritually inspired fashion",
-
     // Location-based Keywords
     "African fashion Dubai",
     "African fashion UAE",
@@ -25,7 +26,6 @@ export const siteConfig = {
     "African fashion Essex",
     "luxury fashion Dubai",
     "contemporary African wear UAE",
-
     // Brand-specific
     "Amariah Manifested Art",
     "AMA fashion",
@@ -72,7 +72,6 @@ export function generateMetaTags({
   const fullUrl = url ? `${siteConfig.url}${url}` : siteConfig.url
   const ogImage = image || siteConfig.ogImage
   const allKeywords = [...siteConfig.keywords, ...keywords].join(", ")
-
   return {
     title: fullTitle,
     description,
@@ -109,18 +108,10 @@ export function generateMetaTags({
 }
 
 // Generate structured data for products
-export function generateProductSchema(product: {
-  id: string
-  name: string
-  description: string
-  priceAED: string
-  priceGBP: string
-  images: string[]
-  category: string
-  materials: string[]
-}) {
-  const aedPrice = Number.parseFloat(product.priceAED.replace(/[^\d.]/g, ""))
-  const gbpPrice = Number.parseFloat(product.priceGBP.replace(/[^\d.]/g, ""))
+export function generateProductSchema(product: Product) {
+  // Ensure prices are numbers, default to 0 if null
+  const aedPrice = product.price_aed !== null ? product.price_aed : 0
+  const gbpPrice = product.price_gbp !== null ? product.price_gbp : 0
 
   return {
     "@context": "https://schema.org/",
@@ -131,15 +122,15 @@ export function generateProductSchema(product: {
       "@type": "Brand",
       name: siteConfig.name,
     },
-    category: "Clothing",
+    category: product.category || "Clothing", // Use product.category, default to "Clothing"
     material: product.materials.join(", "),
-    image: product.images.map((img) => `${siteConfig.url}${img}`),
+    image: product.image_urls.map((img) => `${siteConfig.url}${img}`), // Use image_urls
     offers: [
       {
         "@type": "Offer",
         price: aedPrice,
         priceCurrency: "AED",
-        availability: "https://schema.org/InStock",
+        availability: "https://schema.org/InStock", // This might need to be dynamic based on product.status
         seller: {
           "@type": "Organization",
           name: siteConfig.name,
@@ -153,7 +144,7 @@ export function generateProductSchema(product: {
         "@type": "Offer",
         price: gbpPrice,
         priceCurrency: "GBP",
-        availability: "https://schema.org/InStock",
+        availability: "https://schema.org/InStock", // This might need to be dynamic based on product.status
         seller: {
           "@type": "Organization",
           name: siteConfig.name,

@@ -1,10 +1,13 @@
 "use client"
+
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Package, ShoppingCart, Users, TrendingUp, AlertCircle, CheckCircle } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
+import { formatPrice } from "@/lib/utils"
 
 interface DashboardStats {
   totalProducts: number
@@ -14,18 +17,20 @@ interface DashboardStats {
   paidOrders: number
   pendingOrders: number
   totalSubscribers: number
-  totalRevenue: number
+  totalRevenueAED: number
+  totalRevenueGBP: number
   recentOrders: Array<{
-    id: number
-    customer_name: string
-    product_id: string
+    id: string
+    customer_name: string | null
+    product_id: string // This will now be the product_display_name
     amount_paid: number
     currency: string
     payment_status: string
     created_at: string
   }>
   lowStockProducts: Array<{
-    product_id: string
+    id: string
+    name: string
     quantity_available: number
   }>
 }
@@ -34,6 +39,7 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
+  const { toast } = useToast()
 
   useEffect(() => {
     fetchDashboardStats()
@@ -41,63 +47,28 @@ export default function AdminDashboard() {
 
   const fetchDashboardStats = async () => {
     try {
-      const [inventoryRes, ordersRes, subscribersRes] = await Promise.all([
-        fetch("/api/admin/inventory"),
-        fetch("/api/admin/orders"),
-        fetch("/api/admin/subscribers"),
-      ])
+      setLoading(true)
+      const response = await fetch("/api/admin/dashboard-stats") // Consolidated API endpoint
 
-      if (inventoryRes.status === 401 || ordersRes.status === 401 || subscribersRes.status === 401) {
+      if (response.status === 401) {
         router.push("/admin/login")
         return
       }
 
-      const [inventoryData, ordersData, subscribersData] = await Promise.all([
-        inventoryRes.json(),
-        ordersRes.json(),
-        subscribersRes.json(),
-      ])
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
+      }
 
-      const inventory = inventoryData.inventory || []
-      const orders = ordersData.orders || []
-      const subscribers = subscribersData.subscribers || []
-
-      const totalProducts = inventory.length
-      const inStockProducts = inventory.filter((item: any) => item.quantity_available > 0).length
-      const soldOutProducts = inventory.filter((item: any) => item.quantity_available === 0).length
-      const lowStockProducts = inventory.filter(
-        (item: any) => item.quantity_available > 0 && item.quantity_available <= 2,
-      )
-
-      const totalOrders = orders.length
-      const paidOrders = orders.filter((order: any) => order.payment_status === "completed").length
-      const pendingOrders = orders.filter((order: any) => order.payment_status === "pending").length
-
-      const totalRevenue = orders
-        .filter((order: any) => order.payment_status === "completed")
-        .reduce((sum: number, order: any) => {
-          const amount = Number.parseFloat(order.amount_paid?.toString() || "0") || 0
-          return sum + amount
-        }, 0)
-
-      const recentOrders = orders
-        .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-        .slice(0, 5)
-
-      setStats({
-        totalProducts,
-        inStockProducts,
-        soldOutProducts,
-        totalOrders,
-        paidOrders,
-        pendingOrders,
-        totalSubscribers: subscribers.length,
-        totalRevenue,
-        recentOrders,
-        lowStockProducts,
-      })
-    } catch (error) {
+      const data: DashboardStats = await response.json()
+      setStats(data)
+    } catch (error: any) {
       console.error("Error fetching dashboard stats:", error)
+      toast({
+        title: "Error",
+        description: `Failed to load dashboard statistics: ${error.message}. Please try again.`,
+        variant: "destructive",
+      })
     } finally {
       setLoading(false)
     }
@@ -124,8 +95,9 @@ export default function AdminDashboard() {
           </div>
         </div>
       </div>
+
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 px-4 sm:px-6 lg:px-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Products</CardTitle>
@@ -166,12 +138,15 @@ export default function AdminDashboard() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.totalRevenue?.toFixed(0) || 0} AED</div>
+            <div className="text-2xl font-bold">
+              {formatPrice(stats?.totalRevenueAED || 0, "AED")} / {formatPrice(stats?.totalRevenueGBP || 0, "GBP")}
+            </div>
             <p className="text-xs text-muted-foreground">Total revenue from completed orders</p>
           </CardContent>
         </Card>
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 px-4 sm:px-6 lg:px-8">
         {/* Recent Orders */}
         <Card>
           <CardHeader>
@@ -192,13 +167,8 @@ export default function AdminDashboard() {
                       <p className="text-xs text-gray-400">{new Date(order.created_at).toLocaleDateString()}</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-medium text-sm">
-                        {order.amount_paid} {order.currency}
-                      </p>
-                      <Badge
-                        variant={order.payment_status === "completed" ? "default" : "secondary"}
-                        className="text-xs"
-                      >
+                      <p className="font-medium text-sm">{formatPrice(order.amount_paid, order.currency)}</p>
+                      <Badge variant={order.payment_status === "Paid" ? "default" : "secondary"} className="text-xs">
                         {order.payment_status}
                       </Badge>
                     </div>
@@ -216,6 +186,7 @@ export default function AdminDashboard() {
             )}
           </CardContent>
         </Card>
+
         {/* Low Stock Alert */}
         <Card>
           <CardHeader>
@@ -229,12 +200,9 @@ export default function AdminDashboard() {
             {stats?.lowStockProducts && stats.lowStockProducts.length > 0 ? (
               <div className="space-y-4">
                 {stats.lowStockProducts.map((product) => (
-                  <div
-                    key={product.product_id}
-                    className="flex items-center justify-between p-3 bg-orange-50 rounded-lg"
-                  >
+                  <div key={product.id} className="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
                     <div>
-                      <p className="font-medium text-sm">{product.product_id}</p>
+                      <p className="font-medium text-sm">{product.name}</p>
                       <p className="text-xs text-orange-600">Low stock warning</p>
                     </div>
                     <div className="text-right">
@@ -257,8 +225,9 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
       </div>
+
       {/* Quick Actions */}
-      <div className="mt-8">
+      <div className="mt-8 px-4 sm:px-6 lg:px-8">
         <h2 className="text-lg font-semibold text-[#2c2824] mb-4">Quick Actions</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Link href="/admin/inventory">

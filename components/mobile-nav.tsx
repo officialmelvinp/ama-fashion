@@ -1,13 +1,12 @@
 "use client"
-
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogTrigger, DialogClose } from "@/components/ui/dialog"
-import { Menu, X, ShoppingCart, Phone } from "lucide-react" // Import Phone icon
-import { useCart } from "@/hooks/use-cart"
+import { Menu, X, ShoppingCart, Phone } from "lucide-react"
+import { useCart } from "@/hooks/use-cart" // This import is fine as it re-exports from context/cart-context
 
 interface MobileNavProps {
   textColor?: string
@@ -17,10 +16,9 @@ interface MobileNavProps {
 export default function MobileNav({ textColor = "text-white", className }: MobileNavProps) {
   const [isOpen, setIsOpen] = useState(false)
   const pathname = usePathname()
-  const { getTotalItems } = useCart()
-  const totalCartItems = getTotalItems()
+  const { calculateTotalItems } = useCart() // Changed from getTotalItems
+  const totalCartItems = calculateTotalItems()
   const closeMenu = () => setIsOpen(false)
-
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild className={className}>

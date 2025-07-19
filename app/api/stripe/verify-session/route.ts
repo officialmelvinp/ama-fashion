@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import Stripe from "stripe"
-import { recordOrder, getProductInventory } from "@/lib/inventory" // MODIFIED: Import getProductInventory
+import { recordOrder, getProductById } from "@/lib/inventory"
+import { OrderStatus, PaymentStatus, ShippingStatus } from "@/lib/types" // Import enums
 import type { OrderItemEmailData, RecordOrderData } from "@/lib/types"
 import { sendOrderConfirmationEmail } from "@/lib/email"
 import { sendVendorNotificationEmail } from "@/lib/email-vendor"
@@ -15,7 +16,6 @@ export async function POST(request: NextRequest) {
   try {
     requestBody = await request.json()
     const { sessionId, customerInfo } = requestBody
-
     console.log("STRIPE VERIFY SESSION: Received request for session:", sessionId)
     console.log("STRIPE VERIFY SESSION: Customer info received:", customerInfo)
 
@@ -25,7 +25,6 @@ export async function POST(request: NextRequest) {
     }
 
     console.log("STRIPE VERIFY SESSION: Retrieving Stripe session...")
-    // MODIFIED: Use stripeClient to retrieve session
     const session = await stripeClient.checkout.sessions.retrieve(sessionId, {
       expand: ["line_items", "payment_intent"], // Expand line items and payment intent
     })
@@ -61,14 +60,13 @@ export async function POST(request: NextRequest) {
     console.log("STRIPE VERIFY SESSION: Preparing items for processing (fetching full product details from DB)...")
     const itemsForProcessing: OrderItemEmailData[] = await Promise.all(
       simplifiedCartItems.map(async (item) => {
-        const productInventory = await getProductInventory(item.id) // Fetch full product details
-        if (!productInventory) {
-          console.error(`❌ STRIPE VERIFY SESSION: Product inventory not found for ID: ${item.id}`)
+        const product = await getProductById(item.id) // Fetch full product details using getProductById
+        if (!product) {
+          console.error(`❌ STRIPE VERIFY SESSION: Product not found for ID: ${item.id}`)
           throw new Error(`Product ${item.id} not found in inventory.`)
         }
-
-        const productDisplayName = productInventory.product_name || item.id
-        const unitPrice = item.region === "UAE" ? productInventory.priceAED : productInventory.priceGBP
+        const productDisplayName = product.name || item.id
+        const unitPrice = item.region === "UAE" ? product.price_aed : product.price_gbp
         const currencyCode = item.region === "UAE" ? "AED" : "GBP"
 
         if (unitPrice === null || unitPrice === undefined) {
@@ -81,7 +79,6 @@ export async function POST(request: NextRequest) {
         console.log(
           `STRIPE VERIFY SESSION: Processed item ${item.id}: Display Name: ${productDisplayName}, Quantity: ${item.qty}, Unit Price: ${unitPrice}, Currency: ${currencyCode}`,
         )
-
         return {
           product_id: item.id,
           product_display_name: productDisplayName,
@@ -118,19 +115,19 @@ export async function POST(request: NextRequest) {
       })),
       totalAmount: totalAmount,
       currency: currency,
-      status: "completed",
+      status: PaymentStatus.Completed, // Corrected: Use enum
       customerEmail: customerEmail,
       paymentIntentId: paymentId,
       customerName: customerName,
       shippingAddress: shippingAddress,
-      phoneNumber: customerPhone, // Use customerPhone here
+      phoneNumber: customerPhone,
       notes: `Stripe payment verified via /api/stripe/verify-session. Session ID: ${session.id}.`,
       orderType: "purchase",
-      orderStatus: "completed",
-      shippingStatus: "paid",
+      orderStatus: OrderStatus.Completed, // Corrected: Use enum
+      shippingStatus: ShippingStatus.Paid, // Change from ShippingStatus.Shipped to ShippingStatus.Paid
     }
-    console.log("STRIPE VERIFY SESSION: Order data prepared for recording:", orderDataForRecord)
 
+    console.log("STRIPE VERIFY SESSION: Order data prepared for recording:", orderDataForRecord)
     console.log("STRIPE VERIFY SESSION: Attempting to record order in DB...")
     const recordResult = await recordOrder(orderDataForRecord)
     const orderDbId = recordResult.orderId
@@ -141,7 +138,6 @@ export async function POST(request: NextRequest) {
     }
 
     console.log(`🎉 STRIPE VERIFY SESSION: Order recorded with ID: ${orderDbId}`)
-
     console.log("STRIPE VERIFY SESSION: Attempting to send customer email...")
     await sendOrderConfirmationEmail({
       customer_name: customerName,
@@ -150,8 +146,8 @@ export async function POST(request: NextRequest) {
       items: itemsForProcessing,
       total_amount: totalAmount,
       currency: currency,
-      payment_status: "Confirmed",
-      shipping_status: "Paid",
+      payment_status: "Confirmed", // This is a string for the email template, not the enum
+      shipping_status: "Paid", // This is a string for the email template, not the enum
     })
     console.log("✅ STRIPE VERIFY SESSION: Customer email sent successfully.")
 
@@ -171,7 +167,6 @@ export async function POST(request: NextRequest) {
     console.log("✅ STRIPE VERIFY SESSION: Vendor email sent successfully.")
 
     console.log("🎉 STRIPE VERIFY SESSION: Stripe session verification and order processing completed successfully!")
-
     return NextResponse.json({
       success: true,
       orderId: orderDbId,
@@ -184,9 +179,9 @@ export async function POST(request: NextRequest) {
           email: customerEmail,
           phone: customerPhone,
           address: shippingAddress,
-          city: "",
-          country: "",
-          postalCode: "",
+          city: customerInfo?.city || "", // Use customerInfo for city
+          country: customerInfo?.country || "", // Use customerInfo for country
+          postalCode: customerInfo?.postalCode || "", // Use customerInfo for postalCode
           notes: orderDataForRecord.notes,
         },
         totalAmount: totalAmount,

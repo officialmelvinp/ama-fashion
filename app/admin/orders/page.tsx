@@ -19,7 +19,7 @@ export default function AdminOrdersPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [isPending, startTransition] = useTransition()
   const [shippingForm, setShippingForm] = useState<{
-    orderId: number | null
+    orderId: string | null // Changed from number to string (UUID)
     trackingNumber: string
     carrier: string
     estimatedDelivery: string
@@ -44,9 +44,11 @@ export default function AdminOrdersPage() {
         return
       }
       const data = await response.json()
-      // MODIFIED: Ensure orders is always an array and parse numeric fields
-      const parsedOrders = (data.orders || []).map((order: Order) => ({
+      // Ensure orders is always an array and parse numeric fields
+      const parsedOrders = (data.orders || []).map((order: any) => ({
+        // Use 'any' to safely access raw data
         ...order,
+        id: String(order.id), // Explicitly convert id to string
         total_amount: Number(order.total_amount),
         amount_paid: Number(order.amount_paid),
       }))
@@ -59,7 +61,7 @@ export default function AdminOrdersPage() {
     }
   }
 
-  const updateOrderStatus = async (orderId: number, action: string) => {
+  const updateOrderStatus = async (orderId: string, action: string) => {
     startTransition(async () => {
       let result
       if (action === "mark_shipped") {
@@ -77,16 +79,14 @@ export default function AdminOrdersPage() {
         result = await handleDeliverOrder(orderId)
       }
       if (result?.success) {
-        await fetchOrders() // Re-fetch orders to get updated data including product_display_name
+        await fetchOrders() // Re-fetch orders to get updated data
         setShippingForm({ orderId: null, trackingNumber: "", carrier: "", estimatedDelivery: "" })
-        // MODIFIED: Use toast for success message
         toast({
           title: "Order Status Updated",
           description: result.message,
-          variant: "success",
+          variant: "default", // Changed from "success"
         })
       } else {
-        // MODIFIED: Use toast for error message
         toast({
           title: "Error",
           description: result?.error || "Failed to update order status.",
@@ -96,15 +96,14 @@ export default function AdminOrdersPage() {
     })
   }
 
-  const handleResendEmail = async (orderId: number, emailType: "shipped" | "delivered") => {
+  const handleResendEmail = async (orderId: string, emailType: "shipped" | "delivered") => {
     startTransition(async () => {
-      // The resendOrderEmail action will now handle fetching the product_display_name
       const result = await resendOrderEmail(orderId, emailType)
       if (result.success) {
         toast({
           title: "Email Resent",
           description: result.message,
-          variant: "success",
+          variant: "default", // Changed from "success"
         })
       } else {
         toast({
@@ -117,41 +116,53 @@ export default function AdminOrdersPage() {
   }
 
   const filteredOrders = orders.filter((order) => {
+    // Calculate total product display name for search from items array
+    const productDisplayNames = order.items
+      .map((item) => item.product_display_name)
+      .join(" ")
+      .toLowerCase()
+    const productIds = order.items
+      .map((item) => item.product_id)
+      .join(" ")
+      .toLowerCase()
+
     const matchesFilter =
       filter === "all" ||
-      (filter === "paid" && order.payment_status === "completed") ||
-      (filter === "shipped" && order.shipping_status === "shipped") ||
-      (filter === "delivered" && order.shipping_status === "delivered") ||
-      (filter === "preorder" && (order.quantity_preorder ?? 0) > 0) ||
-      (filter === "pending" && order.payment_status === "pending")
+      (filter === "paid" && order.payment_status === "Completed") ||
+      (filter === "shipped" && order.shipping_status === "Shipped") ||
+      (filter === "delivered" && order.shipping_status === "Delivered") ||
+      (filter === "preorder" && order.items.some((item) => item.quantity_preorder > 0)) ||
+      (filter === "pending" && order.payment_status === "Pending")
+
     const matchesSearch =
       order.customer_email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.customer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (order.product_display_name && order.product_display_name.toLowerCase().includes(searchTerm.toLowerCase())) || // Search by display name
-      order.product_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      productDisplayNames.includes(searchTerm.toLowerCase()) || // Search by display name from items
+      productIds.includes(searchTerm.toLowerCase()) || // Search by product ID from items
       (order.tracking_number && order.tracking_number.toLowerCase().includes(searchTerm.toLowerCase()))
+
     return matchesFilter && matchesSearch
   })
 
   const getOrderStats = () => {
     const totalOrders = orders.length
-    const paidOrders = orders.filter((o) => o.payment_status === "completed").length
-    const shippedOrders = orders.filter((o) => o.shipping_status === "shipped").length
-    const deliveredOrders = orders.filter((o) => o.shipping_status === "delivered").length
-    const preOrders = orders.filter((o) => (o.quantity_preorder ?? 0) > 0).length
+    const paidOrders = orders.filter((o) => o.payment_status === "Completed").length
+    const shippedOrders = orders.filter((o) => o.shipping_status === "Shipped").length
+    const deliveredOrders = orders.filter((o) => o.shipping_status === "Delivered").length
+    const preOrders = orders.filter((o) => o.items.some((item) => item.quantity_preorder > 0)).length // Sum pre-order quantities from items
     const totalRevenue = orders
-      .filter((o) => o.payment_status === "completed")
-      .reduce((sum, o) => sum + o.total_amount, 0) // total_amount is now guaranteed to be a number from API
+      .filter((o) => o.payment_status === "Completed")
+      .reduce((sum, o) => sum + o.total_amount, 0)
     return { totalOrders, paidOrders, shippedOrders, deliveredOrders, preOrders, totalRevenue }
   }
 
   const getShippingStatusBadge = (status: string) => {
     switch (status) {
-      case "shipped":
+      case "Shipped":
         return <Badge className="bg-blue-100 text-blue-800">Shipped</Badge>
-      case "delivered":
+      case "Delivered":
         return <Badge className="bg-green-100 text-green-800">Delivered</Badge>
-      case "paid":
+      case "Pending": // Corrected from "paid"
         return <Badge className="bg-yellow-100 text-yellow-800">Ready to Ship</Badge>
       default:
         return <Badge variant="secondary">Pending</Badge>
@@ -339,7 +350,7 @@ export default function AdminOrdersPage() {
                   <div className="text-center md:text-left mb-2 md:mb-0">
                     {" "}
                     {/* MODIFIED: Centered text on mobile */}
-                    <CardTitle className="text-lg text-[#2c2824]">Order #{order.id}</CardTitle>
+                    <CardTitle className="text-lg text-[#2c2824]">Order #{order.id.substring(0, 8)}...</CardTitle>
                     <CardDescription>
                       {new Date(order.created_at).toLocaleDateString("en-US", {
                         weekday: "long",
@@ -357,11 +368,13 @@ export default function AdminOrdersPage() {
                   <div className="flex gap-2 flex-wrap justify-center md:justify-start">
                     {" "}
                     {/* MODIFIED: Centered badges on mobile */}
-                    <Badge variant={order.payment_status === "completed" ? "default" : "destructive"}>
+                    <Badge variant={order.payment_status === "Completed" ? "default" : "destructive"}>
                       {order.payment_status}
                     </Badge>
                     {getShippingStatusBadge(order.shipping_status)}
-                    {(order.quantity_preorder ?? 0) > 0 && <Badge variant="secondary">Pre-Order</Badge>}
+                    {order.items.some((item) => item.quantity_preorder > 0) && (
+                      <Badge variant="secondary">Pre-Order</Badge>
+                    )}
                   </div>
                 </div>
               </CardHeader>
@@ -395,22 +408,29 @@ export default function AdminOrdersPage() {
                     {/* MODIFIED: Centered text on mobile */}
                     <h3 className="font-semibold mb-2 text-[#2c2824]">Order Details</h3>
                     <div className="text-sm space-y-1">
-                      <p>
-                        {/* MODIFIED: Use product_display_name, fallback to product_id */}
-                        <strong>Product:</strong> {order.product_display_name || order.product_id}
-                      </p>
-                      <p>
-                        <strong>Total Quantity:</strong> {order.quantity_ordered}
-                      </p>
-                      {(order.quantity_in_stock ?? 0) > 0 && (
-                        <p>
-                          <strong>In Stock:</strong> {order.quantity_in_stock}
-                        </p>
-                      )}
-                      {(order.quantity_preorder ?? 0) > 0 && (
-                        <p>
-                          <strong>Pre-Order:</strong> {order.quantity_preorder}
-                        </p>
+                      {order.items && order.items.length > 0 ? (
+                        order.items.map((item) => (
+                          <div key={item.id} className="mb-2 p-2 border rounded bg-gray-50">
+                            <p>
+                              <strong>Product:</strong> {item.product_display_name || item.product_id}
+                            </p>
+                            <p>
+                              <strong>Quantity:</strong> {item.quantity}
+                            </p>
+                            {(item.quantity_from_stock ?? 0) > 0 && (
+                              <p>
+                                <strong>In Stock:</strong> {item.quantity_from_stock}
+                              </p>
+                            )}
+                            {(item.quantity_preorder ?? 0) > 0 && (
+                              <p>
+                                <strong>Pre-Order:</strong> {item.quantity_preorder}
+                              </p>
+                            )}
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-gray-500">No items found for this order.</p>
                       )}
                       <p>
                         <strong>Amount:</strong> {Number(order.amount_paid).toFixed(2)} {order.currency}
@@ -473,9 +493,9 @@ export default function AdminOrdersPage() {
                   {" "}
                   {/* MODIFIED: Centered text on mobile */}
                   <h3 className="font-semibold mb-3 text-[#2c2824]">Shipping Actions</h3>
-                  {order.payment_status === "completed" && (
+                  {order.payment_status === "Completed" && (
                     <div className="space-y-3">
-                      {order.shipping_status === "paid" && (
+                      {order.shipping_status === "Pending" && (
                         <div className="space-y-3">
                           {shippingForm.orderId === order.id ? (
                             <div className="bg-blue-50 p-4 rounded space-y-3">
@@ -546,7 +566,7 @@ export default function AdminOrdersPage() {
                           )}
                         </div>
                       )}
-                      {order.shipping_status === "shipped" && (
+                      {order.shipping_status === "Shipped" && (
                         <div className="flex flex-col items-center gap-2 md:flex-row md:justify-start">
                           {" "}
                           {/* MODIFIED: Centered buttons on mobile */}
@@ -572,7 +592,7 @@ export default function AdminOrdersPage() {
                           </DropdownMenu>
                         </div>
                       )}
-                      {order.shipping_status === "delivered" && (
+                      {order.shipping_status === "Delivered" && (
                         <div className="flex flex-col items-center gap-2 md:flex-row md:justify-start">
                           {" "}
                           {/* MODIFIED: Centered content on mobile */}

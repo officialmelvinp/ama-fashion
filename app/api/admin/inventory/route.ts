@@ -1,85 +1,133 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { neon } from "@neondatabase/serverless" // Use neon for consistency
-import { updateProductStock, updateProductPrice, updatePreorderDate } from "@/lib/inventory" // Import specific update functions
+import { neon } from "@neondatabase/serverless"
+import { NextResponse } from "next/server"
+import type { Product } from "@/lib/types"
 
 const sql = neon(process.env.DATABASE_URL!)
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const inventory = await sql`
-      SELECT
-        id,
-        product_id,
-        quantity_available,
-        total_quantity,
-        status,
-        price_aed,
-        price_gbp,
-        preorder_ready_date,
-        created_at,
-        updated_at
-      FROM product_inventory
-      WHERE status = 'active'
-      ORDER BY product_id
-    `
-    return NextResponse.json({ inventory }, { status: 200 })
+    // Remove the generic type parameter - neon doesn't use it this way
+    const products = await sql`SELECT * FROM products ORDER BY name ASC;`
+
+    // Type assertion and price parsing
+    const productsWithParsedPrices = (products as Product[]).map((product) => ({
+      ...product,
+      price_aed: product.price_aed !== null ? Number.parseFloat(product.price_aed.toString()) : null,
+      price_gbp: product.price_gbp !== null ? Number.parseFloat(product.price_gbp.toString()) : null,
+    }))
+
+    return NextResponse.json(
+      {
+        success: true,
+        products: productsWithParsedPrices,
+      },
+      { status: 200 },
+    )
   } catch (error) {
-    console.error("Error fetching inventory:", error)
-    return NextResponse.json({ error: "Failed to fetch inventory" }, { status: 500 })
+    console.error("Error fetching admin inventory products:", error)
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Failed to fetch admin inventory products",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    )
   }
 }
 
-export async function PUT(request: NextRequest) {
+export async function PUT(request: Request) {
   try {
-    const { productId, quantity, priceAED, priceGBP, preOrderDate, updateType } = await request.json()
+    const { id, updates } = await request.json()
 
-    console.log(`Received PUT request for product ${productId} with updateType: ${updateType}`)
-
-    let success = false
-    let message = "No update performed."
-
-    switch (updateType) {
-      case "stock":
-        if (quantity === undefined) {
-          return NextResponse.json({ error: "Missing quantity for stock update" }, { status: 400 })
-        }
-        console.log(`Attempting to update stock for ${productId} to ${quantity}`)
-        success = await updateProductStock(productId, quantity)
-        message = success
-          ? `Stock for ${productId} updated to ${quantity}.`
-          : `Failed to update stock for ${productId}.`
-        break
-      case "prices":
-        if (priceAED === undefined || priceGBP === undefined) {
-          return NextResponse.json({ error: "Missing priceAED or priceGBP for price update" }, { status: 400 })
-        }
-        console.log(`Attempting to update prices for ${productId} to AED ${priceAED}, GBP ${priceGBP}`)
-        success = await updateProductPrice(productId, priceAED, priceGBP, "Admin Panel Update")
-        message = success ? `Prices for ${productId} updated.` : `Failed to update prices for ${productId}.`
-        break
-      case "preorder":
-        if (preOrderDate === undefined) {
-          return NextResponse.json({ error: "Missing preOrderDate for pre-order update" }, { status: 400 })
-        }
-        console.log(`Attempting to update pre-order date for ${productId} to ${preOrderDate}`)
-        success = await updatePreorderDate(productId, preOrderDate)
-        message = success
-          ? `Pre-order date for ${productId} updated to ${preOrderDate || "null"}.`
-          : `Failed to update pre-order date for ${productId}.`
-        break
-      default:
-        return NextResponse.json({ error: "Invalid update type" }, { status: 400 })
+    if (!id) {
+      return NextResponse.json({ success: false, error: "Product ID is required" }, { status: 400 })
     }
 
-    if (success) {
-      console.log(`✅ ${message}`)
-      return NextResponse.json({ success: true, message }, { status: 200 })
+    // Handle different update scenarios with separate queries
+    let result
+
+    if (updates.quantity_available !== undefined) {
+      result = await sql`
+        UPDATE products 
+        SET quantity_available = ${updates.quantity_available}, updated_at = NOW()
+        WHERE id = ${id}
+        RETURNING *;
+      `
+    } else if (updates.total_quantity !== undefined) {
+      result = await sql`
+        UPDATE products 
+        SET total_quantity = ${updates.total_quantity}, updated_at = NOW()
+        WHERE id = ${id}
+        RETURNING *;
+      `
+    } else if (updates.price_aed !== undefined && updates.price_gbp !== undefined) {
+      result = await sql`
+        UPDATE products 
+        SET price_aed = ${updates.price_aed}, price_gbp = ${updates.price_gbp}, updated_at = NOW()
+        WHERE id = ${id}
+        RETURNING *;
+      `
+    } else if (updates.price_aed !== undefined) {
+      result = await sql`
+        UPDATE products 
+        SET price_aed = ${updates.price_aed}, updated_at = NOW()
+        WHERE id = ${id}
+        RETURNING *;
+      `
+    } else if (updates.price_gbp !== undefined) {
+      result = await sql`
+        UPDATE products 
+        SET price_gbp = ${updates.price_gbp}, updated_at = NOW()
+        WHERE id = ${id}
+        RETURNING *;
+      `
+    } else if (updates.pre_order_date !== undefined) {
+      result = await sql`
+        UPDATE products 
+        SET pre_order_date = ${updates.pre_order_date}, updated_at = NOW()
+        WHERE id = ${id}
+        RETURNING *;
+      `
+    } else if (updates.status !== undefined) {
+      result = await sql`
+        UPDATE products 
+        SET status = ${updates.status}, updated_at = NOW()
+        WHERE id = ${id}
+        RETURNING *;
+      `
     } else {
-      console.error(`❌ ${message}`)
-      return NextResponse.json({ success: false, error: message }, { status: 500 })
+      return NextResponse.json({ success: false, error: "No valid fields to update" }, { status: 400 })
     }
-  } catch (error: any) {
-    console.error("Error in PUT /api/admin/inventory:", error)
-    return NextResponse.json({ success: false, error: error.message || "Internal Server Error" }, { status: 500 })
+
+    if (result.length === 0) {
+      return NextResponse.json({ success: false, error: "Product not found" }, { status: 404 })
+    }
+
+    // Parse the updated product
+    const updatedProduct = {
+      ...result[0],
+      price_aed: result[0].price_aed ? Number.parseFloat(result[0].price_aed.toString()) : null,
+      price_gbp: result[0].price_gbp ? Number.parseFloat(result[0].price_gbp.toString()) : null,
+    }
+
+    return NextResponse.json(
+      {
+        success: true,
+        product: updatedProduct,
+        message: "Product updated successfully",
+      },
+      { status: 200 },
+    )
+  } catch (error) {
+    console.error("Error updating product:", error)
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Failed to update product",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    )
   }
 }

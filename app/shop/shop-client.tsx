@@ -1,422 +1,106 @@
 "use client"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { QuantitySelector } from "@/components/quantity-selector"
+import { useCart } from "@/context/cart-context"
+import type { Product, Region, CartItem } from "@/lib/types"
+import { Skeleton } from "@/components/ui/skeleton"
+import { formatPrice } from "@/lib/utils"
 import Header from "@/components/header"
 import { generateProductSchema } from "@/lib/seo"
-import { QuantitySelector } from "@/components/quantity-selector"
-import { useCart } from "@/hooks/use-cart" // NEW: Import the useCart hook
-import type { Product, Region } from "@/lib/types" // NEW: Import Product and Region types from lib/types
-
-// ============= PRODUCT DATA (Keep your existing hardcoded data) =============
-const allProducts: Product[] = [
-  // Ayọ̀mídé - 2 items with colors
-  {
-    id: "ayomide-blue",
-    name: "Ayọ̀mídé",
-    subtitle: "A Quiet Ode to Joy",
-    materials: ["adire"],
-    description: "Joy woven into form. A dress that carries the lightness of being.",
-    priceAED: "1 AED",
-    priceGBP: "£1 GBP",
-    images: ["/images/ama6.jpeg"],
-    category: "ayomide",
-    essences: ["everyday", "sacred"],
-    colors: ["#3B82F6"],
-    selectedColor: "#3B82F6",
-  },
-  {
-    id: "ayomide-purple",
-    name: "Ayọ̀mídé",
-    subtitle: "A Quiet Ode to Joy",
-    materials: ["adire"],
-    description: "Joy woven into form. A dress that carries the lightness of being.",
-    priceAED: "780 AED",
-    priceGBP: "£168 GBP",
-    images: ["/images/ama6.jpeg"],
-    category: "ayomide",
-    essences: ["everyday", "sacred"],
-    colors: ["#EC4899"],
-    selectedColor: "#EC4899",
-  },
-  // The Manifested Set - 1 item
-  {
-    id: "manifest-set-1",
-    name: "The Manifest Set",
-    subtitle: "What You Asked For, Woven",
-    materials: ["batik"],
-    description: "A pairing of ease and presence. One-size drape, bound by craft.",
-    priceAED: "950 AED",
-    priceGBP: "£205 GBP",
-    images: ["/images/ama5.jpeg"],
-    category: "the-manifested-set",
-    essences: ["sacred", "gatherings"],
-  },
-  // Ayaba Bubu - 12 items
-  {
-    id: "ayaba-bubu-1",
-    name: "Àyaba 01",
-    subtitle: "Royalty, Rendered in Thread",
-    materials: ["batik", "ankara"],
-    description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
-    priceAED: "850 AED",
-    priceGBP: "£183 GBP",
-    images: ["/images/ama3.jpeg"],
-    category: "ayaba-bubu",
-    essences: ["everyday", "sacred"],
-    productCode: "01",
-  },
-  {
-    id: "ayaba-bubu-2",
-    name: "Àyaba 02",
-    subtitle: "Royalty, Rendered in Thread",
-    materials: ["batik", "ankara"],
-    description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
-    priceAED: "850 AED",
-    priceGBP: "£183 GBP",
-    images: ["/images/ama3.jpeg"],
-    category: "ayaba-bubu",
-    essences: ["everyday", "sacred"],
-    productCode: "02",
-  },
-  {
-    id: "ayaba-bubu-3",
-    name: "Àyaba 03",
-    subtitle: "Royalty, Rendered in Thread",
-    materials: ["batik", "ankara"],
-    description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
-    priceAED: "850 AED",
-    priceGBP: "£183 GBP",
-    images: ["/images/ama3.jpeg"],
-    category: "ayaba-bubu",
-    essences: ["everyday", "sacred"],
-    productCode: "03",
-  },
-  {
-    id: "ayaba-bubu-4",
-    name: "Àyaba 04",
-    subtitle: "Royalty, Rendered in Thread",
-    materials: ["batik", "ankara"],
-    description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
-    priceAED: "850 AED",
-    priceGBP: "£183 GBP",
-    images: ["/images/ama3.jpeg"],
-    category: "ayaba-bubu",
-    essences: ["everyday", "sacred"],
-    productCode: "04",
-  },
-  {
-    id: "ayaba-bubu-5",
-    name: "Àyaba 05",
-    subtitle: "Royalty, Rendered in Thread",
-    materials: ["batik", "ankara"],
-    description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
-    priceAED: "850 AED",
-    priceGBP: "£183 GBP",
-    images: ["/images/ama3.jpeg"],
-    category: "ayaba-bubu",
-    essences: ["everyday", "sacred"],
-    productCode: "05",
-  },
-  {
-    id: "ayaba-bubu-6",
-    name: "Àyaba 06",
-    subtitle: "Royalty, Rendered in Thread",
-    materials: ["batik", "ankara"],
-    description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
-    priceAED: "850 AED",
-    priceGBP: "£183 GBP",
-    images: ["/images/ama3.jpeg"],
-    category: "ayaba-bubu",
-    essences: ["everyday", "sacred"],
-    productCode: "06",
-  },
-  {
-    id: "ayaba-bubu-7",
-    name: "Àyaba 07",
-    subtitle: "Royalty, Rendered in Thread",
-    materials: ["batik", "ankara"],
-    description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
-    priceAED: "850 AED",
-    priceGBP: "£183 GBP",
-    images: ["/images/ama3.jpeg"],
-    category: "ayaba-bubu",
-    essences: ["everyday", "sacred"],
-    productCode: "07",
-  },
-  {
-    id: "ayaba-bubu-8",
-    name: "Àyaba 08",
-    subtitle: "Royalty, Rendered in Thread",
-    materials: ["batik", "ankara"],
-    description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
-    priceAED: "850 AED",
-    priceGBP: "£183 GBP",
-    images: ["/images/ama3.jpeg"],
-    category: "ayaba-bubu",
-    essences: ["everyday", "sacred"],
-    productCode: "08",
-  },
-  {
-    id: "ayaba-bubu-9",
-    name: "Àyaba 09",
-    subtitle: "Royalty, Rendered in Thread",
-    materials: ["batik", "ankara"],
-    description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
-    priceAED: "850 AED",
-    priceGBP: "£183 GBP",
-    images: ["/images/ama3.jpeg"],
-    category: "ayaba-bubu",
-    essences: ["everyday", "sacred"],
-    productCode: "09",
-  },
-  {
-    id: "ayaba-bubu-10",
-    name: "Àyaba 10",
-    subtitle: "Royalty, Rendered in Thread",
-    materials: ["batik", "ankara"],
-    description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
-    priceAED: "850 AED",
-    priceGBP: "£183 GBP",
-    images: ["/images/ama3.jpeg"],
-    category: "ayaba-bubu",
-    essences: ["everyday", "sacred"],
-    productCode: "10",
-  },
-  {
-    id: "ayaba-bubu-11",
-    name: "Àyaba 11",
-    subtitle: "Royalty, Rendered in Thread",
-    materials: ["batik", "ankara"],
-    description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
-    priceAED: "850 AED",
-    priceGBP: "£183 GBP",
-    images: ["/images/ama3.jpeg"],
-    category: "ayaba-bubu",
-    essences: ["everyday", "sacred"],
-    productCode: "11",
-  },
-  {
-    id: "ayaba-bubu-12",
-    name: "Àyaba 12",
-    subtitle: "Royalty, Rendered in Thread",
-    materials: ["batik", "ankara"],
-    description: "Freedom in form. A kaftan stitched with lineage, worn in ease.",
-    priceAED: "850 AED",
-    priceGBP: "£183 GBP",
-    images: ["/images/ama3.jpeg"],
-    category: "ayaba-bubu",
-    essences: ["everyday", "sacred"],
-    productCode: "12",
-  },
-  // Candy Combat - 12 items
-  {
-    id: "candy-combat-1",
-    name: "Candy Combat 01",
-    subtitle: "Softness, Armed",
-    materials: ["batik", "ankara", "aso-oke"],
-    description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
-    priceAED: "650 AED",
-    priceGBP: "£140 GBP",
-    images: ["/images/ama4.jpeg"],
-    category: "candy-combat",
-    essences: ["everyday", "gatherings"],
-    productCode: "01",
-  },
-  {
-    id: "candy-combat-2",
-    name: "Candy Combat 02",
-    subtitle: "Softness, Armed",
-    materials: ["batik", "ankara", "aso-oke"],
-    description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
-    priceAED: "650 AED",
-    priceGBP: "£140 GBP",
-    images: ["/images/ama4.jpeg"],
-    category: "candy-combat",
-    essences: ["everyday", "gatherings"],
-    productCode: "02",
-  },
-  {
-    id: "candy-combat-3",
-    name: "Candy Combat 03",
-    subtitle: "Softness, Armed",
-    materials: ["batik", "ankara", "aso-oke"],
-    description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
-    priceAED: "650 AED",
-    priceGBP: "£140 GBP",
-    images: ["/images/ama4.jpeg"],
-    category: "candy-combat",
-    essences: ["everyday", "gatherings"],
-    productCode: "03",
-  },
-  {
-    id: "candy-combat-4",
-    name: "Candy Combat 04",
-    subtitle: "Softness, Armed",
-    materials: ["batik", "ankara", "aso-oke"],
-    description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
-    priceAED: "650 AED",
-    priceGBP: "£140 GBP",
-    images: ["/images/ama4.jpeg"],
-    category: "candy-combat",
-    essences: ["everyday", "gatherings"],
-    productCode: "04",
-  },
-  {
-    id: "candy-combat-5",
-    name: "Candy Combat 05",
-    subtitle: "Softness, Armed",
-    materials: ["batik", "ankara", "aso-oke"],
-    description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
-    priceAED: "650 AED",
-    priceGBP: "£140 GBP",
-    images: ["/images/ama4.jpeg"],
-    category: "candy-combat",
-    essences: ["everyday", "gatherings"],
-    productCode: "05",
-  },
-  {
-    id: "candy-combat-6",
-    name: "Candy Combat 06",
-    subtitle: "Softness, Armed",
-    materials: ["batik", "ankara", "aso-oke"],
-    description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
-    priceAED: "650 AED",
-    priceGBP: "£140 GBP",
-    images: ["/images/ama4.jpeg"],
-    category: "candy-combat",
-    essences: ["everyday", "gatherings"],
-    productCode: "06",
-  },
-  {
-    id: "candy-combat-7",
-    name: "Candy Combat 07",
-    subtitle: "Softness, Armed",
-    materials: ["batik", "ankara", "aso-oke"],
-    description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
-    priceAED: "650 AED",
-    priceGBP: "£140 GBP",
-    images: ["/images/ama4.jpeg"],
-    category: "candy-combat",
-    essences: ["everyday", "gatherings"],
-    productCode: "07",
-  },
-  {
-    id: "candy-combat-8",
-    name: "Candy Combat 08",
-    subtitle: "Softness, Armed",
-    materials: ["batik", "ankara", "aso-oke"],
-    description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
-    priceAED: "650 AED",
-    priceGBP: "£140 GBP",
-    images: ["/images/ama4.jpeg"],
-    category: "candy-combat",
-    essences: ["everyday", "gatherings"],
-    productCode: "08",
-  },
-  {
-    id: "candy-combat-9",
-    name: "Candy Combat 09",
-    subtitle: "Softness, Armed",
-    materials: ["batik", "ankara", "aso-oke"],
-    description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
-    priceAED: "650 AED",
-    priceGBP: "£140 GBP",
-    images: ["/images/ama4.jpeg"],
-    category: "candy-combat",
-    essences: ["everyday", "gatherings"],
-    productCode: "09",
-  },
-  {
-    id: "candy-combat-10",
-    name: "Candy Combat 10",
-    subtitle: "Softness, Armed",
-    materials: ["batik", "ankara", "aso-oke"],
-    description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
-    priceAED: "650 AED",
-    priceGBP: "£140 GBP",
-    images: ["/images/ama4.jpeg"],
-    category: "candy-combat",
-    essences: ["everyday", "gatherings"],
-    productCode: "10",
-  },
-  {
-    id: "candy-combat-11",
-    name: "Candy Combat 11",
-    subtitle: "Softness, Armed",
-    materials: ["batik", "ankara", "aso-oke"],
-    description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
-    priceAED: "650 AED",
-    priceGBP: "£140 GBP",
-    images: ["/images/ama4.jpeg"],
-    category: "candy-combat",
-    essences: ["everyday", "gatherings"],
-    productCode: "11",
-  },
-  {
-    id: "candy-combat-12",
-    name: "Candy Combat 12",
-    subtitle: "Softness, Armed",
-    materials: ["batik", "ankara", "aso-oke"],
-    description: "Strength stitched in softness. Combat trousers, heritage-pocketed, spirit armored.",
-    priceAED: "650 AED",
-    priceGBP: "£140 GBP",
-    images: ["/images/ama4.jpeg"],
-    category: "candy-combat",
-    essences: ["everyday", "gatherings"],
-    productCode: "12",
-  },
-]
-
+import { useToast } from "@/hooks/use-toast"
 export default function ShopPageClient() {
-  // ============= STATE MANAGEMENT =============
-  const [activeFilter, setActiveFilter] = useState<string>("all")
-  const [selectedRegion, setSelectedRegion] = useState<Region>("UAE") // Use Region type
-  const [productsStock, setProductsStock] = useState<
-    Record<string, { stockLevel: number; isAvailable: boolean; priceAED?: number; priceGBP?: number }>
-  >({})
+  const { addToCart } = useCart()
+  const { toast } = useToast()
+  const [products, setProducts] = useState<Product[]>([]) // Initialize as empty, will be populated by fetch
   const [loading, setLoading] = useState(true)
-  const [productQuantities, setProductQuantities] = useState<Record<string, number>>({})
-  const { addItem } = useCart() // NEW: Initialize useCart hook
-  // ============= FETCH PRODUCTS WITH STOCK LEVELS =============
+  const [quantities, setQuantities] = useState<{ [key: string]: number }>({})
+  const [productStockMap, setProductStockMap] = useState<
+    Record<
+      string,
+      { stockLevel: number; isAvailable: boolean; isPreOrder: boolean; status: string; pre_order_date: string | null }
+    >
+  >({})
+  const [selectedRegion, setSelectedRegion] = useState<Region>("UAE") // Default region
+  const [activeFilter, setActiveFilter] = useState<string>("all")
   useEffect(() => {
-    const fetchProductsWithStock = async () => {
-      try {
-        const response = await fetch("/api/inventory/available")
-        const data = await response.json()
-        if (data.success) {
-          setProductsStock(data.productsWithStock || {})
-        }
-      } catch (error) {
-        console.error("Error fetching products with stock:", error)
-        // Fallback: assume all products are available with stock level 1
-        const fallbackStock = allProducts.reduce(
-          (acc, product) => {
-            acc[product.id] = { stockLevel: 1, isAvailable: true }
-            return acc
-          },
-          {} as Record<string, { stockLevel: number; isAvailable: boolean }>,
-        )
-        setProductsStock(fallbackStock)
-      } finally {
-        setLoading(false)
+    // Initialize quantities for all products to 1
+    const initialQuantities: { [key: string]: number } = {}
+    products.forEach((product) => {
+      initialQuantities[product.id] = 1
+    })
+    setQuantities(initialQuantities)
+  }, [products])
+  const fetchProductsWithStock = useCallback(async () => {
+    try {
+      setLoading(true)
+      const response = await fetch("/api/inventory/available")
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
       }
+      const data: { success: boolean; productsWithStock: Product[] } = await response.json()
+      if (data.success && Array.isArray(data.productsWithStock)) {
+        // Use fetched products directly, filtering out inactive ones
+        const activeProducts = data.productsWithStock.filter((p) => p.status !== "inactive")
+        setProducts(activeProducts)
+        const fetchedStockMap: Record<
+          string,
+          {
+            stockLevel: number
+            isAvailable: boolean
+            isPreOrder: boolean
+            status: string
+            pre_order_date: string | null
+          }
+        > = {}
+        activeProducts.forEach((item: Product) => {
+          fetchedStockMap[item.id] = {
+            stockLevel: item.quantity_available || 0,
+            isAvailable: item.quantity_available > 0 && item.status === "active",
+            isPreOrder:
+              item.status === "pre-order" ||
+              (item.status === "out-of-stock" && item.pre_order_date !== null) ||
+              (item.status === "active" && item.quantity_available < (item.total_quantity ?? 0)),
+            status: item.status,
+            pre_order_date: item.pre_order_date || null, // Ensure it's string | null
+          }
+        })
+        setProductStockMap(fetchedStockMap)
+      } else {
+        console.error("API response did not contain productsWithStock array or was not successful:", data)
+        // Fallback to empty array if API response is not as expected
+        setProducts([])
+      }
+    } catch (error: any) {
+      console.error("Error fetching products with stock:", error)
+      toast({
+        title: "Error",
+        description: `Failed to fetch products: ${error.message}.`,
+        variant: "destructive",
+      })
+      // Fallback to empty array on error
+      setProducts([])
+    } finally {
+      setLoading(false)
     }
+  }, [toast])
+  useEffect(() => {
     fetchProductsWithStock()
-  }, [])
+  }, [fetchProductsWithStock])
   // ============= HANDLE URL HASH FROM HOMEPAGE =============
   useEffect(() => {
     const hash = window.location.hash.replace("#", "")
     if (hash) {
-      const hashToFilter: { [key: string]: string } = {
-        "ayaba-bubu": "ayaba-bubu",
-        "candy-combat": "candy-combat",
-        "the-manifested-set": "the-manifested-set",
-        ayomide: "ayomide",
-        batik: "batik",
-        adire: "adire",
-        linen: "linen",
-      }
+      // Use the dynamic categories for hash mapping
+      const allCategories = Array.from(new Set(products.map((p) => p.category).filter(Boolean))) as string[]
+      const hashToFilter: { [key: string]: string } = {}
+      allCategories.forEach((cat) => {
+        if (cat) {
+          hashToFilter[cat.toLowerCase().replace(/\s+/g, "-")] = cat // Map kebab-case hash to actual category name
+        }
+      })
       const filterValue = hashToFilter[hash]
       if (filterValue) {
         setActiveFilter(filterValue)
@@ -428,52 +112,194 @@ export default function ShopPageClient() {
         }, 100)
       }
     }
+  }, [products]) // Depend on products to ensure categories are available
+  const handleQuantityChange = useCallback((productId: string, quantity: number) => {
+    setQuantities((prev) => ({ ...prev, [productId]: quantity }))
   }, [])
-  // ============= FILTER LOGIC - SHOW ALL PRODUCTS WITH STOCK INFO =============
-  const getFilteredProducts = () => {
-    // Show ALL products, but with stock information AND DYNAMIC PRICES
-    const productsWithStock = allProducts.map((product) => {
-      const stockInfo = productsStock[product.id]
-      // Use database prices if available, otherwise fall back to hardcoded prices
-      const dynamicPriceAED = stockInfo?.priceAED ? `${stockInfo.priceAED} AED` : product.priceAED
-      const dynamicPriceGBP = stockInfo?.priceGBP ? `£${stockInfo.priceGBP} GBP` : product.priceGBP
-      return {
+  const handleAddToCart = useCallback(
+    (product: Product) => {
+      const quantity = quantities[product.id] || 1
+      const stockInfo = productStockMap[product.id]
+      if (!stockInfo) {
+        toast({
+          title: "Error",
+          description: `Stock information not found for ${product.name}.`,
+          variant: "destructive",
+        })
+        return
+      }
+      // Determine the price based on the selected region
+      let selectedPrice: { currency: string; amount: number } = { currency: "AED", amount: product.price_aed || 0 }
+      if (selectedRegion === "UK") {
+        selectedPrice = { currency: "GBP", amount: product.price_gbp || 0 }
+      }
+      const itemToAdd: CartItem = {
         ...product,
-        priceAED: dynamicPriceAED,
-        priceGBP: dynamicPriceGBP,
-        stockLevel: stockInfo?.stockLevel || 0,
-        isAvailable: stockInfo?.isAvailable || false,
-        // selectedQuantity is not part of the base Product type, but added for local state management
-        // and for passing to handleBuyNow/handleAddToCart
-        selectedQuantity: productQuantities[product.id] || 1,
+        subtitle: product.subtitle ?? null, // Explicitly handle undefined to be null
+        category: product.category ?? null, // Explicitly handle undefined to be null
+        product_code: product.product_code ?? null, // Explicitly handle undefined to be null
+        selectedQuantity: quantity,
+        selectedRegion: selectedRegion,
+        selectedPrice: selectedPrice,
+        image_urls: product.image_urls || [], // Ensure it's an array
+        price_aed: product.price_aed || 0,
+        price_gbp: product.price_gbp || 0,
+        description: product.description || "",
+        materials: product.materials || [],
+        essences: product.essences || [],
+        // Removed: colors: product.colors || [],
+        quantity_available: product.quantity_available || 0,
+        total_quantity: product.total_quantity || null,
+        pre_order_date: product.pre_order_date || null,
+        status: product.status || "active",
+        created_at: product.created_at || new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }
+      addToCart(itemToAdd) // Pass the CartItem object directly
+      toast({
+        title: "Added to Cart",
+        description: `${quantity} x ${product.name} has been added to your cart.`,
+      })
+    },
+    [addToCart, quantities, productStockMap, selectedRegion, toast],
+  )
+  const handleBuyNow = useCallback(
+    (product: Product) => {
+      const quantity = quantities[product.id] || 1
+      const stockInfo = productStockMap[product.id]
+      if (!stockInfo) {
+        toast({
+          title: "Error",
+          description: `Stock information not found for ${product.name}.`,
+          variant: "destructive",
+        })
+        return
+      }
+      let selectedPrice: { currency: string; amount: number } = { currency: "AED", amount: product.price_aed || 0 }
+      if (selectedRegion === "UK") {
+        selectedPrice = { currency: "GBP", amount: product.price_gbp || 0 }
+      }
+      const itemToAdd: CartItem = {
+        ...product,
+        subtitle: product.subtitle ?? null, // Explicitly handle undefined to be null
+        category: product.category ?? null, // Explicitly handle undefined to be null
+        product_code: product.product_code ?? null, // Explicitly handle undefined to be null
+        selectedQuantity: quantity,
+        selectedRegion: selectedRegion,
+        selectedPrice: selectedPrice,
+        image_urls: product.image_urls || [], // Ensure it's an array
+        price_aed: product.price_aed || 0,
+        price_gbp: product.price_gbp || 0,
+        description: product.description || "",
+        materials: product.materials || [],
+        essences: product.essences || [],
+        // Removed: colors: product.colors || [],
+        quantity_available: product.quantity_available || 0,
+        total_quantity: product.total_quantity || null,
+        pre_order_date: product.pre_order_date || null,
+        status: product.status || "active",
+        created_at: product.created_at || new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }
+      addToCart(itemToAdd) // Pass the CartItem object directly
+      window.location.href = "/checkout"
+    },
+    [addToCart, quantities, productStockMap, selectedRegion, toast],
+  )
+  // NEW: Determines the text for the primary "Buy Now" button
+  const getPrimaryButtonText = useCallback(
+    (product: Product) => {
+      const stockInfo = productStockMap[product.id]
+      if (!stockInfo) return "Buy Now" // Default if no stock info
+      const currentQuantity = quantities[product.id] || 1
+      // If product is truly out of stock and NOT pre-orderable
+      if (stockInfo.status === "out-of-stock" && !stockInfo.isPreOrder) {
+        return "Out of Stock"
+      }
+      // If product is pre-orderable (status is 'pre-order' or 'out-of-stock' with pre_order_date)
+      if (stockInfo.isPreOrder) {
+        if (stockInfo.stockLevel === 0) {
+          return `Pre-Order Now` // Pure pre-order
+        } else if (currentQuantity > stockInfo.stockLevel) {
+          return `Buy Now + Pre-Order` // e.g., 5 in stock, user wants 7
+        } else {
+          return `Buy Now` // Pre-orderable but user wants less than or equal to stock
+        }
+      }
+      // For active, in-stock items
+      if (currentQuantity > stockInfo.stockLevel && stockInfo.stockLevel > 0) {
+        return `Buy Now + Pre-Order` // e.g., 5 in stock, user wants 7
+      }
+      return "Buy Now" // Default for in-stock, quantity <= stock
+    },
+    [productStockMap, quantities],
+  )
+  // NEW: Determines if purchase actions (both buttons) should be disabled
+  const isPurchaseDisabled = useCallback(
+    (product: Product) => {
+      const stockInfo = productStockMap[product.id]
+      if (!stockInfo) return true // Disable if no stock info
+      // If product is truly out of stock and not pre-orderable
+      if (stockInfo.status === "out-of-stock" && !stockInfo.isPreOrder) {
+        return true
+      }
+      // If price is not available for the selected region or is zero/negative
+      const price = selectedRegion === "UAE" ? product.price_aed : product.price_gbp
+      if (price === null || price === undefined || price <= 0) {
+        return true
+      }
+      return false // Otherwise, enable
+    },
+    [productStockMap, selectedRegion],
+  )
+  const handleRegionChange = useCallback((region: Region) => {
+    setSelectedRegion(region)
+  }, [])
+  // ============= DYNAMIC CATEGORY FILTER LOGIC =============
+  const uniqueCategories = useMemo(() => {
+    const categories = new Set<string>()
+    products.forEach((product) => {
+      if (product.category) {
+        categories.add(product.category)
       }
     })
-    if (activeFilter === "all") {
-      return productsWithStock
-    }
-    if (["ayaba-bubu", "candy-combat", "the-manifested-set", "ayomide"].includes(activeFilter)) {
-      return productsWithStock.filter((product) => product.category === activeFilter)
-    }
-    if (["batik", "adire", "linen"].includes(activeFilter)) {
-      return productsWithStock.filter((product) =>
-        product.materials.some((material) => material.toLowerCase().includes(activeFilter)),
-      )
-    }
-    return productsWithStock
-  }
-  const filteredProducts = getFilteredProducts()
+    // Sort categories alphabetically, and ensure "all" is always first
+    return ["all", ...Array.from(categories).sort((a, b) => a.localeCompare(b))]
+  }, [products])
+  const filteredProducts = useMemo(() => {
+    return products.filter((product) => {
+      if (activeFilter === "all") {
+        return true
+      }
+      // Filter by category (case-insensitive)
+      return product.category?.toLowerCase() === activeFilter.toLowerCase()
+    })
+  }, [products, activeFilter])
   // ============= DYNAMIC GRID LAYOUT LOGIC =============
+  // Keeping these as is for now, but they might need more dynamic logic
+  // if new categories require different layouts.
   const getGridClasses = () => {
+    // Specific layouts for existing categories
     if (activeFilter === "the-manifested-set") {
       return "flex justify-center w-full"
     }
     if (activeFilter === "ayomide") {
       return "grid grid-cols-1 lg:grid-cols-2 gap-4 max-w-full mx-auto"
     }
+    // Dynamic layouts based on the number of filtered products
+    if (filteredProducts.length === 1) {
+      return "flex justify-center w-full" // Centers a single product card
+    }
+    if (filteredProducts.length === 2) {
+      return "grid grid-cols-1 md:grid-cols-2 gap-4 max-w-full mx-auto" // Two columns, centered as a block
+    }
+    // Default for 3 or more products, or if no specific filter applies
     return "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-full mx-auto"
   }
   const getProductContainerClasses = () => {
-    return "flex flex-col w-full max-w-full mx-auto"
+    // Added px-2 to reduce overall width slightly, simulating "1 inch" reduction
+    // Added flex flex-col h-full to make the article a flex container that fills height
+    return "flex flex-col w-full max-w-full mx-auto px-2 h-full"
   }
   const getImageAspectRatio = () => {
     if (activeFilter === "the-manifested-set") {
@@ -484,43 +310,9 @@ export default function ShopPageClient() {
     }
     return "aspect-[3/4] h-[75vh] lg:h-[85vh]"
   }
-  // ============= EVENT HANDLERS =============
-  const handleCollectionFilter = (collection: string) => {
-    setActiveFilter(collection)
-    if (collection === "all") {
-      window.history.pushState(null, "", window.location.pathname)
-    } else {
-      window.history.pushState(null, "", `#${collection}`)
-    }
-  }
-  const handleQuantityChange = (productId: string, quantity: number) => {
-    setProductQuantities((prev) => ({
-      ...prev,
-      [productId]: quantity,
-    }))
-  }
-  const handleAddToCart = (product: Product) => {
-    const quantity = productQuantities[product.id] || 1
-    const price = selectedRegion === "UAE" ? product.priceAED : product.priceGBP
-    if (quantity > 0 && price) {
-      addItem(product, quantity, selectedRegion, price)
-    } else {
-      console.error("Cannot add to cart: Invalid quantity or price.")
-    }
-  }
-  const handleBuyNow = (product: Product) => {
-    const quantity = productQuantities[product.id] || 1
-    const price = selectedRegion === "UAE" ? product.priceAED : product.priceGBP // This line was added
-
-    if (quantity > 0 && price) {
-      addItem(product, quantity, selectedRegion, price) // This line replaces localStorage.setItem
-      window.location.href = "/checkout"
-    } else {
-      console.error("Cannot buy now: Invalid quantity or price.")
-    }
-  }
   // ============= HELPER FUNCTIONS =============
-  const getDescriptionParts = (description: string) => {
+  const getDescriptionParts = (description: string | null) => {
+    if (!description) return { firstPart: "", secondPart: "" }
     const parts = description.split(". ")
     if (parts.length >= 2) {
       return {
@@ -533,44 +325,85 @@ export default function ShopPageClient() {
       secondPart: "",
     }
   }
-  const getButtonText = (product: Product) => {
-    const quantity = productQuantities[product.id] || 1
-    const stockLevel = product.stockLevel || 0
-    if (stockLevel === 0) {
-      return "Pre-Order Now"
-    } else if (quantity <= stockLevel) {
-      return "Buy Now"
-    } else {
-      return "Buy Now + Pre-Order"
-    }
-  }
-  const getStockDisplay = (stockLevel: number) => {
-    if (stockLevel === 0) {
-      return "Pre-order available"
-    } else if (stockLevel <= 3) {
-      return `Only ${stockLevel} left`
-    } else if (stockLevel <= 10) {
-      return `${stockLevel} available`
-    } else {
-      return "In stock"
-    }
-  }
+  // Updated getStockDisplay for the badge (concise)
+  const getStockDisplay = useCallback(
+    (product: Product) => {
+      const stockInfo = productStockMap[product.id]
+      if (!stockInfo) return "Loading..." // Should not happen after initial load
+      const available = stockInfo.stockLevel
+      const total = product.total_quantity ?? 0 // Use nullish coalescing to default to 0 if null
+      const preOrderQuantity = total > available ? total - available : 0
+      if (stockInfo.status === "out-of-stock" && !stockInfo.isPreOrder) {
+        return "Out of Stock"
+      } else if (
+        stockInfo.status === "pre-order" ||
+        (stockInfo.status === "out-of-stock" && stockInfo.pre_order_date)
+      ) {
+        // Product is pre-orderable
+        if (available > 0 && preOrderQuantity > 0) {
+          return `${available} in stock + ${preOrderQuantity} pre-order`
+        } else if (available > 0) {
+          return `${available} pieces in stock` // If it's pre-order status but no explicit pre-order quantity
+        } else {
+          return "Pre-order"
+        }
+      } else if (available > 0) {
+        if (available <= 3) {
+          return `Only ${available} left`
+        }
+        return "In stock"
+      } else {
+        return "Out of Stock" // Fallback for active with 0 stock
+      }
+    },
+    [productStockMap],
+  )
+  // NEW: Detailed stock message below quantity selector
+  const getDetailedStockMessage = useCallback(
+    (product: Product) => {
+      const stockInfo = productStockMap[product.id]
+      if (!stockInfo) return ""
+      const available = stockInfo.stockLevel
+      const total = product.total_quantity ?? 0 // Use nullish coalescing to default to 0 if null
+      const currentQuantity = quantities[product.id] || 1
+      if (stockInfo.status === "out-of-stock" && !stockInfo.isPreOrder) {
+        return "Currently unavailable."
+      }
+      if (stockInfo.status === "pre-order" || (stockInfo.status === "out-of-stock" && stockInfo.pre_order_date)) {
+        // Product is pre-orderable
+        if (available > 0 && total > available) {
+          const preOrderQty = total - available
+          if (currentQuantity <= available) {
+            return `${available} pieces in stock • Rest will be pre-ordered`
+          } else {
+            const neededPreOrder = currentQuantity - available
+            return `${available} pieces in stock • ${neededPreOrder} will be pre-ordered`
+          }
+        } else if (available > 0) {
+          return `${available} pieces in stock`
+        } else {
+          return product.pre_order_date
+            ? `Pre-order (ETA: ${new Date(product.pre_order_date).toLocaleDateString()})`
+            : "Pre-order available"
+        }
+      }
+      // For active, in-stock items
+      if (available > 0) {
+        if (currentQuantity <= available) {
+          return `${available} pieces in stock`
+        } else {
+          const neededPreOrder = currentQuantity - available
+          return `${available} pieces in stock • ${neededPreOrder} will be pre-ordered`
+        }
+      } else {
+        return "Out of Stock"
+      }
+    },
+    [productStockMap, quantities],
+  )
   // Generate structured data for all visible products
   const productSchemas = filteredProducts.map((product) => generateProductSchema(product))
-  // Show loading state
-  if (loading) {
-    return (
-      <div className="min-h-screen">
-        <Header bgColor="bg-white/90 backdrop-blur-sm" textColor="text-[#2c2824]" />
-        <div className="container mx-auto pt-24 pb-8 px-1">
-          <div className="text-center py-16">
-            <p className="text-lg md:text-xl text-[#2c2824]/60 font-serif italic">Loading available pieces...</p>
-          </div>
-        </div>
-      </div>
-    )
-  }
-  // ============= RENDER UI =============
+  // ============= RENDER LOGIC =============
   return (
     <div className="min-h-screen">
       {/* Product Structured Data */}
@@ -602,7 +435,7 @@ export default function ShopPageClient() {
               <h2 className="text-sm mb-4 opacity-70 font-medium">Select Your Region</h2>
               <div className="flex gap-3 justify-center">
                 <button
-                  onClick={() => setSelectedRegion("UAE")}
+                  onClick={() => handleRegionChange("UAE")}
                   className={`px-6 py-3 rounded-full text-sm transition-colors ${
                     selectedRegion === "UAE"
                       ? "bg-[#2c2824] text-white"
@@ -613,7 +446,7 @@ export default function ShopPageClient() {
                   🇦🇪 UAE (AED)
                 </button>
                 <button
-                  onClick={() => setSelectedRegion("UK")}
+                  onClick={() => handleRegionChange("UK")}
                   className={`px-6 py-3 rounded-full text-sm transition-colors ${
                     selectedRegion === "UK"
                       ? "bg-[#2c2824] text-white"
@@ -627,206 +460,208 @@ export default function ShopPageClient() {
             </div>
           </div>
         </div>
-        {/* ============= COLLECTION FILTER BUTTONS ============= */}
+        {/* ============= DYNAMIC COLLECTION FILTER BUTTONS ============= */}
         <div className="mb-6">
           <div className="flex justify-center">
             <div className="text-center">
               <h2 className="text-sm mb-4 opacity-70 font-medium">Filter by Collection</h2>
-              <div className="flex flex-wrap gap-2 md:gap-3 justify-center">
-                <button
-                  onClick={() => handleCollectionFilter("all")}
-                  className={`px-4 md:px-6 py-2 md:py-3 rounded-full text-xs md:text-sm transition-colors ${
-                    activeFilter === "all"
-                      ? "bg-[#2c2824] text-white"
-                      : "bg-[#f4f0e8] text-[#2c2824] hover:bg-[#2c2824]/10"
-                  }`}
-                  aria-label="Show all African fashion collections"
-                >
-                  All ({allProducts.length})
-                </button>
-                <button
-                  onClick={() => handleCollectionFilter("the-manifested-set")}
-                  className={`px-4 md:px-6 py-2 md:py-3 rounded-full text-xs md:text-sm transition-colors ${
-                    activeFilter === "the-manifested-set"
-                      ? "bg-[#2c2824] text-white"
-                      : "bg-[#f4f0e8] text-[#2c2824] hover:bg-[#2c2824]/10"
-                  }`}
-                  aria-label="Shop The Manifested Set collection"
-                >
-                  The Manifested Set
-                </button>
-                <button
-                  onClick={() => handleCollectionFilter("ayomide")}
-                  className={`px-4 md:px-6 py-2 md:py-3 rounded-full text-xs md:text-sm transition-colors ${
-                    activeFilter === "ayomide"
-                      ? "bg-[#2c2824] text-white"
-                      : "bg-[#f4f0e8] text-[#2c2824] hover:bg-[#2c2824]/10"
-                  }`}
-                  aria-label="Shop Ayọ̀mídé adire dress collection"
-                >
-                  Ayọ̀mídé
-                </button>
-                <button
-                  onClick={() => handleCollectionFilter("ayaba-bubu")}
-                  className={`px-4 md:px-6 py-2 md:py-3 rounded-full text-xs md:text-sm transition-colors ${
-                    activeFilter === "ayaba-bubu"
-                      ? "bg-[#2c2824] text-white"
-                      : "bg-[#f4f0e8] text-[#2c2824] hover:bg-[#2c2824]/10"
-                  }`}
-                  aria-label="Shop Àyaba bubu dress collection"
-                >
-                  Àyaba
-                </button>
-                <button
-                  onClick={() => handleCollectionFilter("candy-combat")}
-                  className={`px-4 md:px-6 py-2 md:py-3 rounded-full text-xs md:text-sm transition-colors ${
-                    activeFilter === "candy-combat"
-                      ? "bg-[#2c2824] text-white"
-                      : "bg-[#f4f0e8] text-[#2c2824] hover:bg-[#2c2824]/10"
-                  }`}
-                  aria-label="Shop Candy Combat trouser collection"
-                >
-                  Candy Combat
-                </button>
+              {/* Updated to use grid for better control over wrapping and centering */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 md:gap-3 justify-items-center mx-auto max-w-fit">
+                {uniqueCategories.map((category) => (
+                  <button
+                    key={category}
+                    onClick={() => setActiveFilter(category)}
+                    className={`px-4 md:px-6 py-2 md:py-3 rounded-full text-xs md:text-sm transition-colors ${
+                      activeFilter === category
+                        ? "bg-[#2c2824] text-white"
+                        : "bg-[#f4f0e8] text-[#2c2824] hover:bg-[#2c2824]/10"
+                    }`}
+                    aria-label={`Shop ${category === "all" ? "all" : category} collection`}
+                  >
+                    {category === "all" ? `All (${products.length})` : category}
+                  </button>
+                ))}
               </div>
             </div>
           </div>
         </div>
         {/* ============= PRODUCT DISPLAY ============= */}
-        <div className={getGridClasses()}>
-          {filteredProducts.map((product) => {
-            const descriptionParts = getDescriptionParts(product.description)
-            const displayPrice = selectedRegion === "UAE" ? product.priceAED : product.priceGBP
-            const stockLevel = product.stockLevel || 0
-            const isAvailable = product.isAvailable || false // Use the isAvailable from fetched stock
-            const currentQuantity = productQuantities[product.id] || 1
-            return (
-              <article key={product.id} className={getProductContainerClasses()} id={product.category}>
-                <div className={`relative ${getImageAspectRatio()} overflow-hidden mb-2 group`}>
-                  <Image
-                    src={product.images[0] || "/placeholder.svg"}
-                    alt={`${product.name} - ${product.subtitle} - African fashion by AMA featuring ${product.materials.join(", ")} materials`}
-                    fill
-                    className="object-cover transition-transform duration-700 group-hover:scale-110"
-                    sizes={
-                      activeFilter === "the-manifested-set"
-                        ? "(max-width: 768px) 100vw, 50vw"
-                        : activeFilter === "ayomide"
-                          ? "(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 40vw"
-                          : "(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                    }
-                  />
-                  {/* Stock indicator overlay */}
-                  <div className="absolute top-2 right-2">
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        stockLevel === 0
-                          ? "bg-orange-100 text-orange-800"
-                          : stockLevel <= 3
-                            ? "bg-red-100 text-red-800"
-                            : "bg-green-100 text-green-800"
-                      }`}
-                    >
-                      {getStockDisplay(stockLevel)}
-                    </span>
-                  </div>
-                </div>
-                <div className="text-center space-y-3">
-                  <div className="flex items-center justify-center gap-2">
-                    <h3
-                      className={`font-serif text-[#2c2824] ${
-                        activeFilter === "the-manifested-set"
-                          ? "text-2xl md:text-3xl"
-                          : activeFilter === "ayomide"
-                            ? "text-xl md:text-2xl"
-                            : "text-xl md:text-2xl"
-                      }`}
-                    >
-                      {product.name}
-                    </h3>
-                    {product.colors && product.category === "ayomide" && (
-                      <div
-                        className="w-6 h-6 rounded-full border-2 border-gray-300"
-                        style={{ backgroundColor: product.colors[0] }}
-                        title={product.colors[0] === "#3B82F6" ? "Blue" : "Pink"}
-                        aria-label={`${product.colors[0] === "#3B82F6" ? "blue" : "pink"}`}
+        {loading ? (
+          <div className={getGridClasses()}>
+            {Array.from({ length: 8 }).map((_, i) => (
+              <Card key={i} className="flex flex-col overflow-hidden rounded-lg shadow-lg">
+                <Skeleton className={`relative ${getImageAspectRatio()} overflow-hidden mb-2 group`} />
+                <CardContent className="flex flex-grow flex-col justify-between p-4">
+                  <Skeleton className="h-6 w-3/4 mx-auto" />
+                  <Skeleton className="mt-2 h-4 w-1/2 mx-auto" />
+                  <Skeleton className="mt-4 h-10 w-full mx-auto" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className={getGridClasses()}>
+            {filteredProducts.length > 0 ? (
+              filteredProducts.map((product) => {
+                const descriptionParts = getDescriptionParts(product.description)
+                const displayPrice =
+                  selectedRegion === "UAE"
+                    ? formatPrice(product.price_aed || 0, "AED")
+                    : formatPrice(product.price_gbp || 0, "GBP")
+                const stockInfo = productStockMap[product.id] || {
+                  stockLevel: product.quantity_available || 0,
+                  isAvailable: product.quantity_available > 0 && product.status === "active",
+                  isPreOrder:
+                    product.status === "pre-order" ||
+                    (product.status === "out-of-stock" && product.pre_order_date !== null),
+                  status: product.status,
+                  pre_order_date: product.pre_order_date || null, // Ensure it's string | null
+                }
+                const currentQuantity = quantities[product.id] || 1
+                const primaryButtonText = getPrimaryButtonText(product) // Use new function
+                const purchaseDisabled = isPurchaseDisabled(product) // Use new function
+                return (
+                  <article
+                    key={product.id}
+                    className={getProductContainerClasses()}
+                    id={product.category?.toLowerCase().replace(/\s+/g, "-") || product.id} // Use kebab-case for ID
+                  >
+                    <div className={`relative ${getImageAspectRatio()} overflow-hidden mb-2 group`}>
+                      <Image
+                        src={product.image_urls?.[0] || "/placeholder.svg?height=400&width=300"} // Prioritize image_urls[0]
+                        alt={`${product.name} - ${product.subtitle} - African fashion by AMA featuring ${product.materials?.join(", ") || ""} materials`}
+                        fill
+                        className="object-cover object-top transition-transform duration-700 group-hover:scale-110" // Added object-top
+                        sizes={
+                          activeFilter === "the-manifested-set"
+                            ? "(max-width: 768px) 100vw, 50vw"
+                            : activeFilter === "ayomide"
+                              ? "(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 40vw"
+                              : "(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        }
                       />
-                    )}
-                  </div>
-                  <h4
-                    className={`font-serif text-[#2c2824]/80 ${
-                      activeFilter === "the-manifested-set"
-                        ? "text-lg md:text-xl"
-                        : activeFilter === "ayomide"
-                          ? "text-base md:text-lg"
-                          : "text-base md:text-lg"
-                    }`}
-                  >
-                    {product.subtitle}
-                  </h4>
-                  {descriptionParts.secondPart && (
-                    <p
-                      className={`italic text-[#2c2824] leading-relaxed ${
-                        activeFilter === "the-manifested-set" ? "text-base md:text-lg" : "text-sm md:text-base"
-                      }`}
-                    >
-                      {descriptionParts.secondPart}
-                    </p>
-                  )}
-                  <p
-                    className={`italic text-[#2c2824] leading-relaxed ${
-                      activeFilter === "the-manifested-set" ? "text-base md:text-lg" : "text-sm md:text-base"
-                    }`}
-                  >
-                    {descriptionParts.firstPart}
-                  </p>
-                  <p
-                    className={`font-medium text-[#2c2824] pt-2 ${
-                      activeFilter === "the-manifested-set"
-                        ? "text-xl md:text-2xl"
-                        : activeFilter === "ayomide"
-                          ? "text-lg md:text-xl"
-                          : "text-base md:text-lg"
-                    }`}
-                  >
-                    {displayPrice}
-                  </p>
-                  {/* Quantity Selector */}
-                  <div className="pt-2">
-                    <QuantitySelector
-                      stockLevel={stockLevel}
-                      onQuantityChange={(quantity) => handleQuantityChange(product.id, quantity)}
-                      initialQuantity={currentQuantity} // Use currentQuantity from state
-                    />
-                  </div>
-                  <div className="pt-4 flex flex-col gap-2 items-center">
-                    <Button
-                      onClick={() => handleBuyNow(product)}
-                      disabled={!isAvailable || currentQuantity === 0}
-                      className="w-48 bg-[#2c2824] hover:bg-[#2c2824]/90 text-white px-8 py-2 text-base mx-auto"
-                      aria-label={`${getButtonText(product)} ${product.name} for ${displayPrice}`}
-                    >
-                      {getButtonText(product)}
-                    </Button>
-                    <Button
-                      onClick={() => handleAddToCart(product)}
-                      disabled={!isAvailable || currentQuantity === 0}
-                      className="w-48 bg-[#2c2824] hover:bg-[#2c2824]/90 text-white px-8 py-2 text-base mx-auto"
-                      aria-label={`Add ${currentQuantity} of ${product.name} to cart`}
-                    >
-                      Add to Cart
-                    </Button>
-                  </div>
-                </div>
-              </article>
-            )
-          })}
-        </div>
-        {filteredProducts.length === 0 && (
-          <div className="text-center py-16">
-            <p className="text-lg md:text-xl text-[#2c2824]/60 font-serif italic">
-              {loading ? "Loading available pieces..." : "No pieces currently available in this collection."}
-            </p>
+                      {/* Stock indicator overlay */}
+                      <div className="absolute top-2 right-2">
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            stockInfo.status === "out-of-stock" && !stockInfo.isPreOrder
+                              ? "bg-red-100 text-red-800"
+                              : stockInfo.isPreOrder
+                                ? "bg-orange-100 text-orange-800"
+                                : stockInfo.stockLevel <= 3 && stockInfo.stockLevel > 0
+                                  ? "bg-yellow-100 text-yellow-800"
+                                  : stockInfo.stockLevel > 0
+                                    ? "bg-green-100 text-green-800"
+                                    : "bg-gray-100 text-gray-800" // For inactive or 0 stock not pre-order
+                          }`}
+                        >
+                          {getStockDisplay(product)}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex-grow flex flex-col text-center">
+                      {" "}
+                      {/* Removed space-y-3 from here */}
+                      {/* This div contains all the variable height content (name, subtitle, description, price) */}
+                      {/* It should also be flex-grow to push the quantity selector and buttons down */}
+                      <div className="flex-grow space-y-3">
+                        {" "}
+                        {/* Added space-y-3 here for internal spacing */}
+                        <div className="flex items-center justify-center gap-2">
+                          <h3
+                            className={`font-serif text-[#2c2824] ${
+                              activeFilter === "the-manifested-set"
+                                ? "text-2xl md:text-3xl"
+                                : activeFilter === "ayomide"
+                                  ? "text-xl md:text-2xl"
+                                  : "text-xl md:text-2xl"
+                            }`}
+                          >
+                            {product.name}
+                          </h3>
+                        </div>
+                        <h4
+                          className={`font-serif text-[#2c2824]/80 ${
+                            activeFilter === "the-manifested-set"
+                              ? "text-lg md:text-xl"
+                              : activeFilter === "ayomide"
+                                ? "text-base md:text-lg"
+                                : "text-base md:text-lg"
+                          }`}
+                        >
+                          {product.subtitle}
+                        </h4>
+                        {descriptionParts.secondPart && (
+                          <p
+                            className={`italic text-[#2c2824] leading-relaxed ${
+                              activeFilter === "the-manifested-set" ? "text-base md:text-lg" : "text-sm md:text-base"
+                            }`}
+                          >
+                            {descriptionParts.secondPart}
+                          </p>
+                        )}
+                        <p
+                          className={`italic text-[#2c2824] leading-relaxed ${
+                            activeFilter === "the-manifested-set" ? "text-base md:text-lg" : "text-sm md:text-base"
+                          }`}
+                        >
+                          {descriptionParts.firstPart}
+                        </p>
+                        <p
+                          className={`font-medium text-[#2c2824] pt-2 ${
+                            activeFilter === "the-manifested-set"
+                              ? "text-xl md:text-2xl"
+                              : activeFilter === "ayomide"
+                                ? "text-lg md:text-xl"
+                                : "text-base md:text-lg"
+                          }`}
+                        >
+                          {displayPrice}
+                        </p>
+                      </div>
+                      {/* This div contains the quantity selector, detailed stock message, and buttons */}
+                      {/* It should NOT have flex-grow, so it stays at the bottom */}
+                      <div className="pt-2 flex flex-col gap-2 items-center">
+                        {/* Quantity Selector */}
+                        <QuantitySelector
+                          productId={product.id}
+                          value={currentQuantity}
+                          onQuantityChange={handleQuantityChange}
+                          maxQuantity={product.total_quantity ?? 99}
+                          isPreOrderable={stockInfo.isPreOrder}
+                          stockLevel={stockInfo.stockLevel}
+                          disabled={purchaseDisabled}
+                        />
+                        {/* Detailed stock message */}
+                        <p className="text-sm text-[#2c2824]/60 mt-1">{getDetailedStockMessage(product)}</p>
+                        <div className="pt-4 flex flex-col gap-2 items-center">
+                          <Button
+                            onClick={() => handleBuyNow(product)}
+                            disabled={purchaseDisabled}
+                            className="w-48 bg-[#2c2824] hover:bg-[#2c2824]/90 text-white px-8 py-2 text-base mx-auto"
+                            aria-label={`${primaryButtonText} ${product.name} for ${displayPrice}`}
+                          >
+                            {primaryButtonText}
+                          </Button>
+                          <Button
+                            onClick={() => handleAddToCart(product)}
+                            disabled={purchaseDisabled}
+                            className="w-48 bg-[#2c2824] hover:bg-[#2c2824]/90 text-white px-8 py-2 text-base mx-auto"
+                            aria-label={`Add ${currentQuantity} of ${product.name} to cart`}
+                          >
+                            Add to Cart
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </article>
+                )
+              })
+            ) : (
+              <p className="col-span-full text-center py-16 text-lg md:text-xl text-[#2c2824]/60 font-serif italic">
+                No pieces currently available in this collection.
+              </p>
+            )}
           </div>
         )}
       </div>
