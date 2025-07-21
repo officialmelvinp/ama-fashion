@@ -19,7 +19,7 @@ export default function AdminOrdersPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [isPending, startTransition] = useTransition()
   const [shippingForm, setShippingForm] = useState<{
-    orderId: string | null // Changed from number to string (UUID)
+    orderId: string | null
     trackingNumber: string
     carrier: string
     estimatedDelivery: string
@@ -44,7 +44,6 @@ export default function AdminOrdersPage() {
         return
       }
       const data = await response.json()
-      // Ensure orders is always an array and parse numeric fields
       const parsedOrders = (data.orders || []).map((order: any) => ({
         // Use 'any' to safely access raw data
         ...order,
@@ -84,7 +83,7 @@ export default function AdminOrdersPage() {
         toast({
           title: "Order Status Updated",
           description: result.message,
-          variant: "default", // Changed from "success"
+          variant: "default",
         })
       } else {
         toast({
@@ -103,7 +102,7 @@ export default function AdminOrdersPage() {
         toast({
           title: "Email Resent",
           description: result.message,
-          variant: "default", // Changed from "success"
+          variant: "default",
         })
       } else {
         toast({
@@ -162,7 +161,7 @@ export default function AdminOrdersPage() {
         return <Badge className="bg-blue-100 text-blue-800">Shipped</Badge>
       case "Delivered":
         return <Badge className="bg-green-100 text-green-800">Delivered</Badge>
-      case "Pending": // Corrected from "paid"
+      case "Paid":
         return <Badge className="bg-yellow-100 text-yellow-800">Ready to Ship</Badge>
       default:
         return <Badge variant="secondary">Pending</Badge>
@@ -178,7 +177,7 @@ export default function AdminOrdersPage() {
     if (match) {
       return `(${match[1]}) ${match[2]}-${match[3]}`
     }
-    // For international numbers or other formats, you might need more complex logic
+
     return phoneNumber
   }
 
@@ -495,7 +494,7 @@ export default function AdminOrdersPage() {
                   <h3 className="font-semibold mb-3 text-[#2c2824]">Shipping Actions</h3>
                   {order.payment_status === "Completed" && (
                     <div className="space-y-3">
-                      {order.shipping_status === "Pending" && (
+                      {order.shipping_status === "Paid" && ( 
                         <div className="space-y-3">
                           {shippingForm.orderId === order.id ? (
                             <div className="bg-blue-50 p-4 rounded space-y-3">

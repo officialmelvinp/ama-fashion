@@ -14,7 +14,7 @@ import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
 import Header from "@/components/header"
 import { useCart } from "@/context/cart-context"
-import type { CartItem, Region } from "@/lib/types" // Changed from "@/context/cart-context" to "@/lib/types"
+import type { CartItem, Region } from "@/lib/types" 
 
 interface CheckoutForm {
   firstName: string
@@ -90,7 +90,7 @@ export default function CheckoutClientContent() {
             name: item.name,
             image: item.image_urls?.[0],
             currency: item.selectedPrice.currency,
-            region: item.selectedRegion, // Ensure region is passed
+            region: item.selectedRegion, 
           })),
           customerInfo: {
             firstName: form.firstName,
@@ -113,7 +113,7 @@ export default function CheckoutClientContent() {
       }
 
       const { url } = await response.json()
-      console.log("Stripe checkout URL received:", url) // Log the URL
+      console.log("Stripe checkout URL received:", url) 
       if (url) {
         window.location.href = url
       } else {
@@ -142,8 +142,8 @@ export default function CheckoutClientContent() {
         body: JSON.stringify({
           cartItems: regionalCartItems.map((item) => ({
             productId: item.id,
-            quantity: item.selectedQuantity, // This is the correct property name from CartItem
-            price: item.selectedPrice.amount, // This is the correct property name from CartItem
+            quantity: item.selectedQuantity,
+            price: item.selectedPrice.amount, 
             name: item.name,
             currency: item.selectedPrice.currency,
             region: item.selectedRegion, // Pass region for consistency
@@ -440,7 +440,7 @@ export default function CheckoutClientContent() {
                 </div>
                 <div className="pt-6">
                   <Button
-                    type="button" // Explicitly set type to "button"
+                    type="button" 
                     onClick={handleInitiateCheckout}
                     disabled={
                       isProcessing ||

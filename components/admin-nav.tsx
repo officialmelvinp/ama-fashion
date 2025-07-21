@@ -10,7 +10,7 @@ import { SheetClose } from "@/components/ui/sheet"
 
 interface AdminNavProps {
   onLogout: () => void
-  isCollapsed?: boolean // Made optional as it's not always passed
+  isCollapsed?: boolean 
   navItems: { href: string; icon: React.ElementType; label: string; active: boolean; badge?: number }[]
 }
 

@@ -124,12 +124,12 @@ export default function SimpleEmailTest() {
                   >
                     {contactResult.success ? (
                       <div>
-                        <h3 className="font-semibold">✅ Email Sent Successfully!</h3>
+                        <h3 className="font-semibold"> Email Sent Successfully!</h3>
                         <p className="text-sm mt-1">Check your support@amariahco.com inbox</p>
                       </div>
                     ) : (
                       <div>
-                        <h3 className="font-semibold">❌ Email Failed</h3>
+                        <h3 className="font-semibold"> Email Failed</h3>
                         <p className="text-sm mt-1">{contactResult.error}</p>
                       </div>
                     )}
@@ -176,23 +176,23 @@ export default function SimpleEmailTest() {
             <CardContent>
               <div className="space-y-2 text-sm">
                 <div className="flex items-center gap-2">
-                  <span className="text-green-600">✅</span>
+                  <span className="text-green-600"></span>
                   <span>MX Record Added (amariahco.com → amariahco.com)</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-green-600">✅</span>
+                  <span className="text-green-600"></span>
                   <span>SPF Record Present</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-green-600">✅</span>
+                  <span className="text-green-600"></span>
                   <span>DKIM Record Present</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-green-600">✅</span>
+                  <span className="text-green-600"></span>
                   <span>Email Infrastructure (webmail, mail server)</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-yellow-600">⏳</span>
+                  <span className="text-yellow-600"></span>
                   <span>DNS Propagation (may take 15-30 minutes)</span>
                 </div>
               </div>

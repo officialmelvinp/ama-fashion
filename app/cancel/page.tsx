@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import Header from "@/components/header" // Assuming you have a Header component
+import Header from "@/components/header" 
 
 export default function PaymentCancelPage() {
   return (

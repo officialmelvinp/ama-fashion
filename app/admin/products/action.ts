@@ -1,6 +1,6 @@
 "use server"
 
-import { neon } from "@neondatabase/serverless" // Correctly import neon
+import { neon } from "@neondatabase/serverless" 
 import { revalidatePath } from "next/cache"
 import type { Product } from "@/lib/types"
 import { v4 as uuidv4 } from "uuid" // Import uuid for generating product codes

@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogTrigger, DialogClose } from "@/components/ui/dialog"
 import { Menu, X, ShoppingCart, Phone } from "lucide-react"
-import { useCart } from "@/hooks/use-cart" // This import is fine as it re-exports from context/cart-context
+import { useCart } from "@/hooks/use-cart" 
 
 interface MobileNavProps {
   textColor?: string
@@ -16,7 +16,7 @@ interface MobileNavProps {
 export default function MobileNav({ textColor = "text-white", className }: MobileNavProps) {
   const [isOpen, setIsOpen] = useState(false)
   const pathname = usePathname()
-  const { calculateTotalItems } = useCart() // Changed from getTotalItems
+  const { calculateTotalItems } = useCart() 
   const totalCartItems = calculateTotalItems()
   const closeMenu = () => setIsOpen(false)
   return (
@@ -72,7 +72,7 @@ export default function MobileNav({ textColor = "text-white", className }: Mobil
                 WHY AMA
               </Link>
               <Link
-                href="/contact" // New Contact Link
+                href="/contact" 
                 className={cn(
                   `relative text-base tracking-widest hover:opacity-70 transition-opacity text-[#2c2824] flex items-center gap-2`,
                   pathname === "/contact" ? "opacity-100" : "opacity-80",

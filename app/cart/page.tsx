@@ -9,7 +9,7 @@ import { QuantitySelector } from "@/components/quantity-selector"
 import { XCircle } from "lucide-react"
 import Header from "@/components/header"
 import { useMemo, useState } from "react"
-import type { Region } from "@/context/cart-context" // Import Region type
+import type { Region } from "@/context/cart-context" 
 
 export default function CartPage() {
   const { cart, removeFromCart, updateQuantity, calculateTotal, calculateTotalItems, clearCart } = useCart() // Added clearCart
@@ -68,7 +68,7 @@ export default function CartPage() {
                 >
                   <div className="relative w-32 h-32 flex-shrink-0 mb-4 sm:mb-0 sm:mr-4">
                     <Image
-                      src={item.image_urls?.[0] || "/placeholder.svg"} // Fixed: Use image_urls
+                      src={item.image_urls?.[0] || "/placeholder.svg"} 
                       alt={item.name}
                       fill
                       style={{ objectFit: "cover" }}

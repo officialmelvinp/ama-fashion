@@ -20,7 +20,7 @@ const mapProductRow = (row: any): Product => ({
   description: row.description,
   price_aed: row.price_aed ? Number.parseFloat(row.price_aed) : null,
   price_gbp: row.price_gbp ? Number.parseFloat(row.price_gbp) : null,
-  image: row.image_urls?.[0] || "", // Use first image from array as main image
+  image: row.image_urls?.[0] || "", 
   image_urls: row.image_urls || [],
   category: row.category,
   materials: row.materials || [],
@@ -98,7 +98,7 @@ export async function getProductById(productId: string): Promise<Product | null>
         description: row.description,
         price_aed: row.price_aed ? Number.parseFloat(row.price_aed as string) : null,
         price_gbp: row.price_gbp ? Number.parseFloat(row.price_gbp as string) : null,
-        image: row.image_urls?.[0] || "", // Use first image from array as main image
+        image: row.image_urls?.[0] || "",
         image_urls: row.image_urls || [],
         category: row.category,
         essences: row.essences,
@@ -155,7 +155,7 @@ export async function getShopProducts(): Promise<Product[]> {
       description: row.description,
       price_aed: row.price_aed ? Number.parseFloat(row.price_aed as string) : null,
       price_gbp: row.price_gbp ? Number.parseFloat(row.price_gbp as string) : null,
-      image: row.image_urls?.[0] || "", // Use first image from array as main image
+      image: row.image_urls?.[0] || "", 
       image_urls: row.image_urls || [],
       category: row.category,
       essences: row.essences,
@@ -206,7 +206,7 @@ export async function getAdminProducts(): Promise<Product[]> {
       description: row.description,
       price_aed: row.price_aed ? Number.parseFloat(row.price_aed as string) : null,
       price_gbp: row.price_gbp ? Number.parseFloat(row.price_gbp as string) : null,
-      image: row.image_urls?.[0] || "", // Use first image from array as main image
+      image: row.image_urls?.[0] || "", 
       image_urls: row.image_urls || [],
       category: row.category,
       essences: row.essences,
@@ -237,8 +237,8 @@ export async function updateProduct(
       description,
       price_aed,
       price_gbp,
-      image, // This 'image' field is the primary image path
-      image_urls, // This is the full array from the client
+      image, 
+      image_urls, 
       category,
       essences,
       product_code,
@@ -389,7 +389,7 @@ export async function updateProductPrice(
   }
 }
 
-// NEW: Function to update pre-order date
+// Function to update pre-order date
 export async function updatePreorderDate(productId: string, newPreorderDate: string | null): Promise<boolean> {
   try {
     // Use RETURNING id to check if any row was updated
@@ -640,6 +640,13 @@ export async function recordOrder(
           ${quantityFromStock}, ${quantityPreorder}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, ${product.name}
         )
       `
+      // NEW: Call updateStock to reduce the actual product inventory
+      const stockUpdateResult = await updateStock(item.productId, item.quantity)
+      if (!stockUpdateResult.success) {
+        console.error(`Failed to update stock for product ${item.productId} during order recording.`)
+        // Optionally, you could rollback here or handle this error more gracefully
+        // For now, we'll log and continue, but a full rollback might be desired for strict inventory control
+      }
     }
 
     await sql`COMMIT`
@@ -782,8 +789,8 @@ export async function addProduct(
       description,
       price_aed,
       price_gbp,
-      image, // This is the primary image URL from the client
-      image_urls, // This is the full array from the client (if provided)
+      image, 
+      image_urls, 
       category,
       materials,
       essences,
@@ -835,7 +842,7 @@ export async function addProduct(
       description: newProductDb.description,
       price_aed: newProductDb.price_aed,
       price_gbp: newProductDb.price_gbp,
-      image: newProductDb.image_urls?.[0] || "", // Use first image from array as main image
+      image: newProductDb.image_urls?.[0] || "",
       image_urls: newProductDb.image_urls,
       category: newProductDb.category,
       materials: newProductDb.materials,

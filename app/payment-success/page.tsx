@@ -330,7 +330,7 @@ export default function PaymentSuccessPage() {
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <span className="text-2xl">🚚</span>
+                <span className="text-2xl"></span>
                 <div>
                   <h3 className="font-medium mb-1">Delivery</h3>
                   <p className="text-sm opacity-90">We'll coordinate delivery details via email and WhatsApp within 24 hours.</p>

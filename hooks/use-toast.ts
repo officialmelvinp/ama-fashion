@@ -11,8 +11,8 @@ type ToasterToast = ToastProps & {
   title?: React.ReactNode
   description?: React.ReactNode
   action?: React.ReactNode
-  duration?: number // Added duration
-  promise?: Promise<any> // Added promise
+  duration?: number 
+  promise?: Promise<any> 
 }
 
 const actionTypes = {
@@ -134,7 +134,7 @@ function dispatch(action: Action) {
   listeners.forEach((listener) => listener(state))
 }
 
-// MODIFIED: Omit 'id', 'open', and 'onOpenChange' from the Toast type for the input props
+
 type Toast = Omit<ToasterToast, "id" | "open" | "onOpenChange">
 
 function toast({ ...props }: Toast) {

@@ -3,7 +3,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import MobileNav from "./mobile-nav"
-import { useCart } from "@/context/cart-context" // Corrected import path
+import { useCart } from "@/context/cart-context" 
 import { ShoppingCart } from "lucide-react"
 
 interface HeaderProps {
@@ -13,7 +13,7 @@ interface HeaderProps {
 
 export default function Header({ bgColor = "bg-transparent", textColor = "text-white" }: HeaderProps) {
   const pathname = usePathname()
-  const { calculateTotalItems } = useCart() // Changed from getTotalItems
+  const { calculateTotalItems } = useCart()
   const totalCartItems = calculateTotalItems()
   return (
     <header className={`absolute top-0 left-0 right-0 z-50 w-full py-6 px-4 md:px-8 ${bgColor}`}>

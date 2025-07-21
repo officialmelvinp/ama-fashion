@@ -6,7 +6,6 @@ const sql = neon(process.env.DATABASE_URL!)
 
 export async function GET(request: Request) {
   try {
-    // Remove the generic type parameter - neon doesn't use it this way
     const products = await sql`SELECT * FROM products ORDER BY name ASC;`
 
     // Type assertion and price parsing

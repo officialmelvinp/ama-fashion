@@ -9,7 +9,7 @@ import type { OrderItemEmailData } from "@/lib/types" // Import the type
 const sql = neon(process.env.DATABASE_URL!)
 
 export async function handleShipOrder(
-  orderId: string, // Changed from number to string
+  orderId: string, 
   trackingNumber: string,
   carrier: string,
   estimatedDelivery: string,
@@ -43,7 +43,6 @@ export async function handleShipOrder(
         items: emailItems,
         total_amount: order.total_amount,
         currency: order.currency,
-        // Removed payment_status and shipping_status as they are not part of OrderShippedEmailData
         tracking_number: order.tracking_number ?? null, // Use ?? null
         shipping_carrier: order.shipping_carrier ?? null, // Use ?? null
         estimated_delivery_date: order.estimated_delivery_date ?? null, // Use ?? null
@@ -59,7 +58,7 @@ export async function handleShipOrder(
 }
 
 export async function handleDeliverOrder(orderId: string) {
-  // Changed from number to string
+
   try {
     await sql`
       UPDATE orders
@@ -86,7 +85,6 @@ export async function handleDeliverOrder(orderId: string) {
         items: emailItems,
         total_amount: order.total_amount,
         currency: order.currency,
-        // Removed payment_status and shipping_status as they are not part of OrderDeliveredEmailData
         delivered_date: order.delivered_date ?? null, // Use ?? null
       })
     }
@@ -99,7 +97,7 @@ export async function handleDeliverOrder(orderId: string) {
 }
 
 export async function resendOrderEmail(orderId: string, emailType: "shipped" | "delivered") {
-  // Changed from number to string
+
   try {
     const order = await getOrderById(orderId)
     if (!order) {
@@ -120,7 +118,6 @@ export async function resendOrderEmail(orderId: string, emailType: "shipped" | "
         items: emailItems,
         total_amount: order.total_amount,
         currency: order.currency,
-        // Removed payment_status and shipping_status as they are not part of OrderShippedEmailData
         tracking_number: order.tracking_number ?? null, // Use ?? null
         shipping_carrier: order.shipping_carrier ?? null, // Use ?? null
         estimated_delivery_date: order.estimated_delivery_date ?? null, // Use ?? null
@@ -134,7 +131,6 @@ export async function resendOrderEmail(orderId: string, emailType: "shipped" | "
         items: emailItems,
         total_amount: order.total_amount,
         currency: order.currency,
-        // Removed payment_status and shipping_status as they are not part of OrderDeliveredEmailData
         delivered_date: order.delivered_date ?? null, // Use ?? null
       })
     }

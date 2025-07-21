@@ -97,7 +97,7 @@ export async function POST(request: Request) {
       essences: Array.isArray(newProduct[0].essences)
         ? newProduct[0].essences
         : JSON.parse(newProduct[0].essences || "[]"),
-      // Removed: colors: Array.isArray(newProduct[0].colors) ? newProduct[0].colors : JSON.parse(newProduct[0].colors || "[]"),
+        
       // Ensure 'image' field is derived from image_urls for consistency
       image:
         Array.isArray(newProduct[0].image_urls) && newProduct[0].image_urls.length > 0

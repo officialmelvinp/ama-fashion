@@ -112,7 +112,7 @@ export default function HostingDetective() {
 
                   {emailResults?.workingConfigs?.length > 0 && (
                     <div className="bg-green-50 border border-green-200 p-4 rounded">
-                      <h3 className="font-semibold text-green-800 mb-2">✅ Working Email Servers Found!</h3>
+                      <h3 className="font-semibold text-green-800 mb-2"> Working Email Servers Found!</h3>
                       {emailResults?.workingConfigs?.map((config: any, index: number) => (
                         <div key={index} className="bg-white p-3 rounded mb-2">
                           <p className="font-medium">{config.name}</p>
@@ -163,7 +163,7 @@ export default function HostingDetective() {
             <CardContent>
               <div className="space-y-4">
                 <div>
-                  <h3 className="font-semibold mb-2">🤔 Where did you buy amariahco.com?</h3>
+                  <h3 className="font-semibold mb-2"> Where did you buy amariahco.com?</h3>
                   <p className="text-sm text-gray-600 mb-2">Common domain registrars:</p>
                   <ul className="text-sm space-y-1 ml-4">
                     <li>• Namecheap</li>
@@ -175,7 +175,7 @@ export default function HostingDetective() {
                 </div>
 
                 <div>
-                  <h3 className="font-semibold mb-2">🌐 Where is your website hosted?</h3>
+                  <h3 className="font-semibold mb-2"> Where is your website hosted?</h3>
                   <p className="text-sm text-gray-600 mb-2">Common hosting providers:</p>
                   <ul className="text-sm space-y-1 ml-4">
                     <li>• Vercel (your current site)</li>
@@ -187,7 +187,7 @@ export default function HostingDetective() {
                 </div>
 
                 <div>
-                  <h3 className="font-semibold mb-2">📧 Do you have email hosting?</h3>
+                  <h3 className="font-semibold mb-2"> Do you have email hosting?</h3>
                   <p className="text-sm text-gray-600">
                     Check if you've set up email hosting separately or if it comes with your domain/hosting package.
                   </p>

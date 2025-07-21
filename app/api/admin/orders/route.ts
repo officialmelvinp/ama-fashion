@@ -1,19 +1,13 @@
 import { neon } from "@neondatabase/serverless"
 import { NextResponse } from "next/server"
-import type { OrderItemEmailData } from "@/lib/types" // Ensure OrderItemEmailData is imported
+import type { OrderItemEmailData } from "@/lib/types" 
 import { sendOrderShippedEmail, sendOrderDeliveredEmail } from "@/lib/email"
-import { getOrderById, getOrders } from "@/lib/inventory" // Corrected import path to include getOrders
+import { getOrderById, getOrders } from "@/lib/inventory" //import path to include getOrders
 
 const sql = neon(process.env.DATABASE_URL!)
 
-// REMOVED: The duplicate getProductDisplayName helper function from here.
-// It is now handled internally by getOrders and getOrderById in lib/inventory.ts.
-
 export async function GET(request: Request) {
   try {
-    // MODIFIED: Use the getOrders function from lib/inventory to fetch all orders.
-    // This function already handles fetching order items and populating summary fields
-    // for display on the admin page, including product_display_name and quantities.
     const orders = await getOrders()
     return NextResponse.json({ orders }, { status: 200 })
   } catch (error) {
@@ -55,17 +49,18 @@ export async function PUT(request: Request) {
             shipping_carrier = ${updateData.shipping_carrier},
             estimated_delivery_date = ${updateData.estimated_delivery_date},
             updated_at = CURRENT_TIMESTAMP
-          `
+            `
             : sql`
             delivered_date = ${updateData.delivered_date},
             updated_at = CURRENT_TIMESTAMP
-          `
+            `
         }
       WHERE id = ${orderId}
     `
 
     // Fetch the updated order details using getOrderById, which includes the 'items' array
     const order = await getOrderById(orderId)
+
     if (!order) {
       return NextResponse.json({ success: false, error: "Order not found after update" }, { status: 404 })
     }
@@ -83,25 +78,25 @@ export async function PUT(request: Request) {
     if (action === "mark_shipped") {
       await sendOrderShippedEmail({
         customer_email: order.customer_email,
-        customer_name: order.customer_name,
+        customer_name: order.customer_name ?? null, 
         order_id: order.id.toString(),
         items: emailItems,
         total_amount: order.total_amount,
         currency: order.currency,
-        tracking_number: order.tracking_number,
-        shipping_carrier: order.shipping_carrier,
-        estimated_delivery_date: order.estimated_delivery_date,
-        shipped_date: order.shipped_date,
+        tracking_number: order.tracking_number ?? null,
+        shipping_carrier: order.shipping_carrier ?? null, 
+        estimated_delivery_date: order.estimated_delivery_date ?? null, 
+        shipped_date: order.shipped_date ?? null,
       })
     } else if (action === "mark_delivered") {
       await sendOrderDeliveredEmail({
         customer_email: order.customer_email,
-        customer_name: order.customer_name,
+        customer_name: order.customer_name ?? null, 
         order_id: order.id.toString(),
         items: emailItems,
         total_amount: order.total_amount,
         currency: order.currency,
-        delivered_date: order.delivered_date,
+        delivered_date: order.delivered_date ?? null, 
       })
     }
 

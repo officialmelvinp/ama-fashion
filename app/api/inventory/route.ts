@@ -22,7 +22,6 @@ export async function GET() {
       category: row.category,
       materials: row.materials || [],
       essences: row.essences || [],
-      // Removed: colors: row.colors || [],
       product_code: row.product_code,
       quantity_available: Number.parseInt(row.quantity_available),
       total_quantity: row.total_quantity ? Number.parseInt(row.total_quantity) : null,

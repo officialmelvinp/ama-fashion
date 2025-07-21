@@ -71,7 +71,7 @@ export function QuantitySelector({
       </Button>
       <Input
         type="number"
-        value={value} // Use value prop directly
+        value={value}
         onChange={handleInputChange}
         className="w-16 text-center"
         min={1}

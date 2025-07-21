@@ -1,6 +1,6 @@
 "use client"
 import { Suspense } from "react"
-import CheckoutLoading from "./loading" // Assuming you have this loading component
+import CheckoutLoading from "./loading"
 import CheckoutClientContent from "@/components/checkout-client-content"
 
 interface CheckoutForm {

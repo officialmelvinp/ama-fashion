@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { neon } from "@neondatabase/serverless"
-import type { PayPalRequestItem } from "@/lib/types" // Import the new type
+import type { PayPalRequestItem } from "@/lib/types" 
 
 const PAYPAL_CLIENT_ID = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID!
 const PAYPAL_CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET!
@@ -31,7 +31,7 @@ async function getPayPalAccessToken() {
 export async function POST(request: NextRequest) {
   try {
     const { cartItems, customerInfo, region } = (await request.json()) as {
-      cartItems: PayPalRequestItem[] // Use the new type here
+      cartItems: PayPalRequestItem[]
       customerInfo: {
         firstName: string
         lastName: string
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
     }
 
     const accessToken = await getPayPalAccessToken()
-    console.log("✅ Got PayPal access token")
+    console.log(" Got PayPal access token")
 
     const AED_TO_USD_RATE = 0.27
     const GBP_TO_USD_RATE = 1.25 // Assuming a conversion rate for GBP to USD
@@ -111,9 +111,9 @@ export async function POST(request: NextRequest) {
       ],
       application_context: {
         brand_name: "AMA Fashion",
-        landing_page: "BILLING", // 🎯 This forces the card payment page (guest checkout)
+        landing_page: "BILLING", 
         user_action: "PAY_NOW",
-        shipping_preference: "NO_SHIPPING", // 🎯 Skip shipping since we handle it separately
+        shipping_preference: "NO_SHIPPING",
         return_url: `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/payment-success`,
         cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/checkout`,
       },

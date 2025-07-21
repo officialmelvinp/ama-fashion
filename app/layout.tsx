@@ -3,10 +3,7 @@ import type { Metadata } from "next"
 import "./globals.css"
 import { Providers } from "@/components/providers"
 import { Toaster } from "@/components/ui/toaster"
-
-// Re-add font imports
 import { Playfair_Display, Inter } from "next/font/google"
-// Re-add SEO imports
 import { generateMetaTags, generateOrganizationSchema } from "@/lib/seo"
 
 // Define font instances
@@ -19,7 +16,6 @@ const inter = Inter({
   variable: "--font-inter",
 })
 
-// Re-add enhanced SEO metadata
 export const metadata: Metadata = generateMetaTags({
   title: "Amariah Manifested Art | Conscious Luxury African Fashion – Dubai & UK",
   description:
@@ -35,8 +31,6 @@ export default function RootLayout({
   // Inside RootLayout function, before the return statement
   const organizationSchema = generateOrganizationSchema()
 
-  // Modify the <html> and <body> tags to include the <head> section and font classes
-  // Replace the existing <html> and <body> with the following:
   return (
     <html lang="en" suppressHydrationWarning>
       <head>

@@ -8,16 +8,16 @@ export type ProductStatus = "active" | "inactive" | "out-of-stock" | "pre-order"
 export interface Product {
   id: string // UUID from DB
   name: string
-  subtitle?: string | null // Made optional and nullable to match DB
+  subtitle?: string | null 
   description: string
-  price_aed: number | null // Changed to number | null to match DB NUMERIC type
-  price_gbp: number | null // Changed to number | null to match DB NUMERIC type
+  price_aed: number | null
+  price_gbp: number | null 
   image: string
-  image_urls: string[] // Changed from 'images' to 'image_urls' and ensured string[] for JSONB
-  category?: string | null // Made optional and nullable to match DB
-  materials: string[] // Ensured string[] for JSONB
-  essences: string[] // Ensured string[] for JSONB
-  product_code?: string | null // Changed from 'productCode' to 'product_code' and made optional/nullable
+  image_urls: string[] 
+  category?: string | null 
+  materials: string[] 
+  essences: string[] 
+  product_code?: string | null 
   quantity_available: number // Matches DB column
   total_quantity?: number | null // Matches DB column, made optional/nullable
   pre_order_date?: string | null // Matches DB column, made optional/nullable
@@ -29,16 +29,16 @@ export interface Product {
 export interface CartItem {
   id: string
   name: string
-  subtitle?: string | null // Corrected: Made optional and nullable to match Product
+  subtitle?: string | null 
   image_urls: string[] | null
   selectedPrice: {
     currency: string
     amount: number
   }
-  selectedQuantity: number // Changed from 'quantity' to 'selectedQuantity' for consistency
+  selectedQuantity: number 
   category: string | null
   selectedRegion: Region
-  product_code: string | null // Added product_code to CartItem
+  product_code: string | null
   price_aed: number | null
   price_gbp: number | null
   description: string | null
@@ -54,54 +54,52 @@ export interface CartItem {
 
 // OrderItem now uses UUIDs for IDs and includes new quantity field
 export interface OrderItem {
-  id: string // Changed to string (UUID)
-  order_id: string // Changed to string (UUID)
-  product_id: string // Changed to string (UUID)
+  id: string 
+  order_id: string 
+  product_id: string 
   product_display_name: string
   quantity: number
   unit_price: number
   currency: string
-  quantity_from_stock: number // Added from DB schema
-  quantity_preorder: number // Added from DB schema
+  quantity_from_stock: number
+  quantity_preorder: number 
   created_at: string
   updated_at: string
 }
 
 // Order type now reflects the desired orders table schema (without product_id directly)
 export interface Order {
-  id: string // Changed to string (UUID)
+  id: string
   customer_email: string
   customer_name?: string | null
   total_amount: number
   currency: string
-  payment_status: PaymentStatus // Using enum
+  payment_status: PaymentStatus 
   payment_id?: string | null
   shipping_address?: string | null
   phone_number?: string | null
   notes?: string | null
   order_type: "standard" | "preorder" | "mixed" | "purchase"
-  order_status: OrderStatus // Using enum
-  shipping_status: ShippingStatus // Using enum
+  order_status: OrderStatus 
+  shipping_status: ShippingStatus 
   tracking_number?: string | null
   shipping_carrier?: string | null
   shipped_date?: string | null
   delivered_date?: string | null
   estimated_delivery_date?: string | null
-  amount_paid?: number | null // Kept as optional for now, as it was in your provided data
+  amount_paid?: number | null 
   created_at: string
   updated_at: string
-  items: OrderItem[] // Changed to non-optional, assuming getOrderById always returns an array
-  // Removed product_id, product_display_name, quantity_ordered, quantity_in_stock, quantity_preorder
-  // as these are now part of the OrderItem[] array
+  items: OrderItem[] 
+  
 }
 
-// Removed ProductInventory and InventoryItem as they are redundant with the updated Product type
 export interface ProductWithStock {
   productId: string
   stockLevel: number
   isAvailable: boolean
-  price_aed?: number // Changed to price_aed to match DB and Product type
-  price_gbp?: number // Changed to price_gbp to match DB and Product type
+  price_aed?: number 
+  price_gbp?: number 
 }
 
 export interface OrderItemEmailData {
@@ -112,25 +110,25 @@ export interface OrderItemEmailData {
   currency: string
 }
 
-// NEW: DashboardStats and AnalyticsDataPoint types (from previous context)
+
 export interface DashboardStats {
   totalRevenueAED: number
   totalRevenueGBP: number
   totalOrders: number
   totalProducts: number
   totalCustomers: number
-  inStockProducts: number // Added for dashboard
-  soldOutProducts: number // Added for dashboard
-  lowStockProducts: { id: string; name: string; quantity_available: number }[] // Added for dashboard
+  inStockProducts: number 
+  soldOutProducts: number 
+  lowStockProducts: { id: string; name: string; quantity_available: number }[] 
   recentOrders: {
     id: string
     customer_name: string | null
-    product_id: string // This is product_display_name from DB
+    product_id: string 
     amount_paid: number
     currency: string
     payment_status: string
     created_at: string
-  }[] // Added for dashboard
+  }[]
 }
 
 export interface AnalyticsDataPoint {
@@ -147,7 +145,7 @@ export interface TopProductData {
 
 // Enums for consistency
 export enum OrderStatus {
-  New = "New", // Changed to PascalCase for consistency with other enums
+  New = "New", 
   Processing = "Processing",
   Completed = "Completed",
   Shipped = "Shipped",
@@ -159,7 +157,7 @@ export enum OrderStatus {
 
 export enum ShippingStatus {
   Pending = "Pending",
-  Paid = "Paid", // Added 'Paid' status
+  Paid = "Paid", 
   Shipped = "Shipped",
   Delivered = "Delivered",
   Returned = "Returned",
@@ -231,7 +229,7 @@ export interface RecordOrderData {
   }[]
   totalAmount: number
   currency: string
-  status: PaymentStatus // Using enum
+  status: PaymentStatus 
   customerEmail: string
   paymentIntentId?: string | null
   paypalOrderId?: string | null
@@ -240,11 +238,11 @@ export interface RecordOrderData {
   phoneNumber?: string | null
   notes?: string | null
   orderType?: "standard" | "preorder" | "mixed" | "purchase"
-  orderStatus?: OrderStatus // Using enum
-  shippingStatus?: ShippingStatus // Using enum
+  orderStatus?: OrderStatus
+  shippingStatus?: ShippingStatus
 }
 
-// NEW: Subscriber type (from previous context)
+
 export interface Subscriber {
   email: string
   created_at: string
@@ -252,13 +250,12 @@ export interface Subscriber {
 }
 
 export type AdminUser = {
-  // Ensure this type is correctly defined and exported
+ 
   id: string
   email: string
   created_at: string
 }
 
-// NEW: Type for items sent to PayPal API routes
 export interface PayPalRequestItem {
   productId: string
   quantity: number

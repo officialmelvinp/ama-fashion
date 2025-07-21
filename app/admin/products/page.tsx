@@ -152,7 +152,6 @@ export default function AdminProductsPage(): React.ReactElement {
     setImageFile(null) // Clear any pending new file
     setCategory(product.category ?? null)
     setEssences(product.essences || [])
-    // Removed: setColors(product.colors || [])
     setProductCode(product.product_code ?? null)
     setQuantityAvailable(product.quantity_available)
     setTotalQuantity(product.total_quantity ?? null)

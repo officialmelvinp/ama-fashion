@@ -22,7 +22,7 @@ interface DashboardStats {
   recentOrders: Array<{
     id: string
     customer_name: string | null
-    product_id: string // This will now be the product_display_name
+    product_id: string // product_display_name
     amount_paid: number
     currency: string
     payment_status: string

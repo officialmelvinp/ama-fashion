@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getProductById, deleteProduct, updateProduct } from "@/lib/inventory"
-import type { Product } from "@/lib/types" // Corrected import path
+import type { Product } from "@/lib/types" 
 
 export async function GET(req: NextRequest, { params }: { params: { productId: string } }) {
   try {

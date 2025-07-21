@@ -6,7 +6,7 @@ import { recordOrder, getProductDisplayName } from "@/lib/inventory" // Import r
 import {
   type OrderItemEmailData,
   type RecordOrderData,
-  PaymentStatus, // Import enums for consistency
+  PaymentStatus, 
   OrderStatus,
   ShippingStatus,
 } from "@/lib/types"
@@ -75,7 +75,7 @@ async function handlePaymentCaptureCompleted(event: any) {
     const amount = Number.parseFloat(resource.amount.value)
     const currency = resource.amount.currency_code
 
-    console.log("💰 PayPal payment captured via webhook:", {
+    console.log(" PayPal payment captured via webhook:", {
       orderId,
       captureId,
       amount,
@@ -151,11 +151,11 @@ async function handlePaymentCaptureCompleted(event: any) {
     const orderDbId = recordResult.orderId
 
     if (!recordResult.success || !orderDbId) {
-      console.error("❌ Failed to record order in DB from webhook:", recordResult.message)
+      console.error(" Failed to record order in DB from webhook:", recordResult.message)
       return // Exit if order recording failed
     }
 
-    console.log(`🎉 Order recorded with ID: ${orderDbId} from webhook.`)
+    console.log(` Order recorded with ID: ${orderDbId} from webhook.`)
 
     // Send customer confirmation email
     await sendOrderConfirmationEmail({
@@ -183,11 +183,11 @@ async function handlePaymentCaptureCompleted(event: any) {
       items: itemsForProcessing,
       payment_method: "PayPal Webhook",
     })
-    console.log("✅ Vendor notification email sent from webhook.")
+    console.log(" Vendor notification email sent from webhook.")
 
-    console.log("✅ PayPal webhook processed successfully")
+    console.log(" PayPal webhook processed successfully")
   } catch (error) {
-    console.error("❌ Error handling PayPal payment capture from webhook:", error)
+    console.error(" Error handling PayPal payment capture from webhook:", error)
     throw error
   }
 }
@@ -199,7 +199,7 @@ async function handlePaymentCaptureRefunded(event: any) {
     const refundAmount = Number.parseFloat(resource.amount.value)
     const currency = resource.amount.currency_code
 
-    console.log("💸 PayPal refund processed:", {
+    console.log(" PayPal refund processed:", {
       captureId,
       refundAmount,
       currency,
@@ -225,9 +225,9 @@ async function handlePaymentCaptureRefunded(event: any) {
       items: [], // No specific items for refund notification
       payment_method: "PayPal Refund",
     })
-    console.log("✅ PayPal refund webhook processed and vendor email sent.")
+    console.log(" PayPal refund webhook processed and vendor email sent.")
   } catch (error) {
-    console.error("❌ Error handling PayPal refund:", error)
+    console.error(" Error handling PayPal refund:", error)
     throw error
   }
 }
@@ -238,13 +238,13 @@ export async function POST(request: NextRequest) {
     const event = JSON.parse(body)
     const headers = Object.fromEntries(request.headers.entries())
 
-    console.log("🔔 PayPal webhook received:", event.event_type)
+    console.log(" PayPal webhook received:", event.event_type)
 
     // Verify webhook signature (optional but recommended for production)
     if (PAYPAL_WEBHOOK_ID) {
       const isValid = await verifyPayPalWebhook(headers, body)
       if (!isValid) {
-        console.error("❌ PayPal webhook verification failed")
+        console.error(" PayPal webhook verification failed")
         return NextResponse.json({ error: "Webhook verification failed" }, { status: 400 })
       }
     }
@@ -258,18 +258,18 @@ export async function POST(request: NextRequest) {
         await handlePaymentCaptureRefunded(event)
         break
       case "PAYMENT.CAPTURE.DENIED":
-        console.log("❌ PayPal payment denied:", event.resource.id)
+        console.log(" PayPal payment denied:", event.resource.id)
         break
       case "CHECKOUT.ORDER.APPROVED":
-        console.log("✅ PayPal order approved:", event.resource.id)
+        console.log(" PayPal order approved:", event.resource.id)
         break
       default:
-        console.log("ℹ️ Unhandled PayPal webhook event:", event.event_type)
+        console.log(" Unhandled PayPal webhook event:", event.event_type)
     }
 
     return NextResponse.json({ received: true })
   } catch (error) {
-    console.error("❌ PayPal webhook error:", error)
+    console.error(" PayPal webhook error:", error)
     return NextResponse.json({ error: "Webhook processing failed" }, { status: 500 })
   }
 }

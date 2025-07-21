@@ -147,7 +147,6 @@ export default function ShopPageClient() {
         description: product.description || "",
         materials: product.materials || [],
         essences: product.essences || [],
-        // Removed: colors: product.colors || [],
         quantity_available: product.quantity_available || 0,
         total_quantity: product.total_quantity || null,
         pre_order_date: product.pre_order_date || null,
@@ -193,7 +192,6 @@ export default function ShopPageClient() {
         description: product.description || "",
         materials: product.materials || [],
         essences: product.essences || [],
-        // Removed: colors: product.colors || [],
         quantity_available: product.quantity_available || 0,
         total_quantity: product.total_quantity || null,
         pre_order_date: product.pre_order_date || null,
@@ -291,14 +289,12 @@ export default function ShopPageClient() {
       return "flex justify-center w-full" // Centers a single product card
     }
     if (filteredProducts.length === 2) {
-      return "grid grid-cols-1 md:grid-cols-2 gap-4 max-w-full mx-auto" // Two columns, centered as a block
+      return "grid grid-cols-1 md:grid-cols-2 gap-4 max-w-full mx-auto" 
     }
     // Default for 3 or more products, or if no specific filter applies
     return "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-full mx-auto"
   }
   const getProductContainerClasses = () => {
-    // Added px-2 to reduce overall width slightly, simulating "1 inch" reduction
-    // Added flex flex-col h-full to make the article a flex container that fills height
     return "flex flex-col w-full max-w-full mx-auto px-2 h-full"
   }
   const getImageAspectRatio = () => {
@@ -515,11 +511,11 @@ export default function ShopPageClient() {
                     product.status === "pre-order" ||
                     (product.status === "out-of-stock" && product.pre_order_date !== null),
                   status: product.status,
-                  pre_order_date: product.pre_order_date || null, // Ensure it's string | null
+                  pre_order_date: product.pre_order_date || null, 
                 }
                 const currentQuantity = quantities[product.id] || 1
-                const primaryButtonText = getPrimaryButtonText(product) // Use new function
-                const purchaseDisabled = isPurchaseDisabled(product) // Use new function
+                const primaryButtonText = getPrimaryButtonText(product) 
+                const purchaseDisabled = isPurchaseDisabled(product) 
                 return (
                   <article
                     key={product.id}
@@ -531,7 +527,7 @@ export default function ShopPageClient() {
                         src={product.image_urls?.[0] || "/placeholder.svg?height=400&width=300"} // Prioritize image_urls[0]
                         alt={`${product.name} - ${product.subtitle} - African fashion by AMA featuring ${product.materials?.join(", ") || ""} materials`}
                         fill
-                        className="object-cover object-top transition-transform duration-700 group-hover:scale-110" // Added object-top
+                        className="object-cover object-top transition-transform duration-700 group-hover:scale-110" 
                         sizes={
                           activeFilter === "the-manifested-set"
                             ? "(max-width: 768px) 100vw, 50vw"
@@ -561,7 +557,7 @@ export default function ShopPageClient() {
                     </div>
                     <div className="flex-grow flex flex-col text-center">
                       {" "}
-                      {/* Removed space-y-3 from here */}
+                     
                       {/* This div contains all the variable height content (name, subtitle, description, price) */}
                       {/* It should also be flex-grow to push the quantity selector and buttons down */}
                       <div className="flex-grow space-y-3">

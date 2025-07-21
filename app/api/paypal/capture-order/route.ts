@@ -6,8 +6,8 @@ import { recordOrder, getProductDisplayName } from "@/lib/inventory" // Import r
 import {
   type OrderItemEmailData,
   type RecordOrderData,
-  type PayPalRequestItem, // Import the new type
-  PaymentStatus, // Import enums for consistency
+  type PayPalRequestItem, 
+  PaymentStatus, 
   OrderStatus,
   ShippingStatus,
 } from "@/lib/types"
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
         phone: string
         address: string
       }
-      cartItems: PayPalRequestItem[] // Use the new type here
+      cartItems: PayPalRequestItem[]
     }
 
     if (!orderID) {
@@ -200,7 +200,7 @@ export async function POST(request: NextRequest) {
       currency: capture.amount.currency_code,
       paypalMode: process.env.PAYPAL_MODE || "sandbox",
       message: "PayPal order completed and notifications sent!",
-      orderId: orderDbId, // Return the DB order ID
+      orderId: orderDbId,
     })
   } catch (error) {
     console.error("❌ PayPal capture error:", error)
