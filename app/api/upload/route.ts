@@ -33,6 +33,7 @@ export async function POST(request: NextRequest) {
     // Upload to Vercel Blob
     const blob = await put(uniqueFileName, file, {
       access: "public",
+      token: process.env.BLOB_READ_WRITE_TOKEN,  // 🔑
     })
 
     return NextResponse.json({
@@ -113,5 +114,3 @@ export async function POST(request: NextRequest) {
 //     return NextResponse.json({ success: false, error: "Failed to upload file" }, { status: 500 })
 //   }
 // }
-
-
