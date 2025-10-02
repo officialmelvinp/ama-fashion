@@ -54,12 +54,23 @@ export async function POST(request: NextRequest) {
         console.error(`Invalid quantity for item ${item.name}: ${item.quantity}`)
         throw new Error(`Quantity for item ${item.name} is invalid or missing.`)
       }
+      
+      
+      
+    // Construct absolute image URL safely
+      const imageUrl =
+      item.image && item.image.length > 0
+      ? item.image.startsWith("http")
+      ? item.image // ✅ already a full URL (Blob, CDN, etc.)
+      : `${request.nextUrl.origin}${item.image}` // ✅ relative path case
+    : undefined
+
 
       // Construct absolute image URL
-      const imageUrl =
-        item.image && item.image.length > 0
-          ? `${request.nextUrl.origin}${item.image}` // Use the direct image URL
-          : undefined // Or provide a default placeholder URL if no image
+      // const imageUrl =
+        // item.image && item.image.length > 0
+          // ? `${request.nextUrl.origin}${item.image}` // Use the direct image URL
+          // : undefined // Or provide a default placeholder URL if no image
 
       console.log(
         `Processing item: ${item.name}, quantity: ${item.quantity}, unitAmountInCents: ${Math.round(
