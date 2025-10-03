@@ -12,7 +12,7 @@ export default function Home() {
 
       {/* Hero Section */}
       <section className="relative h-screen flex items-center justify-center text-center text-white">
-        <Image src="/images/ama1.jpeg" alt="Hero Image" fill className="object-cover absolute inset-0 -z-10" />
+        <Image src="/images/ama22.jpeg" alt="Hero Image" fill className="object-cover absolute inset-0 -z-10" />
         <div className="absolute inset-0 bg-black/40 -z-10" />
         <div className="container mx-auto px-8">
           <h1 className="font-serif text-5xl md:text-7xl lg:text-8xl font-light tracking-wider leading-tight mb-6 max-w-6xl mx-auto">
