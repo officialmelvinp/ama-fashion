@@ -68,7 +68,7 @@ export async function PUT(request: Request) {
     // Construct the 'items' array for email using the 'items' property of the fetched order.
     // This 'items' array comes from the order_items table and is already correctly typed as OrderItem[].
     const emailItems: OrderItemEmailData[] = order.items.map((item) => ({
-      product_id: item.product_id, // Correctly included from lib/types.ts
+      product_id: item.product_id, 
       product_display_name: item.product_display_name,
       quantity: item.quantity,
       unit_price: item.unit_price,

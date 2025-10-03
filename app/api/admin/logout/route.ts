@@ -5,7 +5,7 @@ export async function POST() {
   try {
     // Clear the authentication cookie
     const cookieStore = await cookies()
-    cookieStore.delete("session") // Assuming your session cookie is named 'session'
+    cookieStore.delete("session") 
 
     return NextResponse.json({ message: "Logged out successfully" }, { status: 200 })
   } catch (error) {

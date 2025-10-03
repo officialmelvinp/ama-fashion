@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
       intent: "CAPTURE",
       purchase_units: [
         {
-          reference_id: "AMA_CART_ORDER", // A general reference ID for the whole cart order
+          reference_id: "AMA_CART_ORDER", 
           amount: {
             currency_code: "USD",
             value: finalTotalAmount,

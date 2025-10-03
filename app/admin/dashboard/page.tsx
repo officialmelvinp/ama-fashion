@@ -22,7 +22,7 @@ interface DashboardStats {
   recentOrders: Array<{
     id: string
     customer_name: string | null
-    product_id: string // product_display_name
+    product_id: string 
     amount_paid: number
     currency: string
     payment_status: string
@@ -48,7 +48,7 @@ export default function AdminDashboard() {
   const fetchDashboardStats = async () => {
     try {
       setLoading(true)
-      const response = await fetch("/api/admin/dashboard-stats") // Consolidated API endpoint
+      const response = await fetch("/api/admin/dashboard-stats") 
 
       if (response.status === 401) {
         router.push("/admin/login")

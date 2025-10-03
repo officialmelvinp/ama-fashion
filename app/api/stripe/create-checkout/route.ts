@@ -9,16 +9,16 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 interface IncomingCheckoutItem {
   productId: string
   quantity: number
-  price: number // This is the direct price amount
+  price: number 
   name: string
-  image?: string // Optional, as it might be undefined
-  currency: string // This is the direct currency code
+  image?: string 
+  currency: string 
 }
 
 export async function POST(request: NextRequest) {
   try {
     const { cartItems, customerInfo, region } = (await request.json()) as {
-      cartItems: IncomingCheckoutItem[] // Use the new IncomingCheckoutItem type
+      cartItems: IncomingCheckoutItem[] 
       customerInfo: {
         firstName: string
         lastName: string
@@ -46,8 +46,8 @@ export async function POST(request: NextRequest) {
 
     // Prepare line items for Stripe
     const lineItems = cartItems.map((item: IncomingCheckoutItem) => {
-      const priceNumeric = item.price // Access the 'price' property directly
-      const currency = item.currency.toLowerCase() // Access the 'currency' property directly and convert to lowercase for Stripe
+      const priceNumeric = item.price 
+      const currency = item.currency.toLowerCase() 
 
       // Ensure quantity is a number and greater than 0
       if (typeof item.quantity !== "number" || item.quantity <= 0) {
@@ -61,12 +61,12 @@ export async function POST(request: NextRequest) {
       const imageUrl =
       item.image && item.image.length > 0
       ? item.image.startsWith("http")
-      ? item.image // ✅ already a full URL (Blob, CDN, etc.)
-      : `${request.nextUrl.origin}${item.image}` // ✅ relative path case
+      ? item.image //
+      : `${request.nextUrl.origin}${item.image}` 
     : undefined
 
 
-      // Construct absolute image URL
+      // Construct absolute image URL 
       // const imageUrl =
         // item.image && item.image.length > 0
           // ? `${request.nextUrl.origin}${item.image}` // Use the direct image URL
@@ -83,13 +83,13 @@ export async function POST(request: NextRequest) {
           currency: currency,
           product_data: {
             name: item.name,
-            description: item.name, // Using name as description for simplicity, adjust if subtitle is needed
-            images: imageUrl ? [imageUrl] : [], // Use the absolute URL
+            description: item.name, 
+            images: imageUrl ? [imageUrl] : [], 
             metadata: {
-              internal_product_id: item.productId, // Store your internal product ID
+              internal_product_id: item.productId, 
             },
           },
-          unit_amount: Math.round(priceNumeric * 100), // Convert to cents
+          unit_amount: Math.round(priceNumeric * 100), 
         },
         quantity: item.quantity,
       }
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
     const simplifiedCartItems = cartItems.map((item) => ({
       id: item.productId,
       qty: item.quantity,
-      region: region, // Use the region passed in the request body
+      region: region, 
     }))
 
     const session = await stripe.checkout.sessions.create({
@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
         enabled: true,
       },
       shipping_address_collection: {
-        allowed_countries: ["GB", "AE", "US", "CA", "AU", "DE", "FR", "IE", "NL", "SG"], // Add countries as needed
+        allowed_countries: ["GB", "AE", "US", "CA", "AU", "DE", "FR", "IE", "NL", "SG"], 
       },
       shipping_options: [
         {
@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
             type: "fixed_amount",
             fixed_amount: {
               amount: 0,
-              currency: lineItems[0]?.price_data.currency || "aed", // Use currency from first item or default
+              currency: lineItems[0]?.price_data.currency || "aed", 
             },
             display_name: "Standard shipping",
             delivery_estimate: {
@@ -132,10 +132,10 @@ export async function POST(request: NextRequest) {
       ],
       // Store the simplified cartItems array in metadata
       metadata: {
-        cart_items_json: JSON.stringify(simplifiedCartItems), // Use simplified version
-        customer_info_json: JSON.stringify(customerInfo), // Also store customer info for webhook
+        cart_items_json: JSON.stringify(simplifiedCartItems), 
+        customer_info_json: JSON.stringify(customerInfo), 
       },
-      customer_email: customerInfo?.email, // Pre-fill customer email
+      customer_email: customerInfo?.email, 
     })
 
     return NextResponse.json({ url: session.url })

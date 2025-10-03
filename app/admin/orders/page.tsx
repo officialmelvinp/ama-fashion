@@ -136,8 +136,8 @@ export default function AdminOrdersPage() {
     const matchesSearch =
       order.customer_email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.customer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      productDisplayNames.includes(searchTerm.toLowerCase()) || // Search by display name from items
-      productIds.includes(searchTerm.toLowerCase()) || // Search by product ID from items
+      productDisplayNames.includes(searchTerm.toLowerCase()) || 
+      productIds.includes(searchTerm.toLowerCase()) || 
       (order.tracking_number && order.tracking_number.toLowerCase().includes(searchTerm.toLowerCase()))
 
     return matchesFilter && matchesSearch
@@ -148,7 +148,7 @@ export default function AdminOrdersPage() {
     const paidOrders = orders.filter((o) => o.payment_status === "Completed").length
     const shippedOrders = orders.filter((o) => o.shipping_status === "Shipped").length
     const deliveredOrders = orders.filter((o) => o.shipping_status === "Delivered").length
-    const preOrders = orders.filter((o) => o.items.some((item) => item.quantity_preorder > 0)).length // Sum pre-order quantities from items
+    const preOrders = orders.filter((o) => o.items.some((item) => item.quantity_preorder > 0)).length 
     const totalRevenue = orders
       .filter((o) => o.payment_status === "Completed")
       .reduce((sum, o) => sum + o.total_amount, 0)

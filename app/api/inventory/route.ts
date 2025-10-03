@@ -4,7 +4,7 @@ import type { Product } from "@/lib/types"
 
 const sql = neon(process.env.DATABASE_URL!)
 
-export const dynamic = "force-dynamic" // Ensure dynamic rendering
+export const dynamic = "force-dynamic" 
 
 export async function GET() {
   try {
@@ -17,7 +17,7 @@ export async function GET() {
       description: row.description,
       price_aed: row.price_aed ? Number.parseFloat(row.price_aed) : null,
       price_gbp: row.price_gbp ? Number.parseFloat(row.price_gbp) : null,
-      image: row.image_urls?.[0] || "", // Use first image from array as main image
+      image: row.image_urls?.[0] || "", 
       image_urls: row.image_urls || [],
       category: row.category,
       materials: row.materials || [],

@@ -1,9 +1,9 @@
 "use server"
 import { neon } from "@neondatabase/serverless"
 import { revalidatePath } from "next/cache"
-import { getOrderById } from "@/lib/inventory" // Import getOrderById
-import { sendOrderShippedEmail, sendOrderDeliveredEmail } from "@/lib/email" // Import email functions
-import type { OrderItemEmailData } from "@/lib/types" // Import the type
+import { getOrderById } from "@/lib/inventory"
+import { sendOrderShippedEmail, sendOrderDeliveredEmail } from "@/lib/email" 
+import type { OrderItemEmailData } from "@/lib/types" 
 
 
 const sql = neon(process.env.DATABASE_URL!)
@@ -38,15 +38,15 @@ export async function handleShipOrder(
       }))
       await sendOrderShippedEmail({
         customer_email: order.customer_email,
-        customer_name: order.customer_name ?? null, // Use ?? null to handle undefined
+        customer_name: order.customer_name ?? null, 
         order_id: order.id.toString(),
         items: emailItems,
         total_amount: order.total_amount,
         currency: order.currency,
-        tracking_number: order.tracking_number ?? null, // Use ?? null
-        shipping_carrier: order.shipping_carrier ?? null, // Use ?? null
-        estimated_delivery_date: order.estimated_delivery_date ?? null, // Use ?? null
-        shipped_date: order.shipped_date ?? null, // Use ?? null
+        tracking_number: order.tracking_number ?? null, 
+        shipping_carrier: order.shipping_carrier ?? null, 
+        estimated_delivery_date: order.estimated_delivery_date ?? null, 
+        shipped_date: order.shipped_date ?? null, 
       })
     }
     revalidatePath("/admin/orders")
@@ -80,12 +80,12 @@ export async function handleDeliverOrder(orderId: string) {
       }))
       await sendOrderDeliveredEmail({
         customer_email: order.customer_email,
-        customer_name: order.customer_name ?? null, // Use ?? null
+        customer_name: order.customer_name ?? null, 
         order_id: order.id.toString(),
         items: emailItems,
         total_amount: order.total_amount,
         currency: order.currency,
-        delivered_date: order.delivered_date ?? null, // Use ?? null
+        delivered_date: order.delivered_date ?? null, 
       })
     }
     revalidatePath("/admin/orders")
@@ -113,25 +113,25 @@ export async function resendOrderEmail(orderId: string, emailType: "shipped" | "
     if (emailType === "shipped") {
       await sendOrderShippedEmail({
         customer_email: order.customer_email,
-        customer_name: order.customer_name ?? null, // Use ?? null
+        customer_name: order.customer_name ?? null, 
         order_id: order.id.toString(),
         items: emailItems,
         total_amount: order.total_amount,
         currency: order.currency,
-        tracking_number: order.tracking_number ?? null, // Use ?? null
-        shipping_carrier: order.shipping_carrier ?? null, // Use ?? null
-        estimated_delivery_date: order.estimated_delivery_date ?? null, // Use ?? null
-        shipped_date: order.shipped_date ?? null, // Use ?? null
+        tracking_number: order.tracking_number ?? null, 
+        shipping_carrier: order.shipping_carrier ?? null, 
+        estimated_delivery_date: order.estimated_delivery_date ?? null, 
+        shipped_date: order.shipped_date ?? null, 
       })
     } else if (emailType === "delivered") {
       await sendOrderDeliveredEmail({
         customer_email: order.customer_email,
-        customer_name: order.customer_name ?? null, // Use ?? null
+        customer_name: order.customer_name ?? null, 
         order_id: order.id.toString(),
         items: emailItems,
         total_amount: order.total_amount,
         currency: order.currency,
-        delivered_date: order.delivered_date ?? null, // Use ?? null
+        delivered_date: order.delivered_date ?? null, 
       })
     }
     return { success: true, message: `Email resent for order #${orderId}.` }

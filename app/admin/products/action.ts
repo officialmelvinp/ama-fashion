@@ -3,9 +3,9 @@
 import { neon } from "@neondatabase/serverless" 
 import { revalidatePath } from "next/cache"
 import type { Product } from "@/lib/types"
-import { v4 as uuidv4 } from "uuid" // Import uuid for generating product codes
+import { v4 as uuidv4 } from "uuid" 
 
-const sql = neon(process.env.DATABASE_URL!) // Initialize Neon client
+const sql = neon(process.env.DATABASE_URL!) 
 
 export async function addProduct(product: Omit<Product, "id" | "created_at" | "updated_at">) {
   try {

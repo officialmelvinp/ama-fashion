@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { getAllProducts } from "@/lib/inventory"
 
-export const dynamic = "force-dynamic" // Ensure this API route is dynamic
+export const dynamic = "force-dynamic" 
 
 export async function GET() {
   try {
