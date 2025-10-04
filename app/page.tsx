@@ -44,7 +44,7 @@ export default function Home() {
             <Link href="/shop#ayomide" className="group">
               <div className="aspect-[3/4] relative mb-4 overflow-hidden">
                 <Image
-                  src="/"
+                  src="/images/cols.jpeg"
                   alt="Ayomide Dress Collection"
                   fill
                   className="object-cover transition-transform duration-500 group-hover:scale-105"

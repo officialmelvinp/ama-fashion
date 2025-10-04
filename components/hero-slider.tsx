@@ -18,6 +18,7 @@ const heroImages = [
   { src: "/images/amaxz.jpeg", alt: "Hero Image 4" },
   { src: "/images/amajjj.jpeg", alt: "Hero Image 5" },
   { src: "/images/ama444.jpeg", alt: "Hero Image 6" },
+  { src: "/images/hero.jpeg", alt: "Hero Image 6" },
   { src: "/images/ama999.jpeg", alt: "Hero Image 7" },
   { src: "/images/subs.jpeg", alt: "Hero Image 8" },
   // Add more images here as needed (max 10)
