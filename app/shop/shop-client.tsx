@@ -318,13 +318,14 @@ export default function ShopPageClient() {
 
   const getImageAspectRatio = () => {
     if (activeFilter === "the-manifested-set") {
-      return "aspect-[3/4] h-[85vh] lg:h-[95vh]"
+      return "aspect-[3/4] h-[70vh] lg:h-[75vh] xl:h-[80vh] max-w-[60%] mx-auto"
     }
     if (activeFilter === "ayomide") {
       return "aspect-[3/4] h-[80vh] lg:h-[90vh]"
     }
     return "aspect-[3/4] h-[75vh] lg:h-[85vh]"
   }
+
 
   const getDescriptionParts = (description: string | null) => {
     if (!description) return { firstPart: "", secondPart: "" }
