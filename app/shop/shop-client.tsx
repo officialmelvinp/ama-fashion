@@ -318,7 +318,7 @@ export default function ShopPageClient() {
 
   const getImageAspectRatio = () => {
     if (activeFilter === "the-manifested-set") {
-      return "aspect-[3/4] h-[70vh] lg:h-[75vh] xl:h-[80vh] max-w-[70%] mx-auto"
+      return "aspect-[3/4] h-[78vh] lg:h-[82vh] xl:h-[85vh] max-w-[75%] mx-auto"
     }
     if (activeFilter === "ayomide") {
       return "aspect-[3/4] h-[80vh] lg:h-[90vh]"
