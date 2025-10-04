@@ -33,12 +33,12 @@ export const metadata: Metadata = {
   }),
   openGraph: {
     title: "Amariah Manifested Art",
-    description: "Conscious luxury African fashion from Dubai & UK.",
+    description: "AMA is a minimalist African fashion brand crafting spiritually-rooted bubu dresses and contemporary printwear in Dubai and the UK. Intentional. Elegant. Manifested.",
     url: "https://www.amariahco.com",
     siteName: "Amariah Manifested Art",
     images: [
       {
-        url: "/images/ama3.jpeg", // place this image inside /public folder
+        url: "/images/ama3.jpeg", 
         width: 1200,
         height: 630,
         alt: "Amariah Manifested Art Logo",
