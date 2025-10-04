@@ -29,6 +29,7 @@
     "@tailwindcss/postcss": "^4.1.8",
     "@vercel/blob": "^2.0.0",
     "@vercel/postgres": "^0.10.0",
+    "@vercel/analytics": "1.3.1",
     "autoprefixer": "^10.4.21",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",

@@ -7,7 +7,7 @@ export const siteConfig = {
   description:
     "Conscious luxury African fashion brand crafting spiritually-rooted bubu dresses and contemporary printwear in Dubai and the UK. Intentional. Elegant. Manifested.",
   url: "https://amariahco.com",
-  ogImage: "/images/ama-og-image.jpg",
+  ogImage: "/images/ama3.jpeg",
   keywords: [
     // Primary Keywords
     "African fashion",
@@ -122,15 +122,15 @@ export function generateProductSchema(product: Product) {
       "@type": "Brand",
       name: siteConfig.name,
     },
-    category: product.category || "Clothing", // Use product.category, default to "Clothing"
+    category: product.category || "Clothing", 
     material: product.materials.join(", "),
-    image: product.image_urls.map((img) => `${siteConfig.url}${img}`), // Use image_urls
+    image: product.image_urls.map((img) => `${siteConfig.url}${img}`), 
     offers: [
       {
         "@type": "Offer",
         price: aedPrice,
         priceCurrency: "AED",
-        availability: "https://schema.org/InStock", // This might need to be dynamic based on product.status
+        availability: "https://schema.org/InStock", 
         seller: {
           "@type": "Organization",
           name: siteConfig.name,
@@ -144,7 +144,7 @@ export function generateProductSchema(product: Product) {
         "@type": "Offer",
         price: gbpPrice,
         priceCurrency: "GBP",
-        availability: "https://schema.org/InStock", // This might need to be dynamic based on product.status
+        availability: "https://schema.org/InStock", 
         seller: {
           "@type": "Organization",
           name: siteConfig.name,
@@ -171,7 +171,7 @@ export function generateOrganizationSchema() {
     name: siteConfig.name,
     alternateName: siteConfig.shortName,
     url: siteConfig.url,
-    logo: `${siteConfig.url}/images/ama-logo.png`,
+    logo: `${siteConfig.url}/images/ama3.jpeg`,
     description: siteConfig.description,
     foundingDate: "2024",
     founders: [
