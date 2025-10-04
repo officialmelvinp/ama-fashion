@@ -50,7 +50,7 @@ export default function HeroSlider() {
             <SwiperSlide key={index}>
               <div className="relative w-full h-full">
                 <Image
-                  src={image.src || "/placeholder.svg"}
+                  src={image.src || "/images/ama3.jpeg"}
                   alt={image.alt}
                   fill
                   className="object-cover"
