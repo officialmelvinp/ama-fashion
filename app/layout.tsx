@@ -6,8 +6,8 @@ import { Playfair_Display, Inter } from "next/font/google"
 import { generateMetaTags, generateOrganizationSchema } from "@/lib/seo"
 import { Analytics } from "@vercel/analytics/react"
 import { Suspense } from "react"
+import { CartProvider } from "@/context/cart-context"
 
-// Define font instances
 const playfair = Playfair_Display({
   subsets: ["latin"],
   variable: "--font-playfair",
@@ -17,9 +17,8 @@ const inter = Inter({
   variable: "--font-inter",
 })
 
-
 export const metadata: Metadata = {
-  metadataBase: new URL("https://www.amariahco.com"), 
+  metadataBase: new URL("https://www.amariahco.com"),
   ...generateMetaTags({
     title: "Amariah Manifested Art | Conscious Luxury African Fashion – Dubai & UK",
     description:
@@ -33,12 +32,13 @@ export const metadata: Metadata = {
   }),
   openGraph: {
     title: "Amariah Manifested Art",
-    description: "AMA is a minimalist African fashion brand crafting spiritually-rooted bubu dresses and contemporary printwear in Dubai and the UK. Intentional. Elegant. Manifested.",
+    description:
+      "AMA is a minimalist African fashion brand crafting spiritually-rooted bubu dresses and contemporary printwear in Dubai and the UK. Intentional. Elegant. Manifested.",
     url: "https://www.amariahco.com",
     siteName: "Amariah Manifested Art",
     images: [
       {
-        url: "/images/ama3.jpeg", 
+        url: "/images/ama3.jpeg",
         width: 1200,
         height: 630,
         alt: "Amariah Manifested Art Logo",
@@ -83,9 +83,12 @@ export default function RootLayout({
         />
       </head>
       <body className={`${playfair.variable} ${inter.variable} antialiased`}>
-        <Suspense fallback={null}>{children}</Suspense>
-        <Toaster />
-        <Analytics />
+        {/* ✅ Wrap everything inside CartProvider */}
+        <CartProvider>
+          <Suspense fallback={null}>{children}</Suspense>
+          <Toaster />
+          <Analytics />
+        </CartProvider>
       </body>
     </html>
   )
