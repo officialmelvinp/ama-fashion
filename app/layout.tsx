@@ -6,6 +6,7 @@ import { Playfair_Display, Inter } from "next/font/google"
 import { generateMetaTags, generateOrganizationSchema } from "@/lib/seo"
 import { Analytics } from "@vercel/analytics/react"
 import { Suspense } from "react"
+import FooterAdvert from "@/components/footer-advert"
 import { CartProvider } from "@/context/cart-context"
 
 const playfair = Playfair_Display({
@@ -88,6 +89,7 @@ export default function RootLayout({
           <Suspense fallback={null}>{children}</Suspense>
           <Toaster />
           <Analytics />
+          <FooterAdvert />
         </CartProvider>
       </body>
     </html>
