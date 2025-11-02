@@ -4,7 +4,7 @@
 export type Region = "UAE" | "UK"
 
 // Product type now directly reflects the products table schema
-export type ProductStatus = "active" | "inactive" | "out-of-stock" | "pre-order"
+export type ProductStatus = "available" | "active" | "inactive" | "out-of-stock" | "pre-order"
 export interface Product {
   id: string // UUID from DB
   name: string
@@ -29,13 +29,13 @@ export interface Product {
 export interface CartItem {
   id: string
   name: string
-  subtitle?: string | null 
+  subtitle?: string | null
   image_urls: string[] | null
   selectedPrice: {
     currency: string
     amount: number
   }
-  selectedQuantity: number 
+  selectedQuantity: number
   category: string | null
   selectedRegion: Region
   product_code: string | null
@@ -50,6 +50,10 @@ export interface CartItem {
   status: ProductStatus
   created_at: string
   updated_at: string
+}
+
+export interface Cart {
+  items: CartItem[]
 }
 
 // OrderItem now uses UUIDs for IDs and includes new quantity field

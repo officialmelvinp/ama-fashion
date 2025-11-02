@@ -213,7 +213,8 @@ export default function ShopPageClient() {
         updated_at: new Date().toISOString(),
       }
       addToCart(itemToAdd)
-      window.location.href = "/checkout"
+      window.location.href = `/checkout?region=${encodeURIComponent(selectedRegion)}`
+
     },
     [addToCart, quantities, productStockMap, selectedRegion, toast],
   )

@@ -1,8 +1,13 @@
+"use client" 
 import Image from "next/image"
 import Link from "next/link"
-import NewsletterForm from "@/components/newsletter-form"
+// import NewsletterForm from "@/components/newsletter-form"
 import Header from "@/components/header"
 import HeroSlider from "@/components/hero-slider"
+import dynamic from "next/dynamic"
+
+// Disable SSR for NewsletterForm (to prevent hydration mismatch)
+const NewsletterForm = dynamic(() => import("@/components/newsletter-form"), { ssr: false })
 
 export default function Home() {
   return (

@@ -1,24 +1,16 @@
 "use client"
 import { Suspense } from "react"
+import { useSearchParams } from "next/navigation"
 import CheckoutLoading from "./loading"
 import CheckoutClientContent from "@/components/checkout-client-content"
 
-interface CheckoutForm {
-  firstName: string
-  lastName: string
-  email: string
-  phone: string
-  address: string
-  city: string
-  country: string
-  postalCode: string
-  notes: string
-}
-
 export default function CheckoutPageWrapper() {
+  const searchParams = useSearchParams()
+  const region = (searchParams.get("region") || "UAE") as "UAE" | "UK"
+
   return (
     <Suspense fallback={<CheckoutLoading />}>
-      <CheckoutClientContent />
+      <CheckoutClientContent initialRegion={region} />
     </Suspense>
   )
 }
