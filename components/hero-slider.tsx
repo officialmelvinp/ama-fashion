@@ -26,7 +26,7 @@ const heroImages = [
 
 export default function HeroSlider() {
   return (
-    <section className="relative w-full flex items-center pt-28 md:pt-32">
+    <section className="relative w-full min-h-screen flex items-center">
       {/* Container */}
       <div className="container mx-auto px-6 md:px-12 flex flex-col-reverse md:flex-row items-center md:items-stretch justify-between gap-12">
         
@@ -35,11 +35,8 @@ export default function HeroSlider() {
           initial={{ opacity: 0, x: -50 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 1 }}
-          className="w-full md:w-1/2 flex flex-col justify-center text-center md:text-center relative z-20"
+          className="w-full md:w-1/2 flex flex-col justify-center text-center md:text-left"
         >
-          {/* Colorful background for desktop only */}
-          <div className="hidden md:block absolute inset-0 bg-gradient-to-tr from-[#FDE68A] via-[#FECACA] to-[#FBBF24] -z-10 rounded-3xl shadow-2xl opacity-95" />
-
           <h1 className="font-serif text-5xl md:text-7xl lg:text-8xl font-light tracking-wider leading-tight mb-6 text-[#2c2824]">
             SOULFULLY MADE.
             <br />
@@ -48,6 +45,14 @@ export default function HeroSlider() {
           <p className="text-lg md:text-xl opacity-80 mb-8">
             Natural Textures 🌿 | Tailored Simplicity ✂️ | Rooted in 🇳🇬 🇦🇪 🇬🇧
           </p>
+          <Link href="/shop">
+            <Button
+              variant="outline"
+              className="bg-[#2c2824]/10 backdrop-blur-sm border border-[#2c2824] text-[#2c2824] hover:bg-[#2c2824] hover:text-white px-6 md:px-12 py-4 md:py-6 text-sm md:text-base tracking-[0.2em] md:tracking-[0.3em] font-medium transition-all duration-300"
+            >
+              ENTER THE MANIFESTATION
+            </Button>
+          </Link>
         </motion.div>
 
         {/* Right: Hero Slider */}
@@ -55,7 +60,7 @@ export default function HeroSlider() {
           initial={{ opacity: 0, x: 50 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 1 }}
-          className="w-full md:w-1/2 h-[350px] md:h-[450px] lg:h-[500px] relative rounded-3xl overflow-hidden shadow-xl"
+          className="w-full md:w-1/2 h-[400px] md:h-[600px] lg:h-[700px] relative"
         >
           <Swiper
             modules={[Autoplay, EffectFade, Pagination]}
@@ -69,7 +74,7 @@ export default function HeroSlider() {
               bulletClass: "hero-pagination-bullet",
               bulletActiveClass: "hero-pagination-bullet-active",
             }}
-            className="w-full h-full"
+            className="w-full h-full rounded-2xl overflow-hidden shadow-xl"
           >
             {heroImages.map((image, index) => (
               <SwiperSlide key={index}>
@@ -82,39 +87,29 @@ export default function HeroSlider() {
                     priority={index === 0}
                     quality={90}
                   />
+                  {/* Optional: Overlay */}
                   <div className="absolute inset-0 bg-black/10 md:bg-transparent" />
                 </div>
               </SwiperSlide>
             ))}
           </Swiper>
-
-          {/* Centered button */}
-          <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
-            <Link href="/shop" className="pointer-events-auto">
-              <Button
-                variant="outline"
-                className="bg-white/10 backdrop-blur-sm border border-[#2c2824] text-[#2c2824] hover:bg-[#2c2824] hover:text-white px-6 md:px-12 py-4 md:py-6 text-sm md:text-base tracking-[0.2em] md:tracking-[0.3em] font-medium transition-all duration-300"
-              >
-                ENTER THE MANIFESTATION
-              </Button>
-            </Link>
-          </div>
         </motion.div>
       </div>
 
-      {/* Pagination CSS */}
+      {/* Custom CSS for pagination */}
       <style jsx global>{`
         .hero-pagination-bullet {
           width: 10px;
           height: 10px;
-          background: rgba(0,0,0,0.3);
+          background: rgba(0, 0, 0, 0.3);
           border-radius: 50%;
           margin: 0 6px;
           cursor: pointer;
           transition: all 0.3s ease;
+          display: inline-block;
         }
         .hero-pagination-bullet-active {
-          background: rgba(0,0,0,0.8);
+          background: rgba(0, 0, 0, 0.8);
           width: 30px;
           border-radius: 5px;
         }
