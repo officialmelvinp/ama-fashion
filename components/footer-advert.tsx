@@ -11,7 +11,7 @@ export default function FooterAdvert() {
         transition={{
           repeat: Infinity,
           repeatType: "loop",
-          duration: 12,
+          duration: 30,
           ease: "linear",
         }}
       >
