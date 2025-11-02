@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogTrigger, DialogClose } from "@/components/ui/dialog"
 import { Menu, X, ShoppingCart, Phone } from "lucide-react"
 import { useCart } from "@/hooks/use-cart"
+import { motion, AnimatePresence } from "framer-motion" 
 
 interface MobileNavProps {
   textColor?: string
@@ -24,19 +25,28 @@ export default function MobileNav({ textColor = "text-white", className }: Mobil
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild className={className}>
-        {/* ✅ Modified button with cart count badge */}
+        {/* ✅ Animated button with cart count badge */}
         <div className="relative">
           <Button variant="ghost" size="icon" className={textColor}>
             <Menu className="h-6 w-6" />
             <span className="sr-only">Toggle navigation menu</span>
           </Button>
 
-          {/* 🔴 Cart count badge on hamburger icon */}
-          {totalCartItems > 0 && (
-            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-[10px] font-bold text-white">
-              {totalCartItems}
-            </span>
-          )}
+          {/* 🔴 Animated cart count badge */}
+          <AnimatePresence>
+            {totalCartItems > 0 && (
+              <motion.span
+                key={totalCartItems} // triggers animation on count change
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0, opacity: 0 }}
+                transition={{ type: "spring", stiffness: 500, damping: 20 }}
+                className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-[10px] font-bold text-white"
+              >
+                {totalCartItems}
+              </motion.span>
+            )}
+          </AnimatePresence>
         </div>
       </DialogTrigger>
 
