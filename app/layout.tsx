@@ -8,7 +8,9 @@ import { Analytics } from "@vercel/analytics/react"
 import { Suspense } from "react"
 import FooterAdvert from "@/components/footer-advert"
 import { CartProvider } from "@/context/cart-context"
+import Script from "next/script"
 
+// ✅ Fonts
 const playfair = Playfair_Display({
   subsets: ["latin"],
   variable: "--font-playfair",
@@ -18,6 +20,7 @@ const inter = Inter({
   variable: "--font-inter",
 })
 
+// ✅ SEO Metadata
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.amariahco.com"),
   ...generateMetaTags({
@@ -57,11 +60,10 @@ export const metadata: Metadata = {
   },
 }
 
+// ✅ Main Layout
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
   const organizationSchema = generateOrganizationSchema()
 
   return (
@@ -70,12 +72,29 @@ export default function RootLayout({
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#2c2824" />
         <link rel="manifest" href="/manifest.json" />
+
+        {/* ✅ Google Analytics */}
+        <Script
+          strategy="afterInteractive"
+          src="https://www.googletagmanager.com/gtag/js?id=G-XSVJ52970E"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-XSVJ52970E');
+          `}
+        </Script>
+
+        {/* ✅ Organization Schema for SEO */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify(organizationSchema),
           }}
         />
+
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
           rel="preconnect"
@@ -83,8 +102,8 @@ export default function RootLayout({
           crossOrigin="anonymous"
         />
       </head>
+
       <body className={`${playfair.variable} ${inter.variable} antialiased`}>
-        {/* ✅ Wrap everything inside CartProvider */}
         <CartProvider>
           <Suspense fallback={null}>{children}</Suspense>
           <Toaster />
