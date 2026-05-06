@@ -8,7 +8,7 @@ import type { OrderItemEmailData, RecordOrderData } from "@/lib/types"
 
 // Initialize Stripe client
 const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2025-06-30.basil",
+ apiVersion: "2026-04-22.dahlia",
 })
 
 const webhookSecret: string = process.env.STRIPE_WEBHOOK_SECRET!
@@ -100,10 +100,11 @@ export async function POST(request: NextRequest) {
       )
       console.log("STRIPE WEBHOOK: Items prepared:", itemsForProcessing)
 
-      const customerName =
-        session.customer_details?.name ??
-        customerInfoFromMetadata?.firstName + " " + customerInfoFromMetadata?.lastName ??
-        null
+ const customerName =
+  session.customer_details?.name ??
+  (customerInfoFromMetadata?.firstName && customerInfoFromMetadata?.lastName
+    ? `${customerInfoFromMetadata.firstName} ${customerInfoFromMetadata.lastName}`
+    : "Customer")
       const customerEmail = session.customer_details?.email || customerInfoFromMetadata?.email || ""
       const customerPhone =
         session.customer_details?.phone?.replace(/\s/g, "") ??
