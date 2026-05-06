@@ -102,10 +102,13 @@ export async function POST(request: NextRequest) {
       region: region, 
     }))
 
-  const session = await (stripe.checkout.sessions.create as any)({
-  automatic_payment_methods: {
-    enabled: true,
-  },
+  // const session = await (stripe.checkout.sessions.create as any)({
+  // automatic_payment_methods: {
+  //   enabled: true,
+  // },
+  // line_items: lineItems,
+  const session = await stripe.checkout.sessions.create({
+  payment_method_types: ["card"],
   line_items: lineItems,
       mode: "payment",
       success_url: `${request.nextUrl.origin}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
